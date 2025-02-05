@@ -73,7 +73,11 @@ export default function SidebarPageTemplate({
 
   const pathname = usePathname();
 
-  const isPathInItems = (items: any[]) => {
+  interface NavItem {
+    url: string;
+  }
+
+  const isPathInItems = (items: NavItem[]) => {
     return items?.some(item => item.url === pathname);
   };
 
