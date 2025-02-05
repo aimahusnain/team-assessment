@@ -1,6 +1,5 @@
 "use client";
 
-import { useCallback, useEffect, useState } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -12,13 +11,30 @@ import {
 import { Button } from "@/components/ui/button";
 import { Checkbox } from "@/components/ui/checkbox";
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogTrigger,
+} from "@/components/ui/dialog";
+import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import {
+  Form,
+  FormControl,
+  FormField,
+  FormItem,
+  FormLabel,
+  FormMessage,
+} from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
   SelectContent,
@@ -44,6 +60,9 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { useToast } from "@/hooks/use-toast";
+import { zodResolver } from "@hookform/resolvers/zod";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -56,16 +75,19 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table";
+import { format } from "date-fns";
 import {
+  ArrowUpDown,
   ChevronDown,
   ChevronUp,
+  Loader2,
+  Plus,
   SlidersHorizontal,
   Trash2,
-  Loader2,
-  ArrowUpDown,
 } from "lucide-react";
-import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
-import { format } from "date-fns";
+import { useCallback, useEffect, useState } from "react";
+import { useForm } from "react-hook-form";
+import * as z from "zod";
 
 type ActivityLogEntry = {
   id: number;
@@ -80,6 +102,17 @@ type ActivityLogEntry = {
   updatedAt: string;
 };
 
+// Form schema
+const formSchema = z.object({
+  name: z.string().min(2, "Name must be at least 2 characters"),
+  team: z.string().min(1, "Team is required"),
+  activity: z.string().min(1, "Activity is required"),
+  verdi: z.string().min(1, "Verdi is required"),
+  department: z.string().min(1, "Department is required"),
+  year: z.string().min(1, "Year is required"),
+  monthName: z.string().min(1, "Month is required"),
+});
+
 const ActivityLog = () => {
   // State
   const [data, setData] = useState<ActivityLogEntry[]>([]);
@@ -92,11 +125,70 @@ const ActivityLog = () => {
   const [selectedYear, setSelectedYear] = useState<string>("all");
   const [selectedMonth, setSelectedMonth] = useState<string>("all");
   const [isFilterOpen, setIsFilterOpen] = useState(false);
-
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const { toast } = useToast();
   const [sorting, setSorting] = useState<SortingState>([]);
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [teamInputType, setTeamInputType] = useState("existing");
+  const [newTeam, setNewTeam] = useState("");
+
+  // Form
+  const form = useForm<z.infer<typeof formSchema>>({
+    resolver: zodResolver(formSchema),
+    defaultValues: {
+      name: "",
+      team: "",
+      activity: "",
+      verdi: "",
+      department: "",
+      year: new Date().getFullYear().toString(),
+      monthName: format(new Date(), "MMMM"),
+    },
+  });
+
+  // Modify the onSubmit handler to handle new team
+  const onSubmit = async (values: z.infer<typeof formSchema>) => {
+    try {
+      // If adding a new team, use that instead of the selected team
+      const finalValues = {
+        ...values,
+        team: teamInputType === "new" ? newTeam : values.team
+      };
+
+      const response = await fetch("/api/add-activityLog", {
+        method: "POST",
+        headers: {
+          "Content-Type": "application/json",
+        },
+        body: JSON.stringify(finalValues),
+      });
+
+      const result = await response.json();
+
+      if (result.success) {
+        toast({
+          title: "Success",
+          description: "Activity log added successfully",
+        });
+        setIsAddDialogOpen(false);
+        form.reset();
+        setTeamInputType("existing");
+        setNewTeam("");
+        fetchData();
+      } else {
+        throw new Error(result.message);
+      }
+    } catch (error) {
+      toast({
+        title: "Error",
+        description: "Failed to add activity log",
+        variant: "destructive",
+      });
+    }
+  };
+
 
   // Column definition
   const columns: ColumnDef<ActivityLogEntry>[] = [
@@ -704,6 +796,249 @@ const ActivityLog = () => {
                     )}
                   </Button>
                 )}
+                {/* Add Activity Log Dialog */}
+                <Dialog
+                  open={isAddDialogOpen}
+                  onOpenChange={setIsAddDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button
+                      size="sm"
+                      className="dark:text-white"
+                      variant="secondary"
+                    >
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Activity Log
+                    </Button>
+                  </DialogTrigger>
+                  <DialogContent className="sm:max-w-[425px] dark:text-white">
+                    <DialogHeader>
+                      <DialogTitle>Add Activity Log</DialogTitle>
+                      <DialogDescription>
+                        Create a new activity log entry
+                      </DialogDescription>
+                    </DialogHeader>
+                    <Form {...form}>
+                      <form
+                        onSubmit={form.handleSubmit(onSubmit)}
+                        className="space-y-4"
+                      >
+                        <FormField
+                          control={form.control}
+                          name="name"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Name</FormLabel>
+                              <FormControl>
+                                <Input placeholder="Enter name" {...field} />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+  <FormField
+    control={form.control}
+    name="team"
+    render={({ field }) => (
+      <FormItem className="space-y-4">
+        <FormLabel>Team</FormLabel>
+        <RadioGroup
+          defaultValue="existing"
+          value={teamInputType}
+          onValueChange={setTeamInputType}
+          className="mb-4"
+        >
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="existing" id="existing" />
+            <Label htmlFor="existing">Select Existing Team</Label>
+          </div>
+          <div className="flex items-center space-x-2">
+            <RadioGroupItem value="new" id="new" />
+            <Label htmlFor="new">Add New Team</Label>
+          </div>
+        </RadioGroup>
+        
+        {teamInputType === "existing" ? (
+          <Select
+            onValueChange={field.onChange}
+            defaultValue={field.value}
+          >
+            <FormControl>
+              <SelectTrigger>
+                <SelectValue placeholder="Select team" />
+              </SelectTrigger>
+            </FormControl>
+            <SelectContent>
+              {uniqueTeams.map((team) => (
+                <SelectItem key={team} value={team}>
+                  {team}
+                </SelectItem>
+              ))}
+            </SelectContent>
+          </Select>
+        ) : (
+          <FormControl>
+            <Input
+              placeholder="Enter new team name"
+              value={newTeam}
+              onChange={(e) => {
+                setNewTeam(e.target.value);
+                field.onChange(e.target.value);
+              }}
+            />
+          </FormControl>
+        )}
+        <FormMessage />
+      </FormItem>
+    )}
+  />
+                        <FormField
+                          control={form.control}
+                          name="activity"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Activity</FormLabel>
+                              <Select
+                                onValueChange={field.onChange}
+                                defaultValue={field.value}
+                              >
+                                <FormControl>
+                                  <SelectTrigger>
+                                    <SelectValue placeholder="Select activity" />
+                                  </SelectTrigger>
+                                </FormControl>
+                                <SelectContent>
+                                  {uniqueActivities.map((activity) => (
+                                    <SelectItem key={activity} value={activity}>
+                                      {activity}
+                                    </SelectItem>
+                                  ))}
+                                </SelectContent>
+                              </Select>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="verdi"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Verdi</FormLabel>
+                              <FormControl>
+                                <Input
+                                  type="number"
+                                  placeholder="Enter verdi"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <FormField
+                          control={form.control}
+                          name="department"
+                          render={({ field }) => (
+                            <FormItem>
+                              <FormLabel>Department</FormLabel>
+                              <FormControl>
+                                <Input
+                                  placeholder="Enter department"
+                                  {...field}
+                                />
+                              </FormControl>
+                              <FormMessage />
+                            </FormItem>
+                          )}
+                        />
+                        <div className="grid grid-cols-2 gap-4">
+                          <FormField
+                            control={form.control}
+                            name="year"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Year</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select year" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {Array.from(
+                                      {
+                                        length:
+                                          new Date().getFullYear() - 1970 + 1,
+                                      },
+                                      (_, i) => 1970 + i
+                                    )
+                                      .reverse()
+                                      .map((year) => (
+                                        <SelectItem
+                                          key={year}
+                                          value={year.toString()}
+                                        >
+                                          {year}
+                                        </SelectItem>
+                                      ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                          <FormField
+                            control={form.control}
+                            name="monthName"
+                            render={({ field }) => (
+                              <FormItem>
+                                <FormLabel>Month</FormLabel>
+                                <Select
+                                  onValueChange={field.onChange}
+                                  defaultValue={field.value}
+                                >
+                                  <FormControl>
+                                    <SelectTrigger>
+                                      <SelectValue placeholder="Select month" />
+                                    </SelectTrigger>
+                                  </FormControl>
+                                  <SelectContent>
+                                    {Array.from({ length: 12 }, (_, i) => ({
+                                      value: format(new Date(2000, i), "MMMM"),
+                                      label: format(new Date(2000, i), "MMMM"),
+                                    })).map(({ value, label }) => (
+                                      <SelectItem key={value} value={value}>
+                                        {label}
+                                      </SelectItem>
+                                    ))}
+                                  </SelectContent>
+                                </Select>
+                                <FormMessage />
+                              </FormItem>
+                            )}
+                          />
+                        </div>
+                        <div className="flex justify-end gap-3 mt-6">
+                          <Button
+                            type="button"
+                            variant="outline"
+                            onClick={() => {
+                              setIsAddDialogOpen(false);
+                              form.reset();
+                            }}
+                          >
+                            Cancel
+                          </Button>
+                          <Button type="submit">Add Activity Log</Button>
+                        </div>
+                      </form>
+                    </Form>
+                  </DialogContent>
+                </Dialog>
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
