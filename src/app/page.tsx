@@ -21,92 +21,110 @@ const iconMap = {
   Network,
 };
 
+const container = {
+  hidden: { opacity: 0 },
+  show: {
+    opacity: 1,
+    transition: {
+      staggerChildren: 0.1
+    }
+  }
+};
+
+const item = {
+  hidden: { opacity: 0, y: 20 },
+  show: { opacity: 1, y: 0 }
+};
+
 export default function Home() {
   return (
-    <div className="flex flex-col min-h-screen bg-gray-50">
-      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b bg-white/80 px-4 backdrop-blur-sm transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
-        <SidebarTrigger className="-ml-1" />
-        <Separator orientation="vertical" className="mr-2 h-4" />
+    <div className="flex flex-col min-h-screen bg-white dark:bg-black">
+      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-gray-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 px-4 backdrop-blur-sm transition-[width,height] ease-linear">
+        <SidebarTrigger className="-ml-1 text-gray-500 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white transition-colors" />
+        <Separator orientation="vertical" className="mr-2 h-4 bg-gray-200 dark:bg-zinc-800" />
         <Breadcrumb>
           <BreadcrumbList>
             <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="#" className="text-sm font-medium">
+              <BreadcrumbLink href="#" className="text-sm font-medium text-gray-500 hover:text-gray-900 dark:text-zinc-400 dark:hover:text-white transition-colors">
                 Dashboard
               </BreadcrumbLink>
             </BreadcrumbItem>
           </BreadcrumbList>
         </Breadcrumb>
       </header>
-      <main className="flex-grow p-4 sm:p-6 md:p-8 lg:p-10">
+
+      <main className="flex-grow p-4 sm:p-6 md:p-8 lg:p-10 bg-gradient-to-b from-white to-gray-50 dark:from-black dark:to-zinc-900">
         <motion.h1
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5 }}
-          className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 mb-2"
+          className="text-3xl sm:text-4xl font-extrabold tracking-tight text-gray-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-emerald-400 dark:to-cyan-400 mb-2"
         >
           Welcome back
         </motion.h1>
+        
         <motion.p
           initial={{ opacity: 0, y: -20 }}
           animate={{ opacity: 1, y: 0 }}
           transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-lg text-gray-500 mb-8"
+          className="text-lg text-gray-500 dark:text-zinc-400 mb-8"
         >
           Select a category to manage your application
         </motion.p>
-        <div className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-4">
+
+        <motion.div 
+          variants={container}
+          initial="hidden"
+          animate="show"
+          className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-4"
+        >
           {dashboardLinks.links.map((link, index) => {
             const Icon = iconMap[link.icon as keyof typeof iconMap];
             return (
               <motion.div
                 key={link.href}
-                initial={{ opacity: 0, y: 20 }}
-                animate={{ opacity: 1, y: 0 }}
-                transition={{ duration: 0.5, delay: index * 0.1 }}
+                variants={item}
+                className="group"
               >
-                <Link href={link.href} className="group">
-                  <div className="bg-white rounded-2xl shadow-sm p-6 transition-all duration-300 ease-in-out hover:shadow-md hover:-translate-y-1 hover:bg-gradient-to-br hover:from-white hover:to-gray-50 relative overflow-hidden">
-                    <div
-                      className="absolute inset-0 bg-gradient-to-br opacity-0 transition-opacity duration-300 ease-in-out group-hover:opacity-10"
-                      style={{
-                        backgroundImage: `linear-gradient(to bottom right, var(--tw-gradient-stops))`,
-                      }}
-                    />
-                    <div className="flex items-center gap-4 mb-4">
-                      <div
-                        className={`rounded-full p-3 ${link.color} bg-opacity-10 transition-colors duration-300 ease-in-out group-hover:bg-opacity-20`}
-                      >
-                        <Icon className={`h-6 w-6 ${link.color}`} />
+                <Link href={link.href}>
+                  <div className="relative rounded-xl bg-gradient-to-br from-gray-100 to-white dark:from-zinc-900 dark:to-zinc-800 p-[1px] transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-md dark:shadow-none">
+                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-400/0 to-cyan-400/0 dark:from-emerald-400/20 dark:to-cyan-400/20 opacity-0 blur transition-opacity duration-300 group-hover:opacity-100" />
+                    
+                    <div className="relative rounded-xl bg-white dark:bg-zinc-900 p-6 transition-all duration-300">
+                      <div className="flex items-center gap-4 mb-4">
+                        <div className={`rounded-lg p-3 bg-gray-50 dark:bg-zinc-800/50 transition-colors duration-300 group-hover:bg-gray-100 dark:group-hover:bg-zinc-800`}>
+                          <Icon className={`h-6 w-6 text-gray-500 group-hover:text-emerald-500 dark:text-emerald-400 dark:group-hover:text-cyan-400 transition-colors duration-300`} />
+                        </div>
+                        <h2 className="text-xl font-semibold text-gray-900 dark:text-white">
+                          {link.title}
+                        </h2>
                       </div>
-                      <h2 className="text-xl font-semibold text-gray-900">
-                        {link.title}
-                      </h2>
-                    </div>
-                    <p className="text-gray-500 mb-4">{link.description}</p>
-                    <div
-                      className={`flex items-center text-sm font-medium ${link.color} transition-all duration-300 ease-in-out opacity-0 translate-y-2 group-hover:opacity-100 group-hover:translate-y-0`}
-                    >
-                      Learn more
-                      <svg
-                        className="ml-2 h-4 w-4 transition-transform duration-300 ease-in-out group-hover:translate-x-1"
-                        fill="none"
-                        viewBox="0 0 24 24"
-                        stroke="currentColor"
-                      >
-                        <path
-                          strokeLinecap="round"
-                          strokeLinejoin="round"
-                          strokeWidth={2}
-                          d="M9 5l7 7-7 7"
-                        />
-                      </svg>
+
+                      <p className="text-gray-500 dark:text-zinc-400 mb-4">{link.description}</p>
+
+                      <div className="flex items-center text-sm font-medium text-emerald-500 group-hover:text-emerald-600 dark:text-emerald-400 dark:group-hover:text-cyan-400 transition-all duration-300">
+                        Learn more
+                        <svg
+                          className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
+                          fill="none"
+                          viewBox="0 0 24 24"
+                          stroke="currentColor"
+                        >
+                          <path
+                            strokeLinecap="round"
+                            strokeLinejoin="round"
+                            strokeWidth={2}
+                            d="M9 5l7 7-7 7"
+                          />
+                        </svg>
+                      </div>
                     </div>
                   </div>
                 </Link>
               </motion.div>
             );
           })}
-        </div>
+        </motion.div>
       </main>
     </div>
   );
