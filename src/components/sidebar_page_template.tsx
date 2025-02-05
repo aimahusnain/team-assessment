@@ -11,11 +11,13 @@ import {
   Folder,
   Forward,
   LogOut,
+  Moon,
   MoreHorizontal,
   PieChart,
   Plus,
   Sparkles,
   SquareTerminal,
+  Sun,
   Trash2,
 } from "lucide-react";
 import React, { ReactNode } from "react";
@@ -56,6 +58,8 @@ import {
 } from "@/components/ui/sidebar";
 import { usePathname } from "next/navigation";
 import Link from "next/link";
+import { Button } from "./ui/button";
+import { useTheme } from "next-themes";
 // import { signOut, useSession } from "next-auth/react"
 
 interface SidebarPageTemplateProps {
@@ -78,7 +82,7 @@ export default function SidebarPageTemplate({
   }
 
   const isPathInItems = (items: NavItem[]) => {
-    return items?.some(item => item.url === pathname);
+    return items?.some((item) => item.url === pathname);
   };
 
   const data = {
@@ -87,7 +91,7 @@ export default function SidebarPageTemplate({
         name: "Main Model",
         logo: AudioWaveform,
         plan: "for Perdyrkorn",
-      }
+      },
     ],
     navMain: [
       {
@@ -95,79 +99,84 @@ export default function SidebarPageTemplate({
         url: "#",
         icon: Bot,
         isActive: isPathInItems([
-          { url: '/dashboard/individuals' },
-          { url: '/dashboard/teams' },
-          { url: '/dashboard/departments' },
-          { url: '/dashboard/company' }
+          { url: "/dashboard/individuals" },
+          { url: "/dashboard/teams" },
+          { url: "/dashboard/departments" },
+          { url: "/dashboard/company" },
         ]),
         items: [
           {
             title: "Individuals",
             url: "/dashboard/individuals",
-            isActive: pathname === '/dashboard/individuals'
+            isActive: pathname === "/dashboard/individuals",
           },
           {
             title: "Teams",
-            url: "/dashboard/teams", 
-            isActive: pathname === '/dashboard/teams'
+            url: "/dashboard/teams",
+            isActive: pathname === "/dashboard/teams",
           },
           {
             title: "Departments",
             url: "/dashboard/departments",
-            isActive: pathname === '/dashboard/departments'
+            isActive: pathname === "/dashboard/departments",
           },
           {
-            title: "Company", 
+            title: "Company",
             url: "/dashboard/company",
-            isActive: pathname === '/dashboard/company'
-          }
-        ]
+            isActive: pathname === "/dashboard/company",
+          },
+        ],
       },
       {
         title: "Data Entry",
         url: "#",
         icon: SquareTerminal,
         isActive: isPathInItems([
-          { url: '/data-entry/activity-log' },
-          { url: '/incoming-calls' },
-          { url: '/outgoing-calls' },
-          { url: '/inputs' }
+          { url: "/data-entry/activity-log" },
+          { url: "/incoming-calls" },
+          { url: "/outgoing-calls" },
+          { url: "/inputs" },
         ]),
         items: [
           {
             title: "Activity Log (Table1)",
             url: "/data-entry/activity-log",
-            isActive: pathname === '/data-entry/activity-log'
+            isActive: pathname === "/data-entry/activity-log",
           },
           {
             title: "Incoming Calls",
             url: "/incoming-calls",
-            isActive: pathname === '/incoming-calls'
+            isActive: pathname === "/incoming-calls",
           },
           {
             title: "Outgoing Calls",
             url: "/outgoing-calls",
-            isActive: pathname === '/outgoing-calls'
+            isActive: pathname === "/outgoing-calls",
           },
           {
             title: "Inputs",
             url: "/inputs",
-            isActive: pathname === '/inputs'
-          }
-        ]
-      }
+            isActive: pathname === "/inputs",
+          },
+        ],
+      },
     ],
     visualization: [
       {
         name: "Top 10",
         url: "/top-10",
         icon: PieChart,
-        isActive: pathname === '/top-10'
-      }
-    ]
+        isActive: pathname === "/top-10",
+      },
+    ],
   };
- 
+
   const [activeTeam, setActiveTeam] = React.useState(data.teams[0]);
+  const { theme, setTheme } = useTheme();
+
+  const toggleTheme = () => {
+    setTheme(theme === "light" ? "dark" : "light");
+  };
 
   //   const logoutWithGoogle = async () => {
   //     try {
@@ -240,45 +249,47 @@ export default function SidebarPageTemplate({
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-       <SidebarGroup>
-         <SidebarGroupLabel>Platform</SidebarGroupLabel>
-         <SidebarMenu>
-           {data.navMain.map((item) => (
-             <Collapsible
-               key={item.title}
-               asChild
-               defaultOpen={item.isActive}
-               className="group/collapsible"
-             >
-               <SidebarMenuItem>
-                 <CollapsibleTrigger asChild>
-                   <SidebarMenuButton tooltip={item.title}>
-                     {item.icon && <item.icon />}
-                     <span>{item.title}</span>
-                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                   </SidebarMenuButton>
-                 </CollapsibleTrigger>
-                 <CollapsibleContent>
-                   <SidebarMenuSub>
-                     {item.items?.map((subItem) => (
-                       <SidebarMenuSubItem key={subItem.title}>
-                         <SidebarMenuSubButton 
-                           asChild
-                           className={subItem.isActive ? "bg-sidebar-accent" : ""}
-                         >
-                           <Link href={subItem.url}>
-                             <span>{subItem.title}</span>
-                           </Link>
-                         </SidebarMenuSubButton>
-                       </SidebarMenuSubItem>
-                     ))}
-                   </SidebarMenuSub>
-                 </CollapsibleContent>
-               </SidebarMenuItem>
-             </Collapsible>
-           ))}
-         </SidebarMenu>
-       </SidebarGroup>
+          <SidebarGroup>
+            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarMenu>
+              {data.navMain.map((item) => (
+                <Collapsible
+                  key={item.title}
+                  asChild
+                  defaultOpen={item.isActive}
+                  className="group/collapsible"
+                >
+                  <SidebarMenuItem>
+                    <CollapsibleTrigger asChild>
+                      <SidebarMenuButton tooltip={item.title}>
+                        {item.icon && <item.icon />}
+                        <span>{item.title}</span>
+                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                      </SidebarMenuButton>
+                    </CollapsibleTrigger>
+                    <CollapsibleContent>
+                      <SidebarMenuSub>
+                        {item.items?.map((subItem) => (
+                          <SidebarMenuSubItem key={subItem.title}>
+                            <SidebarMenuSubButton
+                              asChild
+                              className={
+                                subItem.isActive ? "bg-sidebar-accent" : ""
+                              }
+                            >
+                              <Link href={subItem.url}>
+                                <span>{subItem.title}</span>
+                              </Link>
+                            </SidebarMenuSubButton>
+                          </SidebarMenuSubItem>
+                        ))}
+                      </SidebarMenuSub>
+                    </CollapsibleContent>
+                  </SidebarMenuItem>
+                </Collapsible>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
           <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel>Visualization</SidebarGroupLabel>
             <SidebarMenu>
@@ -400,6 +411,14 @@ export default function SidebarPageTemplate({
                     <DropdownMenuItem>
                       <Bell />
                       Notifications
+                    </DropdownMenuItem>
+                    <DropdownMenuItem
+                      onClick={toggleTheme}
+                      aria-label="Toggle theme"
+                    >
+                        <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
+                        <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
+                      <span>Toggle Theme</span>
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />

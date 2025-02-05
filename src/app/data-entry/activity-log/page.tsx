@@ -220,25 +220,25 @@ const ActivityLog = () => {
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 animate-pulse">
         <div className="flex items-center gap-2 px-4">
-          <div className="h-8 w-8 rounded-md bg-muted" />
-          <div className="h-4 w-32 rounded-md bg-muted" />
+          <div className="h-8 w-8 rounded-md bg-muted dark:bg-muted/40" />
+          <div className="h-4 w-32 rounded-md bg-muted dark:bg-muted/40" />
         </div>
       </header>
-
+  
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="w-full">
           <div className="flex items-center justify-between py-4">
-            <div className="h-9 w-72 rounded-md bg-muted animate-pulse" />
-            <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
+            <div className="h-9 w-72 rounded-md bg-muted dark:bg-muted/40 animate-pulse" />
+            <div className="h-9 w-24 rounded-md bg-muted dark:bg-muted/40 animate-pulse" />
           </div>
-
-          <div className="rounded-md border">
-            <div className="h-10 bg-muted/5 animate-pulse" />
+  
+          <div className="rounded-md border dark:border-muted/50">
+            <div className="h-10 bg-muted/5 dark:bg-muted/20 animate-pulse" />
             {[...Array(5)].map((_, i) => (
-              <div key={i} className="flex border-t">
+              <div key={i} className="flex border-t dark:border-muted/50">
                 {[...Array(8)].map((_, j) => (
                   <div key={j} className="flex-1 p-4">
-                    <div className="h-4 w-full rounded bg-muted animate-pulse" />
+                    <div className="h-4 w-full rounded bg-muted dark:bg-muted/40 animate-pulse" />
                   </div>
                 ))}
               </div>
@@ -248,32 +248,37 @@ const ActivityLog = () => {
       </div>
     </>
   );
-
+  
   const ErrorState = ({ error }: { error: string }) => (
     <div className="flex min-h-[400px] items-center justify-center p-4">
-      <div className="relative overflow-hidden rounded-xl border bg-card p-8 shadow-lg">
+      <div className="relative overflow-hidden rounded-xl border bg-card dark:bg-muted/30 dark:border-muted/50 p-8 shadow-lg">
         <div className="relative z-10 text-center">
-          <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10">
-            <ExclamationTriangleIcon className="h-8 w-8 text-destructive" />
+          <div className="mb-6 inline-flex h-16 w-16 items-center justify-center rounded-full bg-destructive/10 dark:bg-destructive/20">
+            <ExclamationTriangleIcon className="h-8 w-8 text-destructive dark:text-red-400" />
           </div>
-          <h3 className="mb-3 text-xl font-semibold">Failed to Load Data</h3>
-          <p className="mb-6 text-sm text-muted-foreground">{error}</p>
-          <Button onClick={() => window.location.reload()} variant="outline">
+          <h3 className="mb-3 text-xl font-semibold dark:text-white">
+            Failed to Load Data
+          </h3>
+          <p className="mb-6 text-sm text-muted-foreground dark:text-gray-300">
+            {error}
+          </p>
+          <Button onClick={() => window.location.reload()} variant="outline" className="dark:text-white">
             <RefreshCw className="mr-2 h-4 w-4" />
             Try Again
           </Button>
         </div>
         <div className="absolute left-1/2 top-1/2 h-[120%] w-[120%] -translate-x-1/2 -translate-y-1/2 animate-pulse-slow">
-          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-destructive/5 to-transparent blur-3xl" />
+          <div className="absolute inset-0 bg-gradient-to-r from-transparent via-destructive/5 dark:via-destructive/10 to-transparent blur-3xl" />
         </div>
       </div>
     </div>
   );
+  
 
   // Usage:
   if (loading) return <LoadingState />;
   if (error) return <ErrorState error={error} />;
-  
+
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -293,7 +298,7 @@ const ActivityLog = () => {
           </Breadcrumb>
         </div>
       </header>
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
+      <div className="flex flex-1 flex-col gap-4 p-4 pt-0 dark:text-white">
         <div className="w-full relative">
           {" "}
           {/* Add margin for footer */}
@@ -306,7 +311,7 @@ const ActivityLog = () => {
               onChange={(event) =>
                 table.getColumn("name")?.setFilterValue(event.target.value)
               }
-              className="max-w-sm"
+              className="max-w-sm dark:text-white"
             />
             <div className="flex items-center space-x-2">
               {table.getFilteredSelectedRowModel().rows.length > 0 && (
@@ -331,7 +336,7 @@ const ActivityLog = () => {
               )}
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
-                  <Button variant="outline" className="ml-auto">
+                  <Button variant="outline" className="ml-auto dark:text-white">
                     Columns <ChevronDown className="ml-2 h-4 w-4" />
                   </Button>
                 </DropdownMenuTrigger>
@@ -357,7 +362,7 @@ const ActivityLog = () => {
               </DropdownMenu>
             </div>
           </div>
-          <div className="rounded-md border">
+          <div className="w-full overflow-x-auto rounded-md border scrollbar-thin scrollbar-thumb-muted-foreground/20 scrollbar-track-transparent">
             <Table>
               <TableHeader>
                 {table.getHeaderGroups().map((headerGroup) => (

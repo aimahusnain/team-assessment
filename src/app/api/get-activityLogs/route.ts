@@ -5,7 +5,11 @@ import { NextResponse } from "next/server";
 
 export async function GET() {
   try {
-    const allActivityLogs = await db.activityLog.findMany();
+    const allActivityLogs = await db.activityLog.findMany({
+      orderBy: {
+        createdAt: 'desc'
+      }
+    });
 
     if (allActivityLogs.length > 0) {
       return NextResponse.json({
