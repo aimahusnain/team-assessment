@@ -99,7 +99,7 @@ const data: ActivityLogEntry[] = [
   },
 ];
 
-export type ActivityLogEntry = {
+type ActivityLogEntry = {
   name: string;
   team: string;
   activity: string;
@@ -109,7 +109,7 @@ export type ActivityLogEntry = {
   monthName: string;
 };
 
-export const columns: ColumnDef<ActivityLogEntry>[] = [
+const columns: ColumnDef<ActivityLogEntry>[] = [
   {
     id: "select",
     header: ({ table }) => (
