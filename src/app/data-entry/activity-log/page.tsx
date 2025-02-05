@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import { useEffect, useState } from "react"
+import { useEffect, useState } from "react";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,19 +8,26 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
-import { Checkbox } from "@/components/ui/checkbox"
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Checkbox } from "@/components/ui/checkbox";
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu"
-import { Input } from "@/components/ui/input"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+} from "@/components/ui/dropdown-menu";
+import { Input } from "@/components/ui/input";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -32,30 +39,33 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
-import { ChevronDown, Trash2, Loader2 } from "lucide-react"
-import { ExclamationTriangleIcon } from "@radix-ui/react-icons"
-import { RefreshCw } from "lucide-react"
+} from "@tanstack/react-table";
+import { ChevronDown, Trash2, Loader2 } from "lucide-react";
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+import { RefreshCw } from "lucide-react";
 
 type ActivityLogEntry = {
-  id: number
-  name: string
-  team: string
-  activity: string
-  verdi: number
-  department: string
-  year: number
-  monthName: string
-  createdAt: string
-  updatedAt: string
-}
+  id: number;
+  name: string;
+  team: string;
+  activity: string;
+  verdi: number;
+  department: string;
+  year: number;
+  monthName: string;
+  createdAt: string;
+  updatedAt: string;
+};
 
 const columns: ColumnDef<ActivityLogEntry>[] = [
   {
     id: "select",
     header: ({ table }) => (
       <Checkbox
-        checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
+        checked={
+          table.getIsAllPageRowsSelected() ||
+          (table.getIsSomePageRowsSelected() && "indeterminate")
+        }
         onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
         aria-label="Select all"
       />
@@ -88,7 +98,9 @@ const columns: ColumnDef<ActivityLogEntry>[] = [
   {
     accessorKey: "verdi",
     header: () => <div className="text-right">Verdi</div>,
-    cell: ({ row }) => <div className="text-right font-medium">{row.getValue("verdi")}</div>,
+    cell: ({ row }) => (
+      <div className="text-right font-medium">{row.getValue("verdi")}</div>
+    ),
   },
   {
     accessorKey: "department",
@@ -105,41 +117,41 @@ const columns: ColumnDef<ActivityLogEntry>[] = [
     header: "Month Name",
     cell: ({ row }) => <div>{row.getValue("monthName")}</div>,
   },
-]
+];
 
 const ActivityLog = () => {
-  const [data, setData] = useState<ActivityLogEntry[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [isDeleting, setIsDeleting] = useState(false)
-  const [deletingCount, setDeletingCount] = useState(0)
+  const [data, setData] = useState<ActivityLogEntry[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [isDeleting, setIsDeleting] = useState(false);
+  const [deletingCount, setDeletingCount] = useState(0);
 
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = useState({})
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [rowSelection, setRowSelection] = useState({});
 
   const fetchData = async () => {
     try {
-      const response = await fetch("/api/get-activityLogs")
-      const result = await response.json()
+      const response = await fetch("/api/get-activityLogs");
+      const result = await response.json();
       if (result.success) {
-        setData(result.data)
-        setError(null) // Clear any previous errors
+        setData(result.data);
+        setError(null); // Clear any previous errors
       } else {
-        throw new Error("Failed to fetch data")
+        throw new Error("Failed to fetch data");
       }
     } catch (err) {
-      console.error(err)
-      setError("An error occurred while fetching data")
+      console.error(err);
+      setError("An error occurred while fetching data");
     } finally {
-      setLoading(false)
+      setLoading(false);
     }
-  }
+  };
 
   useEffect(() => {
-    fetchData()
-  }, [setData]) // Added setData to dependencies
+    fetchData();
+  }, [setData]); // Added setData to dependencies
 
   const table = useReactTable({
     data,
@@ -163,13 +175,13 @@ const ActivityLog = () => {
       columnVisibility,
       rowSelection,
     },
-  })
+  });
 
   const handleDelete = async () => {
-    setIsDeleting(true)
-    const selectedRows = table.getFilteredSelectedRowModel().rows
-    const selectedIds = selectedRows.map((row) => row.original.id)
-    setDeletingCount(selectedIds.length)
+    setIsDeleting(true);
+    const selectedRows = table.getFilteredSelectedRowModel().rows;
+    const selectedIds = selectedRows.map((row) => row.original.id);
+    setDeletingCount(selectedIds.length);
 
     for (const id of selectedIds) {
       try {
@@ -179,27 +191,30 @@ const ActivityLog = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ activityLogId: id }),
-        })
+        });
 
-        const result = await response.json()
+        const result = await response.json();
 
         if (!result.success) {
-          console.error(`Failed to delete activity log with ID ${id}:`, result.message)
+          console.error(
+            `Failed to delete activity log with ID ${id}:`,
+            result.message
+          );
         } else {
-          setDeletingCount((prev) => prev - 1)
+          setDeletingCount((prev) => prev - 1);
         }
       } catch (error) {
-        console.error(`Error deleting activity log with ID ${id}:`, error)
+        console.error(`Error deleting activity log with ID ${id}:`, error);
       }
     }
 
     // Refresh the data after deletion
-    await fetchData()
+    await fetchData();
     // Clear selection
-    setRowSelection({})
-    setIsDeleting(false)
-    setDeletingCount(0)
-  }
+    setRowSelection({});
+    setIsDeleting(false);
+    setDeletingCount(0);
+  };
 
   const LoadingState = () => (
     <>
@@ -209,14 +224,14 @@ const ActivityLog = () => {
           <div className="h-4 w-32 rounded-md bg-muted" />
         </div>
       </header>
-   
+
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
         <div className="w-full">
           <div className="flex items-center justify-between py-4">
             <div className="h-9 w-72 rounded-md bg-muted animate-pulse" />
             <div className="h-9 w-24 rounded-md bg-muted animate-pulse" />
           </div>
-   
+
           <div className="rounded-md border">
             <div className="h-10 bg-muted/5 animate-pulse" />
             {[...Array(5)].map((_, i) => (
@@ -232,9 +247,9 @@ const ActivityLog = () => {
         </div>
       </div>
     </>
-   )
-   
-   const ErrorState = ({ error }: { error: string }) => (
+  );
+
+  const ErrorState = ({ error }: { error: string }) => (
     <div className="flex min-h-[400px] items-center justify-center p-4">
       <div className="relative overflow-hidden rounded-xl border bg-card p-8 shadow-lg">
         <div className="relative z-10 text-center">
@@ -253,12 +268,12 @@ const ActivityLog = () => {
         </div>
       </div>
     </div>
-   )
-   
-   // Usage:
-   if (loading) return <LoadingState />
-   if (error) return <ErrorState error={error} />
+  );
 
+  // Usage:
+  if (loading) return <LoadingState />;
+  if (error) return <ErrorState error={error} />;
+  
   return (
     <>
       <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
@@ -279,17 +294,28 @@ const ActivityLog = () => {
         </div>
       </header>
       <div className="flex flex-1 flex-col gap-4 p-4 pt-0">
-        <div className="w-full">
+        <div className="w-full relative">
+          {" "}
+          {/* Add margin for footer */}
           <div className="flex items-center justify-between py-4">
             <Input
               placeholder="Filter names..."
-              value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-              onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
+              value={
+                (table.getColumn("name")?.getFilterValue() as string) ?? ""
+              }
+              onChange={(event) =>
+                table.getColumn("name")?.setFilterValue(event.target.value)
+              }
               className="max-w-sm"
             />
             <div className="flex items-center space-x-2">
               {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={handleDelete}
+                  disabled={isDeleting}
+                >
                   {isDeleting ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -319,11 +345,13 @@ const ActivityLog = () => {
                           key={column.id}
                           className="capitalize"
                           checked={column.getIsVisible()}
-                          onCheckedChange={(value) => column.toggleVisibility(!!value)}
+                          onCheckedChange={(value) =>
+                            column.toggleVisibility(!!value)
+                          }
                         >
                           {column.id}
                         </DropdownMenuCheckboxItem>
-                      )
+                      );
                     })}
                 </DropdownMenuContent>
               </DropdownMenu>
@@ -339,9 +367,12 @@ const ActivityLog = () => {
                         <TableHead key={header.id}>
                           {header.isPlaceholder
                             ? null
-                            : flexRender(header.column.columnDef.header, header.getContext())}
+                            : flexRender(
+                                header.column.columnDef.header,
+                                header.getContext()
+                              )}
                         </TableHead>
-                      )
+                      );
                     })}
                   </TableRow>
                 ))}
@@ -349,15 +380,26 @@ const ActivityLog = () => {
               <TableBody>
                 {table.getRowModel().rows?.length ? (
                   table.getRowModel().rows.map((row) => (
-                    <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
+                    <TableRow
+                      key={row.id}
+                      data-state={row.getIsSelected() && "selected"}
+                    >
                       {row.getVisibleCells().map((cell) => (
-                        <TableCell key={cell.id}>{flexRender(cell.column.columnDef.cell, cell.getContext())}</TableCell>
+                        <TableCell key={cell.id}>
+                          {flexRender(
+                            cell.column.columnDef.cell,
+                            cell.getContext()
+                          )}
+                        </TableCell>
                       ))}
                     </TableRow>
                   ))
                 ) : (
                   <TableRow>
-                    <TableCell colSpan={columns.length} className="h-24 text-center">
+                    <TableCell
+                      colSpan={columns.length}
+                      className="h-24 text-center"
+                    >
                       No results.
                     </TableCell>
                   </TableRow>
@@ -365,29 +407,37 @@ const ActivityLog = () => {
               </TableBody>
             </Table>
           </div>
-          <div className="flex items-center justify-end space-x-2 py-4">
-            <div className="flex-1 text-sm text-muted-foreground">
-              {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-              selected.
-            </div>
-            <div className="space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => table.previousPage()}
-                disabled={!table.getCanPreviousPage()}
-              >
-                Previous
-              </Button>
-              <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
-                Next
-              </Button>
+          {/* Bottom Footer */}
+          <div className="sticky bottom-0 left-0 right-0 bg-background border-t">
+            <div className="container flex items-center justify-between py-4">
+              <div className="flex-1 text-sm text-muted-foreground">
+                {table.getFilteredSelectedRowModel().rows.length} of{" "}
+                {table.getFilteredRowModel().rows.length} row(s) selected
+              </div>
+              <div className="space-x-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.previousPage()}
+                  disabled={!table.getCanPreviousPage()}
+                >
+                  Previous
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table.nextPage()}
+                  disabled={!table.getCanNextPage()}
+                >
+                  Next
+                </Button>
+              </div>
             </div>
           </div>
         </div>
       </div>
     </>
-  )
-}
+  );
+};
 
-export default ActivityLog
+export default ActivityLog;
