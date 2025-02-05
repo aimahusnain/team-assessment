@@ -1,0 +1,37 @@
+{
+    "links": [
+      {
+        "title": "Individuals",
+        "description": "Manage individual accounts and profiles",
+        "href": "/dashboard/individuals",
+        "icon": "User",
+        "color": "text-blue-500",
+        "gradient": "from-blue-400 to-blue-600"
+      },
+      {
+        "title": "Teams",
+        "description": "Collaborate and manage team projects",
+        "href": "/dashboard/teams",
+        "icon": "Users",
+        "color": "text-purple-500",
+        "gradient": "from-purple-400 to-purple-600"
+      },
+      {
+        "title": "Company",
+        "description": "Overview of company-wide metrics and data",
+        "href": "/dashboard/company",
+        "icon": "Building2",
+        "color": "text-teal-500",
+        "gradient": "from-teal-400 to-teal-600"
+      },
+      {
+        "title": "Departments",
+        "description": "Manage and track departmental activities",
+        "href": "/dashboard/departments",
+        "icon": "Network",
+        "color": "text-pink-500",
+        "gradient": "from-pink-400 to-pink-600"
+      }
+    ]
+  }
+  

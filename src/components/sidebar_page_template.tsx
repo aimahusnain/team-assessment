@@ -79,7 +79,7 @@ export default function SidebarPageTemplate({
       {
         name: "Main Model",
         logo: AudioWaveform,
-        plan: "Startup",
+        plan: "for Perdyrkorn",
       },
       // {
       //   name: "Evil Corp.",
