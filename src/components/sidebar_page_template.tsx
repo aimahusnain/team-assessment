@@ -118,8 +118,8 @@ export default function SidebarPageTemplate({
         icon: SquareTerminal,
         items: [
           {
-            title: "Activity Log (Sheet1)",
-            url: "/",
+            title: "Activity Log (Table1)",
+            url: "/data-entry/activity-log",
           },
           {
             title: "Incoming Calls",
