@@ -54,6 +54,8 @@ import {
   SidebarProvider,
   SidebarRail,
 } from "@/components/ui/sidebar";
+import { usePathname } from "next/navigation";
+import Link from "next/link";
 // import { signOut, useSession } from "next-auth/react"
 
 interface SidebarPageTemplateProps {
@@ -69,82 +71,98 @@ export default function SidebarPageTemplate({
   //   const userEmail = signeduser?.email;
   //   const userImage = signeduser?.image;
 
+  const pathname = usePathname();
+
+  const isPathInItems = (items: any[]) => {
+    return items?.some(item => item.url === pathname);
+  };
+
   const data = {
     teams: [
-      // {
-      //   name: "Acme Inc",
-      //   logo: GalleryVerticalEnd,
-      //   plan: "Enterprise",
-      // },
       {
         name: "Main Model",
         logo: AudioWaveform,
         plan: "for Perdyrkorn",
-      },
-      // {
-      //   name: "Evil Corp.",
-      //   logo: Command,
-      //   plan: "Free",
-      // },
+      }
     ],
     navMain: [
       {
         title: "Dashboard",
         url: "#",
         icon: Bot,
-        isActive: true,
+        isActive: isPathInItems([
+          { url: '/dashboard/individuals' },
+          { url: '/dashboard/teams' },
+          { url: '/dashboard/departments' },
+          { url: '/dashboard/company' }
+        ]),
         items: [
           {
             title: "Individuals",
             url: "/dashboard/individuals",
+            isActive: pathname === '/dashboard/individuals'
           },
           {
             title: "Teams",
-            url: "/dashboard/teams",
+            url: "/dashboard/teams", 
+            isActive: pathname === '/dashboard/teams'
           },
           {
             title: "Departments",
             url: "/dashboard/departments",
+            isActive: pathname === '/dashboard/departments'
           },
           {
-            title: "Company",
+            title: "Company", 
             url: "/dashboard/company",
-          },
-        ],
+            isActive: pathname === '/dashboard/company'
+          }
+        ]
       },
       {
         title: "Data Entry",
         url: "#",
         icon: SquareTerminal,
+        isActive: isPathInItems([
+          { url: '/data-entry/activity-log' },
+          { url: '/incoming-calls' },
+          { url: '/outgoing-calls' },
+          { url: '/inputs' }
+        ]),
         items: [
           {
             title: "Activity Log (Table1)",
             url: "/data-entry/activity-log",
+            isActive: pathname === '/data-entry/activity-log'
           },
           {
             title: "Incoming Calls",
             url: "/incoming-calls",
+            isActive: pathname === '/incoming-calls'
           },
           {
             title: "Outgoing Calls",
             url: "/outgoing-calls",
+            isActive: pathname === '/outgoing-calls'
           },
           {
             title: "Inputs",
             url: "/inputs",
-          },
-        ],
-      },
+            isActive: pathname === '/inputs'
+          }
+        ]
+      }
     ],
     visualization: [
       {
         name: "Top 10",
         url: "/top-10",
         icon: PieChart,
-      },
-    ],
+        isActive: pathname === '/top-10'
+      }
+    ]
   };
-
+ 
   const [activeTeam, setActiveTeam] = React.useState(data.teams[0]);
 
   //   const logoutWithGoogle = async () => {
@@ -218,52 +236,55 @@ export default function SidebarPageTemplate({
           </SidebarMenu>
         </SidebarHeader>
         <SidebarContent>
-          <SidebarGroup>
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
-            <SidebarMenu>
-              {data.navMain.map((item) => (
-                <Collapsible
-                  key={item.title}
-                  asChild
-                  defaultOpen={item.isActive}
-                  className="group/collapsible"
-                >
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip={item.title}>
-                        {item.icon && <item.icon />}
-                        <span>{item.title}</span>
-                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton asChild>
-                              <a href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </a>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
+       <SidebarGroup>
+         <SidebarGroupLabel>Platform</SidebarGroupLabel>
+         <SidebarMenu>
+           {data.navMain.map((item) => (
+             <Collapsible
+               key={item.title}
+               asChild
+               defaultOpen={item.isActive}
+               className="group/collapsible"
+             >
+               <SidebarMenuItem>
+                 <CollapsibleTrigger asChild>
+                   <SidebarMenuButton tooltip={item.title}>
+                     {item.icon && <item.icon />}
+                     <span>{item.title}</span>
+                     <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
+                   </SidebarMenuButton>
+                 </CollapsibleTrigger>
+                 <CollapsibleContent>
+                   <SidebarMenuSub>
+                     {item.items?.map((subItem) => (
+                       <SidebarMenuSubItem key={subItem.title}>
+                         <SidebarMenuSubButton 
+                           asChild
+                           className={subItem.isActive ? "bg-sidebar-accent" : ""}
+                         >
+                           <Link href={subItem.url}>
+                             <span>{subItem.title}</span>
+                           </Link>
+                         </SidebarMenuSubButton>
+                       </SidebarMenuSubItem>
+                     ))}
+                   </SidebarMenuSub>
+                 </CollapsibleContent>
+               </SidebarMenuItem>
+             </Collapsible>
+           ))}
+         </SidebarMenu>
+       </SidebarGroup>
           <SidebarGroup className="group-data-[collapsible=icon]:hidden">
             <SidebarGroupLabel>Visualization</SidebarGroupLabel>
             <SidebarMenu>
               {data.visualization.map((item) => (
                 <SidebarMenuItem key={item.name}>
                   <SidebarMenuButton asChild>
-                    <a href={item.url}>
+                    <Link href={item.url}>
                       <item.icon />
                       <span>{item.name}</span>
-                    </a>
+                    </Link>
                   </SidebarMenuButton>
                   <DropdownMenu>
                     <DropdownMenuTrigger asChild>
