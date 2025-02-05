@@ -1,0 +1,51 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider  = "postgresql"
+  url       = env("DATABASE_URL")
+  directUrl = env("DIRECT_URL")
+}
+
+model ActivityLog {
+  id         Int      @id @default(autoincrement())
+  name       String
+  team       String
+  activity   String
+  verdi      Int
+  department String
+  year       Int
+  monthName  String
+  createdAt  DateTime @default(now())
+  updatedAt  DateTime @updatedAt
+
+  @@map("activity_logs")
+}
+
+model IncomingCalls {
+  id        Int      @id @default(autoincrement())
+  navn      String
+  min       String // Total time of answered calls (min)
+  year      Int
+  monthName String
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  @@map("incoming_calls")
+}
+
+model OutgoingCalls {
+  id                    Int      @id @default(autoincrement())
+  navn                  String
+  outgoing              String // Total number of outgoing calls (min)
+  regular               String // Number of calls with regular number
+  company               String // Number of calls with company number
+  regular_call_time_min String // Total time calls with regular number (min)
+  year                  Int
+  monthName             String
+  createdAt             DateTime @default(now())
+  updatedAt             DateTime @updatedAt
+
+  @@map("outgoing_calls")
+}

@@ -120,7 +120,7 @@ export default function SidebarPageTemplate({
         icon: SquareTerminal,
         items: [
           {
-            title: "ActivityLog",
+            title: "Activity Log (Sheet1)",
             url: "/",
           },
           {
@@ -131,6 +131,10 @@ export default function SidebarPageTemplate({
             title: "Outgoing Calls",
             url: "/outgoing-calls",
           },
+          {
+            title: "Inputs",
+            url: "/inputs",
+          },
         ],
       },
     ],
@@ -138,17 +142,7 @@ export default function SidebarPageTemplate({
       {
         name: "Top 10",
         url: "/top-10",
-        icon: Frame,
-      },
-      {
-        name: "Sales & Marketing",
-        url: "#",
         icon: PieChart,
-      },
-      {
-        name: "Travel",
-        url: "#",
-        icon: Map,
       },
     ],
   };
