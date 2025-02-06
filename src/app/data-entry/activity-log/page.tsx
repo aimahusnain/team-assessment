@@ -137,7 +137,7 @@ const ActivityLog = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
-  const [fileData, setFileData] = useState<any[]>([]);
+  const [fileData, setFileData] = useState<ActivityLogEntry[]>([]);
   const [isUploading, setIsUploading] = useState(false);
   const [uploadProgress, setUploadProgress] = useState(0);
   const [teamInputType, setTeamInputType] = useState("existing");
@@ -203,6 +203,7 @@ const ActivityLog = () => {
       setFileData([]);
       fetchData();
     } catch (error) {
+      console.log(error);
       toast({
         title: "Error",
         description: "Failed to add activity log(s)",
@@ -1250,8 +1251,8 @@ const ActivityLog = () => {
                   No Activity Logs Found
                 </h3>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Start by adding your first activity log using the "Add
-                  Activity Log" button above.
+                  Start by adding your first activity log using the &quot;Add
+                  Activity Log&quot; button above.
                 </p>
                 <Dialog
                   open={isAddDialogOpen}

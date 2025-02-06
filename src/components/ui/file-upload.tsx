@@ -24,13 +24,17 @@ export const FileUpload = ({
       : newFiles;
     
     setFiles(filteredFiles);
-    onChange && onChange(filteredFiles);
+    if (onChange) {
+      onChange(filteredFiles);
+    }
   };
 
   const removeFile = (indexToRemove: number) => {
     const updatedFiles = files.filter((_, index) => index !== indexToRemove);
     setFiles(updatedFiles);
-    onChange && onChange(updatedFiles);
+    if (onChange) {
+      onChange(updatedFiles);
+    }
   };
 
   const { getRootProps, isDragActive } = useDropzone({
