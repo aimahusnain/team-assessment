@@ -28,6 +28,7 @@ import {
 } from "@/components/ui/table";
 import { Progress } from "@/components/ui/progress";
 import { Toaster, toast } from "sonner";
+import { ScoreMatrixTable } from "@/components/score-matrix-table";
 
 // Types remain the same but ensure string types for certain fields
 type Config = {
@@ -60,12 +61,17 @@ const formatNumber = (value: number | string) => {
   return !isNaN(num) ? num.toLocaleString() : value;
 };
 
+// Create a type for the data prop that allows dynamic string keys
+type ScoreTableData = {
+  [key: string]: string | number;
+};
+
 const ScoreTable = ({
   data,
   title,
   onUpdate,
 }: {
-  data: any;
+  data: ScoreTableData;
   title: string;
   onUpdate?: (field: string, value: string | number) => void;
 }) => (
@@ -86,7 +92,7 @@ const ScoreTable = ({
             </TableRow>
           </TableHeader>
           <TableBody>
-            {["tcm", "ce", "ts", "rbsl"].map((score) => (
+            {(["tcm", "ce", "ts", "rbsl"] as const).map((score) => (
               <TableRow key={score}>
                 <TableCell className="font-medium uppercase">{score}</TableCell>
                 <TableCell>
@@ -307,14 +313,14 @@ export default function Inputs() {
 
       <main className="container mx-auto py-6 px-4">
         <div className="grid gap-6">
-          <div className="flex sm:flex-row flex-col gap-5 sm:items-center items-start justify-between">
+          <div className="flex items-center justify-between">
             <div className="flex items-center space-x-4 dark:text-white">
               <Settings className="h-6 w-6 text-primary" />
               <h1 className="text-2xl font-bold">System Configuration</h1>
             </div>
             <div className="flex space-x-2">
               <Button
-                variant="secondary"
+                variant="outline"
                 className="dark:text-white"
                 onClick={() => window.location.reload()}
                 disabled={loading || saving}
@@ -335,13 +341,9 @@ export default function Inputs() {
 
           {loading ? (
             <div className="grid gap-6">
-              {[1, 2].map((i) => (
-                <Skeleton key={i} className="h-[240px] w-full" />
+              {[1, 2, 3].map((i) => (
+                <Skeleton key={i} className="h-[200px] w-full" />
               ))}
-              <div className="grid sm:grid-cols-2 gap-5">
-                <Skeleton key={3} className="h-[400px]" />
-                <Skeleton key={4} className="h-[400px]" />
-              </div>
             </div>
           ) : config ? (
             <div className="grid gap-6">
@@ -442,31 +444,70 @@ export default function Inputs() {
               <div className="grid md:grid-cols-2 gap-6">
                 <ScoreTable
                   title="Individual Scores"
-                  data={Object.fromEntries(
-                    Object.entries(config)
-                      .filter(([key]) => key.startsWith("individual_score_"))
-                      .map(([key, value]) => [
-                        key.replace("individual_score_", ""),
-                        value,
-                      ])
-                  )}
+                  data={
+                    Object.fromEntries(
+                      Object.entries(config)
+                        .filter(([key]) => key.startsWith("individual_score_"))
+                        .map(([key, value]) => [
+                          key.replace("individual_score_", ""),
+                          // Only include string or number values
+                          typeof value === "object" ? "" : value,
+                        ])
+                    ) as ScoreTableData
+                  }
                   onUpdate={(field, value) =>
                     handleScoreUpdate("individual", field, value)
                   }
                 />
                 <ScoreTable
-                  title="Team / Department Scores"
-                  data={Object.fromEntries(
-                    Object.entries(config)
-                      .filter(([key]) => key.startsWith("team_score_"))
-                      .map(([key, value]) => [
-                        key.replace("team_score_", ""),
-                        value,
-                      ])
-                  )}
+                  title="Team / Department / Company Scores"
+                  data={
+                    Object.fromEntries(
+                      Object.entries(config)
+                        .filter(([key]) => key.startsWith("team_score_"))
+                        .map(([key, value]) => [
+                          key.replace("team_score_", ""),
+                          // Only include string or number values
+                          typeof value === "object" ? "" : value,
+                        ])
+                    ) as ScoreTableData
+                  }
                   onUpdate={(field, value) =>
                     handleScoreUpdate("team", field, value)
                   }
+                />
+              </div>
+
+              <div className="grid gap-6">
+                <ScoreMatrixTable
+                  title="Individual Score Matrix"
+                  benchmark={{
+                    tcm: config.individual_score_tcm_benchmark,
+                    ce: config.individual_score_ce_benchmark,
+                    ts: config.individual_score_ts_benchmark,
+                    rbsl: config.individual_score_rbsl_benchmark,
+                  }}
+                  interval={{
+                    tcm: config.individual_score_tcm_interval,
+                    ce: config.individual_score_ce_interval,
+                    ts: config.individual_score_ts_interval,
+                    rbsl: config.individual_score_rbsl_interval,
+                  }}
+                />
+                <ScoreMatrixTable
+                  title="Team / Department / Company Score Matrix"
+                  benchmark={{
+                    tcm: config.team_score_tcm_benchmark,
+                    ce: config.team_score_ce_benchmark,
+                    ts: config.team_score_ts_benchmark,
+                    rbsl: config.team_score_rbsl_benchmark,
+                  }}
+                  interval={{
+                    tcm: config.team_score_tcm_interval,
+                    ce: config.team_score_ce_interval,
+                    ts: config.team_score_ts_interval,
+                    rbsl: config.team_score_rbsl_interval,
+                  }}
                 />
               </div>
             </div>
