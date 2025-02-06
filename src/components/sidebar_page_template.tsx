@@ -144,16 +144,16 @@ export default function SidebarPageTemplate({
           },
           {
             title: "Incoming Calls",
-            url: "/incoming-calls",
-            isActive: pathname === "/incoming-calls",
+            url: "/data-entry/incoming-calls",
+            isActive: pathname === "/data-entry/incoming-calls",
           },
           {
             title: "Outgoing Calls",
-            url: "/outgoing-calls",
-            isActive: pathname === "/outgoing-calls",
+            url: "/data-entry/outgoing-calls",
+            isActive: pathname === "/data-entry/outgoing-calls",
           },
           {
-            title: "Inputs",
+            title: "System Configuration",
             url: "/data-entry/inputs",
             isActive: pathname === "/data-entry/inputs",
           },

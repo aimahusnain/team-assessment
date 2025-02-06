@@ -786,18 +786,13 @@ const ActivityLog = () => {
                             <SelectContent>
                               <SelectItem value="all">All Years</SelectItem>
                               {Array.from(
-                                { length: new Date().getFullYear() - 1970 + 1 },
-                                (_, i) => 1970 + i
-                              )
-                                .reverse()
-                                .map((year) => (
-                                  <SelectItem
-                                    key={year}
-                                    value={year.toString()}
-                                  >
-                                    {year}
-                                  </SelectItem>
-                                ))}
+                                { length: 21 }, // 10 years back + current year + 10 years forward
+                                (_, i) => new Date().getFullYear() - 10 + i // Start from 10 years back
+                              ).map((year) => (
+                                <SelectItem key={year} value={year.toString()}>
+                                  {year}
+                                </SelectItem>
+                              ))}
                             </SelectContent>
                           </Select>
                         </div>
@@ -1088,23 +1083,17 @@ const ActivityLog = () => {
                                       </FormControl>
                                       <SelectContent>
                                         {Array.from(
-                                          {
-                                            length:
-                                              new Date().getFullYear() -
-                                              1970 +
-                                              1,
-                                          },
-                                          (_, i) => 1970 + i
-                                        )
-                                          .reverse()
-                                          .map((year) => (
-                                            <SelectItem
-                                              key={year}
-                                              value={year.toString()}
-                                            >
-                                              {year}
-                                            </SelectItem>
-                                          ))}
+                                          { length: 21 }, // 10 years back + current year + 10 years forward
+                                          (_, i) =>
+                                            new Date().getFullYear() - 10 + i // Starts from 10 years back
+                                        ).map((year) => (
+                                          <SelectItem
+                                            key={year}
+                                            value={year.toString()}
+                                          >
+                                            {year}
+                                          </SelectItem>
+                                        ))}
                                       </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -1185,7 +1174,11 @@ const ActivityLog = () => {
                               >
                                 Cancel
                               </Button>
-                              <Button type="submit" className="dark:text-black" disabled={isUploading}>
+                              <Button
+                                type="submit"
+                                className="dark:text-black"
+                                disabled={isUploading}
+                              >
                                 Add Activity Log
                               </Button>
                             </div>
