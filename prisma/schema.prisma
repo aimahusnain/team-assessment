@@ -51,13 +51,39 @@ model OutgoingCalls {
 }
 
 model Inputs {
-  id                     String   @id @default(uuid())
-  call_mins_thr          Int
-  score_tcm_weightage    String
-  score_ce_weightage     String
-  score_ts_weightage     String
-  score_rbsl_weightage   String
-  team_members_thr       String
+  id                   String @id @default(uuid())
+  call_mins_thr        Int
+  team_members_thr     String
+  score_tcm_weightage  String
+  score_ce_weightage   String
+  score_ts_weightage   String
+  score_rbsl_weightage String
+
+  // Individual Scores
+  individual_score_tcm_benchmark Int?
+  individual_score_tcm_interval  Int?
+
+  individual_score_ce_benchmark String?
+  individual_score_ce_interval  String?
+
+  individual_score_ts_benchmark Int?
+  individual_score_ts_interval  Int?
+
+  individual_score_rbsl_benchmark String?
+  individual_score_rbsl_interval  String?
+
+  // Team/Department/Company Scores
+  team_score_tcm_benchmark Int?
+  team_score_tcm_interval  Int?
+
+  team_score_ce_benchmark String?
+  team_score_ce_interval  String?
+
+  team_score_ts_benchmark Int?
+  team_score_ts_interval  Int?
+
+  team_score_rbsl_benchmark String?
+  team_score_rbsl_interval  String?
 
   @@map("inputs")
 }
