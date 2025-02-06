@@ -52,7 +52,7 @@ model OutgoingCalls {
 
 model Inputs {
   id                     String   @id @default(uuid())
-  call_mins_thr          String
+  call_mins_thr          Int
   score_tcm_weightage    String
   score_ce_weightage     String
   score_ts_weightage     String
