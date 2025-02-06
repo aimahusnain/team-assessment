@@ -49,3 +49,15 @@ model OutgoingCalls {
 
   @@map("outgoing_calls")
 }
+
+model Inputs {
+  id                     String   @id @default(uuid())
+  call_mins_thr          String
+  score_tcm_weightage    String
+  score_ce_weightage     String
+  score_ts_weightage     String
+  score_rbsl_weightage   String
+  team_members_thr       String
+
+  @@map("inputs")
+}

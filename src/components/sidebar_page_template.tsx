@@ -154,8 +154,8 @@ export default function SidebarPageTemplate({
           },
           {
             title: "Inputs",
-            url: "/inputs",
-            isActive: pathname === "/inputs",
+            url: "/data-entry/inputs",
+            isActive: pathname === "/data-entry/inputs",
           },
         ],
       },
@@ -352,7 +352,7 @@ export default function SidebarPageTemplate({
                         src="https://github.com/shadcn.png"
                         alt="perdyrkorn"
                       />
-                      <AvatarFallback className="rounded-lg">CN</AvatarFallback>
+                      <AvatarFallback className="rounded-lg">PK</AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
                       <span className="truncate font-semibold">Perdyrkorn</span>

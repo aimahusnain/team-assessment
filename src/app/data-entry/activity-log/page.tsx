@@ -1,5 +1,6 @@
 "use client";
 
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -24,6 +25,7 @@ import {
   DropdownMenuContent,
   DropdownMenuTrigger,
 } from "@/components/ui/dropdown-menu";
+import { FileUpload } from "@/components/ui/file-upload";
 import {
   Form,
   FormControl,
@@ -34,6 +36,7 @@ import {
 } from "@/components/ui/form";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
+import { Progress } from "@/components/ui/progress";
 import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
 import {
   Select,
@@ -60,6 +63,7 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
 import { useToast } from "@/hooks/use-toast";
 import { zodResolver } from "@hookform/resolvers/zod";
 import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
@@ -77,6 +81,7 @@ import {
 } from "@tanstack/react-table";
 import { format } from "date-fns";
 import {
+  AlertCircle,
   ArrowUpDown,
   ChevronDown,
   ChevronUp,
@@ -85,6 +90,7 @@ import {
   SlidersHorizontal,
   Trash2,
 } from "lucide-react";
+import Papa from "papaparse";
 import { useCallback, useEffect, useState } from "react";
 import { useForm } from "react-hook-form";
 import * as z from "zod";
@@ -131,8 +137,11 @@ const ActivityLog = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [rowSelection, setRowSelection] = useState({});
+  const [fileData, setFileData] = useState<any[]>([]);
+  const [isUploading, setIsUploading] = useState(false);
+  const [uploadProgress, setUploadProgress] = useState(0);
   const [teamInputType, setTeamInputType] = useState("existing");
-  const [newTeam, setNewTeam] = useState("");
+  const [activityInputType, setActivityInputType] = useState("existing");
 
   // Form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -151,44 +160,101 @@ const ActivityLog = () => {
   // Modify the onSubmit handler to handle new team
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      // If adding a new team, use that instead of the selected team
-      const finalValues = {
-        ...values,
-        team: teamInputType === "new" ? newTeam : values.team
-      };
-
-      const response = await fetch("/api/add-activityLog", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify(finalValues),
-      });
-
-      const result = await response.json();
-
-      if (result.success) {
-        toast({
-          title: "Success",
-          description: "Activity log added successfully",
+      setIsUploading(true);
+      if (fileData.length > 0) {
+        // Handle file upload
+        const response = await fetch("/api/upload-activity-logs", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({ logs: fileData }),
         });
-        setIsAddDialogOpen(false);
-        form.reset();
-        setTeamInputType("existing");
-        setNewTeam("");
-        fetchData();
+        const result = await response.json();
+        if (result.success) {
+          toast({
+            title: "Success",
+            description: `${result.count} activity logs added successfully`,
+          });
+        } else {
+          throw new Error(result.message);
+        }
       } else {
-        throw new Error(result.message);
+        const response = await fetch("/api/add-activityLog", {
+          method: "POST",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify(values),
+        });
+        const result = await response.json();
+        if (result.success) {
+          toast({
+            title: "Success",
+            description: "Activity log added successfully",
+          });
+        } else {
+          throw new Error(result.message);
+        }
       }
+      setIsAddDialogOpen(false);
+      form.reset();
+      setActivityInputType("existing");
+      setFileData([]);
+      fetchData();
     } catch (error) {
       toast({
         title: "Error",
-        description: "Failed to add activity log",
+        description: "Failed to add activity log(s)",
         variant: "destructive",
       });
+    } finally {
+      setIsUploading(false);
     }
   };
 
+  const handleFileUpload = (files: File[]) => {
+    const file = files[0];
+    if (file) {
+      Papa.parse(file, {
+        header: true,
+        complete: async (results) => {
+          setIsUploading(true);
+          setUploadProgress(0);
+          const totalEntries = results.data.length;
+          let successfulUploads = 0;
+
+          for (let i = 0; i < totalEntries; i++) {
+            const entry = results.data[i];
+            try {
+              const response = await fetch("/api/add-activityLog", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(entry),
+              });
+
+              if (response.ok) {
+                successfulUploads++;
+              }
+            } catch (error) {
+              console.error("Error uploading entry:", error);
+            }
+
+            setUploadProgress(((i + 1) / totalEntries) * 100);
+          }
+
+          setIsUploading(false);
+          toast({
+            title: "Upload Complete",
+            description: `Successfully uploaded ${successfulUploads} out of ${totalEntries} entries.`,
+          });
+          fetchData();
+        },
+      });
+    }
+  };
 
   // Column definition
   const columns: ColumnDef<ActivityLogEntry>[] = [
@@ -420,7 +486,6 @@ const ActivityLog = () => {
     },
   ];
 
-  // Data fetching
   const fetchData = useCallback(async () => {
     try {
       const response = await fetch("/api/get-activityLogs");
@@ -437,7 +502,11 @@ const ActivityLog = () => {
         ] as string[]);
         setError(null);
       } else {
-        throw new Error("Failed to fetch data");
+        // Set empty data when success is false
+        setData([]);
+        setUniqueActivities([]);
+        setUniqueTeams([]);
+        setError(null);
       }
     } catch (err) {
       console.error(err);
@@ -569,12 +638,12 @@ const ActivityLog = () => {
 
   if (error) {
     return (
-      <div className="flex min-h-[400px] items-center justify-center p-4">
+      <div className="flex min-h-[400px] items-center justify-center p-4 dark:text-white">
         <div className="text-center">
           <ExclamationTriangleIcon className="mx-auto h-10 w-10 text-destructive" />
           <h3 className="mt-4 text-lg font-semibold">Error Loading Data</h3>
           <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-          <Button onClick={() => fetchData()} className="mt-4">
+          <Button onClick={() => fetchData()} className="mt-4 dark:text-black">
             Try Again
           </Button>
         </div>
@@ -815,228 +884,334 @@ const ActivityLog = () => {
                     <DialogHeader>
                       <DialogTitle>Add Activity Log</DialogTitle>
                       <DialogDescription>
-                        Create a new activity log entry
+                        Create a new activity log entry or upload a CSV file
                       </DialogDescription>
                     </DialogHeader>
-                    <Form {...form}>
-                      <form
-                        onSubmit={form.handleSubmit(onSubmit)}
-                        className="space-y-4"
-                      >
-                        <FormField
-                          control={form.control}
-                          name="name"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Name</FormLabel>
-                              <FormControl>
-                                <Input placeholder="Enter name" {...field} />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-  <FormField
-    control={form.control}
-    name="team"
-    render={({ field }) => (
-      <FormItem className="space-y-4">
-        <FormLabel>Team</FormLabel>
-        <RadioGroup
-          defaultValue="existing"
-          value={teamInputType}
-          onValueChange={setTeamInputType}
-          className="mb-4"
-        >
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="existing" id="existing" />
-            <Label htmlFor="existing">Select Existing Team</Label>
-          </div>
-          <div className="flex items-center space-x-2">
-            <RadioGroupItem value="new" id="new" />
-            <Label htmlFor="new">Add New Team</Label>
-          </div>
-        </RadioGroup>
-        
-        {teamInputType === "existing" ? (
-          <Select
-            onValueChange={field.onChange}
-            defaultValue={field.value}
-          >
-            <FormControl>
-              <SelectTrigger>
-                <SelectValue placeholder="Select team" />
-              </SelectTrigger>
-            </FormControl>
-            <SelectContent>
-              {uniqueTeams.map((team) => (
-                <SelectItem key={team} value={team}>
-                  {team}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        ) : (
-          <FormControl>
-            <Input
-              placeholder="Enter new team name"
-              value={newTeam}
-              onChange={(e) => {
-                setNewTeam(e.target.value);
-                field.onChange(e.target.value);
-              }}
-            />
-          </FormControl>
-        )}
-        <FormMessage />
-      </FormItem>
-    )}
-  />
-                        <FormField
-                          control={form.control}
-                          name="activity"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Activity</FormLabel>
-                              <Select
-                                onValueChange={field.onChange}
-                                defaultValue={field.value}
-                              >
-                                <FormControl>
-                                  <SelectTrigger>
-                                    <SelectValue placeholder="Select activity" />
-                                  </SelectTrigger>
-                                </FormControl>
-                                <SelectContent>
-                                  {uniqueActivities.map((activity) => (
-                                    <SelectItem key={activity} value={activity}>
-                                      {activity}
-                                    </SelectItem>
-                                  ))}
-                                </SelectContent>
-                              </Select>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="verdi"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Verdi</FormLabel>
-                              <FormControl>
-                                <Input
-                                  type="number"
-                                  placeholder="Enter verdi"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <FormField
-                          control={form.control}
-                          name="department"
-                          render={({ field }) => (
-                            <FormItem>
-                              <FormLabel>Department</FormLabel>
-                              <FormControl>
-                                <Input
-                                  placeholder="Enter department"
-                                  {...field}
-                                />
-                              </FormControl>
-                              <FormMessage />
-                            </FormItem>
-                          )}
-                        />
-                        <div className="grid grid-cols-2 gap-4">
-                          <FormField
-                            control={form.control}
-                            name="year"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Year</FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select year" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {Array.from(
-                                      {
-                                        length:
-                                          new Date().getFullYear() - 1970 + 1,
-                                      },
-                                      (_, i) => 1970 + i
-                                    )
-                                      .reverse()
-                                      .map((year) => (
-                                        <SelectItem
-                                          key={year}
-                                          value={year.toString()}
-                                        >
-                                          {year}
-                                        </SelectItem>
-                                      ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                          <FormField
-                            control={form.control}
-                            name="monthName"
-                            render={({ field }) => (
-                              <FormItem>
-                                <FormLabel>Month</FormLabel>
-                                <Select
-                                  onValueChange={field.onChange}
-                                  defaultValue={field.value}
-                                >
-                                  <FormControl>
-                                    <SelectTrigger>
-                                      <SelectValue placeholder="Select month" />
-                                    </SelectTrigger>
-                                  </FormControl>
-                                  <SelectContent>
-                                    {Array.from({ length: 12 }, (_, i) => ({
-                                      value: format(new Date(2000, i), "MMMM"),
-                                      label: format(new Date(2000, i), "MMMM"),
-                                    })).map(({ value, label }) => (
-                                      <SelectItem key={value} value={value}>
-                                        {label}
-                                      </SelectItem>
-                                    ))}
-                                  </SelectContent>
-                                </Select>
-                                <FormMessage />
-                              </FormItem>
-                            )}
-                          />
-                        </div>
-                        <div className="flex justify-end gap-3 mt-6">
-                          <Button
-                            type="button"
-                            variant="outline"
-                            onClick={() => {
-                              setIsAddDialogOpen(false);
-                              form.reset();
-                            }}
+                    <Tabs defaultValue="choose-existing" className="w-full">
+                      <TabsList className="grid w-full grid-cols-2">
+                        <TabsTrigger value="add-new-entry">
+                          Add New Entry
+                        </TabsTrigger>
+                        <TabsTrigger value="upload-csv">Upload CSV</TabsTrigger>
+                      </TabsList>
+                      <TabsContent value="add-new-entry">
+                        <Form {...form}>
+                          <form
+                            onSubmit={form.handleSubmit(onSubmit)}
+                            className="space-y-4"
                           >
-                            Cancel
-                          </Button>
-                          <Button type="submit">Add Activity Log</Button>
+                            <FormField
+                              control={form.control}
+                              name="name"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Name</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="Enter name"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="team"
+                              render={({ field }) => (
+                                <FormItem className="space-y-4">
+                                  <FormLabel>Team</FormLabel>
+                                  <RadioGroup
+                                    value={teamInputType}
+                                    onValueChange={setTeamInputType}
+                                    className="flex gap-6"
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem
+                                        value="existing"
+                                        id="existing-team"
+                                      />
+                                      <Label htmlFor="existing-team">
+                                        Choose Existing
+                                      </Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem
+                                        value="new"
+                                        id="new-team"
+                                      />
+                                      <Label htmlFor="new-team">Add New</Label>
+                                    </div>
+                                  </RadioGroup>
+
+                                  {teamInputType === "existing" ? (
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      value={field.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select existing team" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {uniqueTeams.map((team) => (
+                                          <SelectItem key={team} value={team}>
+                                            {team}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <Input
+                                      placeholder="Enter new team name"
+                                      {...field}
+                                    />
+                                  )}
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+
+                            <FormField
+                              control={form.control}
+                              name="activity"
+                              render={({ field }) => (
+                                <FormItem className="space-y-4">
+                                  <FormLabel>Activity</FormLabel>
+                                  <RadioGroup
+                                    value={activityInputType}
+                                    onValueChange={setActivityInputType}
+                                    className="flex gap-6"
+                                  >
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem
+                                        value="existing"
+                                        id="existing-activity"
+                                      />
+                                      <Label htmlFor="existing-activity">
+                                        Choose Existing
+                                      </Label>
+                                    </div>
+                                    <div className="flex items-center space-x-2">
+                                      <RadioGroupItem
+                                        value="new"
+                                        id="new-activity"
+                                      />
+                                      <Label htmlFor="new-activity">
+                                        Add New
+                                      </Label>
+                                    </div>
+                                  </RadioGroup>
+
+                                  {activityInputType === "existing" ? (
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      value={field.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select existing activity" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {uniqueActivities.map((activity) => (
+                                          <SelectItem
+                                            key={activity}
+                                            value={activity}
+                                          >
+                                            {activity}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                  ) : (
+                                    <Input
+                                      placeholder="Enter new activity name"
+                                      {...field}
+                                    />
+                                  )}
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="verdi"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Verdi</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      type="number"
+                                      placeholder="Enter verdi"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <FormField
+                              control={form.control}
+                              name="department"
+                              render={({ field }) => (
+                                <FormItem>
+                                  <FormLabel>Department</FormLabel>
+                                  <FormControl>
+                                    <Input
+                                      placeholder="Enter department"
+                                      {...field}
+                                    />
+                                  </FormControl>
+                                  <FormMessage />
+                                </FormItem>
+                              )}
+                            />
+                            <div className="grid grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="year"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Year</FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      defaultValue={field.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select year" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {Array.from(
+                                          {
+                                            length:
+                                              new Date().getFullYear() -
+                                              1970 +
+                                              1,
+                                          },
+                                          (_, i) => 1970 + i
+                                        )
+                                          .reverse()
+                                          .map((year) => (
+                                            <SelectItem
+                                              key={year}
+                                              value={year.toString()}
+                                            >
+                                              {year}
+                                            </SelectItem>
+                                          ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="monthName"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Month</FormLabel>
+                                    <Select
+                                      onValueChange={field.onChange}
+                                      defaultValue={field.value}
+                                    >
+                                      <FormControl>
+                                        <SelectTrigger>
+                                          <SelectValue placeholder="Select month" />
+                                        </SelectTrigger>
+                                      </FormControl>
+                                      <SelectContent>
+                                        {Array.from({ length: 12 }, (_, i) => ({
+                                          value: format(
+                                            new Date(2000, i),
+                                            "MMMM"
+                                          ),
+                                          label: format(
+                                            new Date(2000, i),
+                                            "MMMM"
+                                          ),
+                                        })).map(({ value, label }) => (
+                                          <SelectItem key={value} value={value}>
+                                            {label}
+                                          </SelectItem>
+                                        ))}
+                                      </SelectContent>
+                                    </Select>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
+
+                            {isUploading && (
+                              <div className="space-y-2">
+                                <Progress
+                                  value={uploadProgress}
+                                  className="w-full"
+                                />
+                                <p className="text-sm text-muted-foreground">
+                                  Uploading: {Math.round(uploadProgress)}%
+                                </p>
+                              </div>
+                            )}
+
+                            {fileData.length > 200 && (
+                              <Alert variant="destructive">
+                                <AlertCircle className="h-4 w-4" />
+                                <AlertTitle>Warning</AlertTitle>
+                                <AlertDescription>
+                                  You are attempting to upload {fileData.length}{" "}
+                                  entries. This may take some time and could
+                                  impact performance.
+                                </AlertDescription>
+                              </Alert>
+                            )}
+
+                            <div className="flex justify-end gap-3 mt-6">
+                              <Button
+                                type="button"
+                                variant="outline"
+                                onClick={() => {
+                                  setIsAddDialogOpen(false);
+                                  form.reset();
+                                }}
+                                disabled={isUploading}
+                              >
+                                Cancel
+                              </Button>
+                              <Button type="submit" className="dark:text-black" disabled={isUploading}>
+                                Add Activity Log
+                              </Button>
+                            </div>
+                          </form>
+                        </Form>{" "}
+                      </TabsContent>
+                      <TabsContent value="upload-csv">
+                        <div className="space-y-2">
+                          <FileUpload
+                            onChange={handleFileUpload}
+                            accept=".csv"
+                            disabled={isUploading}
+                          />
                         </div>
-                      </form>
-                    </Form>
+                        {isUploading && (
+                          <div className="space-y-2">
+                            <Progress
+                              value={uploadProgress}
+                              className="w-full"
+                            />
+                            <p className="text-sm text-muted-foreground">
+                              Uploading: {Math.round(uploadProgress)}%
+                            </p>
+                          </div>
+                        )}{" "}
+                      </TabsContent>
+                    </Tabs>
                   </DialogContent>
                 </Dialog>
                 <DropdownMenu>
@@ -1069,66 +1244,89 @@ const ActivityLog = () => {
             </div>
 
             {/* Table */}
-            <div className="rounded-md border">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
-                      ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow
-                        key={row.id}
-                        data-state={row.getIsSelected() && "selected"}
-                      >
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
-                          </TableCell>
+            {data.length === 0 ? (
+              <div className="flex flex-col items-center justify-center py-32 border rounded-md">
+                <h3 className="text-lg font-semibold">
+                  No Activity Logs Found
+                </h3>
+                <p className="text-sm text-muted-foreground mt-2">
+                  Start by adding your first activity log using the "Add
+                  Activity Log" button above.
+                </p>
+                <Dialog
+                  open={isAddDialogOpen}
+                  onOpenChange={setIsAddDialogOpen}
+                >
+                  <DialogTrigger asChild>
+                    <Button className="mt-4 dark:text-black">
+                      <Plus className="mr-2 h-4 w-4" />
+                      Add Activity Log
+                    </Button>
+                  </DialogTrigger>
+                </Dialog>
+              </div>
+            ) : (
+              <div className="rounded-md border">
+                <Table>
+                  <TableHeader>
+                    {table.getHeaderGroups().map((headerGroup) => (
+                      <TableRow key={headerGroup.id}>
+                        {headerGroup.headers.map((header) => (
+                          <TableHead key={header.id}>
+                            {header.isPlaceholder
+                              ? null
+                              : flexRender(
+                                  header.column.columnDef.header,
+                                  header.getContext()
+                                )}
+                          </TableHead>
                         ))}
                       </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={columns.length}
-                        className="h-24 text-center"
-                      >
-                        <div className="flex flex-col items-center gap-2">
-                          <p className="text-sm text-muted-foreground">
-                            The filters applied have returned no results from
-                            this table
-                          </p>
-                          <Button
-                            variant="outline"
-                            onClick={clearFilters}
-                            className="mt-2"
-                          >
-                            Remove all filters
-                          </Button>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                    ))}
+                  </TableHeader>
+                  <TableBody>
+                    {table.getRowModel().rows?.length ? (
+                      table.getRowModel().rows.map((row) => (
+                        <TableRow
+                          key={row.id}
+                          data-state={row.getIsSelected() && "selected"}
+                        >
+                          {row.getVisibleCells().map((cell) => (
+                            <TableCell key={cell.id}>
+                              {flexRender(
+                                cell.column.columnDef.cell,
+                                cell.getContext()
+                              )}
+                            </TableCell>
+                          ))}
+                        </TableRow>
+                      ))
+                    ) : (
+                      <TableRow>
+                        <TableCell
+                          colSpan={columns.length}
+                          className="h-24 text-center"
+                        >
+                          <div className="flex flex-col items-center gap-2">
+                            <p className="text-sm text-muted-foreground">
+                              The filters applied have returned no results from
+                              this table
+                            </p>
+                            <Button
+                              variant="outline"
+                              onClick={clearFilters}
+                              className="mt-2"
+                            >
+                              Remove all filters
+                            </Button>
+                          </div>
+                        </TableCell>
+                      </TableRow>
+                    )}
+                  </TableBody>
+                </Table>
+              </div>
+            )}
 
             {/* Pagination */}
             <div className="sticky bottom-0 left-0 right-0 flex items-center justify-between py-4 bg-background border-t">
