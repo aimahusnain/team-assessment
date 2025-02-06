@@ -87,6 +87,7 @@ import {
   ChevronUp,
   Loader2,
   Plus,
+  RefreshCcw,
   SlidersHorizontal,
   Trash2,
 } from "lucide-react";
@@ -142,6 +143,10 @@ const ActivityLog = () => {
   const [uploadProgress, setUploadProgress] = useState(0);
   const [teamInputType, setTeamInputType] = useState("existing");
   const [activityInputType, setActivityInputType] = useState("existing");
+  const [isBackgroundUploading, setIsBackgroundUploading] = useState(false);
+  const [isRefreshing, setIsRefreshing] = useState(false);
+
+  console.log(isBackgroundUploading) // No need now.
 
   // Form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -162,6 +167,15 @@ const ActivityLog = () => {
     try {
       setIsUploading(true);
       if (fileData.length > 0) {
+        // If dialog is closed during upload, show toast
+        if (!isAddDialogOpen) {
+          setIsBackgroundUploading(true);
+          toast({
+            title: "Upload In Progress",
+            description: "File upload is running in the background",
+          });
+        }
+
         // Handle file upload
         const response = await fetch("/api/upload-activity-logs", {
           method: "POST",
@@ -211,6 +225,7 @@ const ActivityLog = () => {
       });
     } finally {
       setIsUploading(false);
+      setIsBackgroundUploading(false);
     }
   };
 
@@ -489,6 +504,7 @@ const ActivityLog = () => {
 
   const fetchData = useCallback(async () => {
     try {
+      setIsRefreshing(true);
       const response = await fetch("/api/get-activityLogs");
       const result = await response.json();
       if (result.success) {
@@ -513,6 +529,7 @@ const ActivityLog = () => {
       console.error(err);
       setError("An error occurred while fetching data");
     } finally {
+      setIsRefreshing(false);
       setLoading(false);
     }
   }, []);
@@ -864,7 +881,18 @@ const ActivityLog = () => {
                 {/* Add Activity Log Dialog */}
                 <Dialog
                   open={isAddDialogOpen}
-                  onOpenChange={setIsAddDialogOpen}
+                  onOpenChange={(open) => {
+                    if (!open && isUploading) {
+                      // If trying to close while uploading
+                      setIsBackgroundUploading(true);
+                      toast({
+                        title: "Upload Continuing",
+                        description:
+                          "Upload is running in the background. You can reopen this dialog to view progress.",
+                      });
+                    }
+                    setIsAddDialogOpen(open);
+                  }}
                 >
                   <DialogTrigger asChild>
                     <Button
@@ -1190,7 +1218,6 @@ const ActivityLog = () => {
                           <FileUpload
                             onChange={handleFileUpload}
                             accept=".csv"
-                            disabled={isUploading}
                           />
                         </div>
                         {isUploading && (
@@ -1324,6 +1351,18 @@ const ActivityLog = () => {
 
             {/* Pagination */}
             <div className="sticky bottom-0 left-0 right-0 flex items-center justify-between py-4 bg-background border-t">
+              <Button
+                variant="outline"
+                size="sm"
+                className="mr-4"
+                onClick={() => fetchData()}
+                disabled={isRefreshing}
+              >
+                <RefreshCcw
+                  className={`h-2 w-2 ${isRefreshing ? "animate-spin" : ""}`}
+                />
+                Refresh
+              </Button>
               <div className="flex-1 text-sm text-muted-foreground">
                 {table.getFilteredSelectedRowModel().rows.length} of{" "}
                 {table.getFilteredRowModel().rows.length} row(s) selected
