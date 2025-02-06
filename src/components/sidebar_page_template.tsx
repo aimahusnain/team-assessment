@@ -132,9 +132,9 @@ export default function SidebarPageTemplate({
         icon: SquareTerminal,
         isActive: isPathInItems([
           { url: "/data-entry/activity-log" },
-          { url: "/incoming-calls" },
-          { url: "/outgoing-calls" },
-          { url: "/inputs" },
+          { url: "/data-entry/incoming-calls" },
+          { url: "/data-entry/outgoing-calls" },
+          { url: "/data-entry/inputs" },
         ]),
         items: [
           {
