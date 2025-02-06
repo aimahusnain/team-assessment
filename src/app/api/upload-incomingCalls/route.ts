@@ -1,13 +1,20 @@
 import { db } from "@/lib/db";
 import { NextResponse } from "next/server";
 
+interface IncomingCall {
+  navn: string;
+  min: number;
+  year: string;
+  monthName: string;
+}
+
 export async function POST(req: Request) {
   try {
     const body = await req.json();
     const { calls } = body;
 
     const createdCalls = await db.incomingCalls.createMany({
-      data: calls.map((call: any) => ({
+      data: calls.map((call: IncomingCall) => ({
         navn: call.navn,
         min: call.min,
         year: parseInt(call.year),

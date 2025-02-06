@@ -132,6 +132,8 @@ const IncomingCalls = () => {
   const [uploadProgress] = useState(0);
   const [isBackgroundUploading, setIsBackgroundUploading] = useState(false);
   const [isRefreshing, setIsRefreshing] = useState(false);
+  
+  console.log(isBackgroundUploading) // No need now.
 
   // Form
   const form = useForm<z.infer<typeof formSchema>>({
