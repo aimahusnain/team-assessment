@@ -10,6 +10,7 @@ import {
   CreditCard,
   Folder,
   Forward,
+  LogOut,
   Moon,
   MoreHorizontal,
   PieChart,
@@ -17,9 +18,8 @@ import {
   SquareTerminal,
   Sun,
   Trash2,
-  LogOut,
 } from "lucide-react";
-import React, { useState, type ReactNode, useEffect, useCallback } from "react";
+import React, { useCallback, useEffect, type ReactNode } from "react";
 
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
 import {
