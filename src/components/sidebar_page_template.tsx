@@ -192,17 +192,15 @@ export default function SidebarPageTemplate({
   }, []);
 
   const fetchUser = useCallback(async () => {
-    async () => {
-      const response = await fetch("/api/get-user");
-      const data = await response.json();
-      if (data.success) {
-        setUser(data.data[0]);
-        return data.data[0];
-      } else {
-        throw new Error("Failed to fetch user data");
-      }
-    };
-  }, []);
+    const response = await fetch("/api/get-user");
+    const data = await response.json();
+    if (data.success) {
+      setUser(data.data[0]);
+      return data.data[0];
+    } else {
+      throw new Error("Failed to fetch user data");
+    }
+  }, [setUser]);
 
   return (
     <SidebarProvider>
