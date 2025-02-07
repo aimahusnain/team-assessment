@@ -14,6 +14,7 @@ interface NameDetails {
   totalCallMinutes: number;
   callEfficiency: number;
   totalSales: number;
+  livRatio: number;
 }
 
 export async function GET() {
@@ -23,15 +24,13 @@ export async function GET() {
         name: true,
         team: true,
         department: true,
-        verdi: true
+        verdi: true,
+        activity: true
       }
     });
 
     const incomingCalls = await prisma.incomingCalls.findMany({
-      select: { 
-        navn: true,
-        min: true
-      },
+      select: { navn: true, min: true },
       distinct: ["navn"],
     });
 
@@ -48,6 +47,7 @@ export async function GET() {
     const outgoingMinutesMap = new Map<string, number>();
     const outgoingCallsMap = new Map<string, number>();
     const totalSalesMap = new Map<string, number>();
+    const livSalesMap = new Map<string, number>();
 
     activityLogs.forEach((log) => {
       const trimmedName = safeTrim(log.name);
@@ -57,9 +57,15 @@ export async function GET() {
           department: log.department
         });
         
-        // Sum up verdi for total sales
+        // Update total sales
         const currentSales = totalSalesMap.get(trimmedName) || 0;
         totalSalesMap.set(trimmedName, currentSales + log.verdi);
+
+        // Update liv sales if activity matches
+        if (log.activity === "2. liv") {
+          const currentLivSales = livSalesMap.get(trimmedName) || 0;
+          livSalesMap.set(trimmedName, currentLivSales + log.verdi);
+        }
       }
     });
 
@@ -93,6 +99,8 @@ export async function GET() {
       const outgoingMinutes = outgoingMinutesMap.get(name) || 0;
       const totalCallMinutes = incomingMinutes + outgoingMinutes;
       const totalOutgoingCalls = outgoingCallsMap.get(name) || 0;
+      const totalSales = totalSalesMap.get(name) || 0;
+      const livSales = livSalesMap.get(name) || 0;
 
       return {
         name,
@@ -100,7 +108,8 @@ export async function GET() {
         department: details?.department || null,
         totalCallMinutes,
         callEfficiency: totalCallMinutes > 0 ? Number((totalOutgoingCalls / totalCallMinutes).toFixed(2)) : 0,
-        totalSales: totalSalesMap.get(name) || 0
+        totalSales,
+        livRatio: totalSales > 0 ? Number((livSales / totalSales).toFixed(2)) : 0
       };
     });
 
