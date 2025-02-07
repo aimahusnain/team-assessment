@@ -1,5 +1,5 @@
-import React from 'react';
-import { Card } from '@/components/ui/card';
+import React from "react";
+import { Card } from "@/components/ui/card";
 import {
   Bot,
   SquareTerminal,
@@ -12,9 +12,9 @@ import {
   PhoneIncoming,
   PhoneOutgoing,
   Settings,
-  ArrowUpRight
-} from 'lucide-react';
-import Link from 'next/link';
+  ArrowUpRight,
+} from "lucide-react";
+import Link from "next/link";
 
 const GlowingBackground = () => (
   <div className="fixed inset-0 -z-10 overflow-hidden">
@@ -34,10 +34,20 @@ interface NavigationCardProps {
   gradient: string;
 }
 
-const NavigationCard: React.FC<NavigationCardProps> = ({ icon: Icon, title, description, href, gradient }) => (
+const NavigationCard: React.FC<NavigationCardProps> = ({
+  icon: Icon,
+  title,
+  description,
+  href,
+  gradient,
+}) => (
   <Link href={href}>
-    <Card className={`group relative overflow-hidden backdrop-blur-sm bg-background/50 border-0 hover:shadow-2xl transition-all duration-300 h-full`}>
-      <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${gradient}`} />
+    <Card
+      className={`group relative overflow-hidden backdrop-blur-sm bg-background/50 border-0 hover:shadow-2xl transition-all duration-300 h-full`}
+    >
+      <div
+        className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${gradient}`}
+      />
       <div className="p-6 relative z-10">
         <div className="flex items-center justify-between mb-4">
           <div className="p-3 rounded-xl bg-background/50 backdrop-blur-sm border border-border/50 group-hover:scale-110 transition-transform duration-300">
@@ -45,7 +55,9 @@ const NavigationCard: React.FC<NavigationCardProps> = ({ icon: Icon, title, desc
           </div>
           <ArrowUpRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
         </div>
-        <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors duration-300">{title}</h3>
+        <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors duration-300">
+          {title}
+        </h3>
         <p className="text-sm text-muted-foreground">{description}</p>
       </div>
     </Card>
@@ -56,7 +68,7 @@ const DashboardPage = () => {
   return (
     <div className="min-h-screen bg-background/50 p-8">
       <GlowingBackground />
-      
+
       {/* Header */}
       <div className="relative">
         <div className="flex justify-between items-center mb-12">
@@ -64,7 +76,9 @@ const DashboardPage = () => {
             <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
               Team Assessment
             </h1>
-            <p className="text-muted-foreground mt-2">Welcome to your dashboard overview</p>
+            <p className="text-muted-foreground mt-2">
+              Welcome to your dashboard overview
+            </p>
           </div>
         </div>
       </div>
@@ -79,7 +93,7 @@ const DashboardPage = () => {
             </div>
             <h2 className="text-2xl font-semibold">Analytics Dashboard</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <NavigationCard
               icon={Users}
@@ -120,7 +134,7 @@ const DashboardPage = () => {
             </div>
             <h2 className="text-2xl font-semibold">Data Entry</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <NavigationCard
               icon={TableProperties}
@@ -161,7 +175,7 @@ const DashboardPage = () => {
             </div>
             <h2 className="text-2xl font-semibold">Visualization</h2>
           </div>
-          
+
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
             <NavigationCard
               icon={Activity}

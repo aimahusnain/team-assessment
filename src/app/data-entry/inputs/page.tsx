@@ -341,8 +341,15 @@ export default function Inputs() {
 
           {loading ? (
             <div className="grid gap-6">
-              {[1, 2, 3].map((i) => (
+              {[1, 2].map((i) => (
                 <Skeleton key={i} className="h-[200px] w-full" />
+              ))}
+              <div className="grid md:grid-cols-2 gap-6">
+                <Skeleton key={3} className="h-[300px] w-full" />
+                <Skeleton key={4} className="h-[300px] w-full" />
+              </div>
+              {[1, 2].map((i) => (
+                <Skeleton key={i} className="h-[530px] w-full" />
               ))}
             </div>
           ) : config ? (
