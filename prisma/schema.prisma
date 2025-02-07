@@ -42,6 +42,7 @@ model OutgoingCalls {
   regular               String // Number of calls with regular number
   company               String // Number of calls with company number
   regular_call_time_min String // Total time calls with regular number (min)
+  company_call_time_min String // Total time of call with company number (min)
   year                  Int
   monthName             String
   createdAt             DateTime @default(now())

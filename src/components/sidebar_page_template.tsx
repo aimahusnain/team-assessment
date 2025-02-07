@@ -89,7 +89,7 @@ export default function SidebarPageTemplate({
       {
         name: "Main Model",
         logo: AudioWaveform,
-        plan: "for Perdyrkorn",
+        plan: "by Devkins",
       },
     ],
     navMain: [
