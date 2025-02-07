@@ -39,6 +39,7 @@ export function UpdateUserForm({ user }: { user: User }) {
         throw new Error(data.message)
       }
     } catch (error) {
+      console.error("Failed to update user:", error)
       toast({
         title: "Error",
         description: "Failed to update user information. Please try again.",

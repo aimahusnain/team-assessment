@@ -67,7 +67,6 @@ export default function SidebarPageTemplate({
   children,
 }: SidebarPageTemplateProps) {
   const pathname = usePathname();
-  const [isSheetOpen, setIsSheetOpen] = useState(false);
 
   interface NavItem {
     url: string;
