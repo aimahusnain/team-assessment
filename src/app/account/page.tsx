@@ -3,7 +3,7 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 
 import { db } from "@/lib/db"
 
-export async function getUserById(id: number) {
+async function getUserById(id: number) {
   try {
     const user = await db.user.findUnique({
       where: { id },

@@ -184,6 +184,7 @@ export default function SidebarPageTemplate({
   //       console.error("There was an error logging out:", err);
   //     }
   //   };
+  
   useEffect(() => {
     fetchUser();
     const intervalId = setInterval(fetchUser, 10000); // Fetch every 10 seconds
