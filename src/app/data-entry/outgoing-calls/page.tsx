@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   Breadcrumb,
@@ -7,9 +7,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@/components/ui/breadcrumb"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -17,53 +17,27 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { FileUpload } from "@/components/ui/file-upload";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Progress } from "@/components/ui/progress";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+} from "@/components/ui/dropdown-menu"
+import { FileUpload } from "@/components/ui/file-upload"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toast"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons"
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -75,37 +49,27 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
-import { format } from "date-fns";
-import {
-  ArrowUpDown,
-  ChevronDown,
-  ChevronUp,
-  Loader2,
-  Plus,
-  RefreshCcw,
-  SlidersHorizontal,
-  Trash2,
-} from "lucide-react";
-import Papa from "papaparse";
-import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
-import { Label } from "@/components/ui/label";
+} from "@tanstack/react-table"
+import { format } from "date-fns"
+import { ArrowUpDown, ChevronDown, ChevronUp, Loader2, Plus, RefreshCcw, SlidersHorizontal, Trash2 } from "lucide-react"
+import Papa from "papaparse"
+import { useCallback, useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
 
 type OutgoingCall = {
-  id: number;
-  navn: string;
-  outgoing: string;
-  regular: string;
-  company: string;
-  regular_call_time_min: string;
-  company_call_time_min: string;
-  year: number;
-  monthName: string;
-  createdAt: string;
-  updatedAt: string;
-};
+  id: number
+  navn: string
+  outgoing: string
+  regular: string
+  company: string
+  regular_call_time_min: string
+  company_call_time_min: string
+  year: number
+  monthName: string
+  createdAt: string
+  updatedAt: string
+}
 
 // Form schema
 const formSchema = z.object({
@@ -117,31 +81,31 @@ const formSchema = z.object({
   company_call_time_min: z.string().min(1, "Company call time is required"),
   year: z.string().min(1, "Year is required"),
   monthName: z.string().min(1, "Month is required"),
-});
+})
 
 const OutgoingCalls = () => {
   // State
-  const [data, setData] = useState<OutgoingCall[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deletingCount, setDeletingCount] = useState(0);
-  const [selectedYear, setSelectedYear] = useState<string>("all");
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { toast } = useToast();
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
-  const [fileData, setFileData] = useState<OutgoingCall[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress] = useState(0);
-  const [isBackgroundUploading, setIsBackgroundUploading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [data, setData] = useState<OutgoingCall[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deletingCount, setDeletingCount] = useState(0)
+  const [selectedYear, setSelectedYear] = useState<string>("all")
+  const [selectedMonth, setSelectedMonth] = useState<string>("all")
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const { toast } = useToast()
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = useState({})
+  const [fileData, setFileData] = useState<OutgoingCall[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress] = useState(0)
+  const [isBackgroundUploading, setIsBackgroundUploading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
-  console.log(isBackgroundUploading); // No need now.
+  console.log(isBackgroundUploading) // No need now.
 
   // Form
   const form = useForm<z.infer<typeof formSchema>>({
@@ -156,7 +120,7 @@ const OutgoingCalls = () => {
       year: new Date().getFullYear().toString(),
       monthName: format(new Date(), "MMMM"),
     },
-  });
+  })
 
   // Column definition
   const columns: ColumnDef<OutgoingCall>[] = [
@@ -164,10 +128,7 @@ const OutgoingCalls = () => {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
         />
@@ -188,13 +149,13 @@ const OutgoingCalls = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent"
@@ -216,13 +177,13 @@ const OutgoingCalls = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent text-right w-full"
@@ -237,11 +198,7 @@ const OutgoingCalls = () => {
           )}
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="text-center font-medium">
-          {row.getValue("outgoing")}
-        </div>
-      ),
+      cell: ({ row }) => <div className="text-center font-medium">{row.getValue("outgoing")}</div>,
     },
     {
       accessorKey: "regular",
@@ -249,13 +206,13 @@ const OutgoingCalls = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent text-right w-full"
@@ -270,9 +227,7 @@ const OutgoingCalls = () => {
           )}
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="text-center font-medium">{row.getValue("regular")}</div>
-      ),
+      cell: ({ row }) => <div className="text-center font-medium">{row.getValue("regular")}</div>,
     },
     {
       accessorKey: "company",
@@ -280,13 +235,13 @@ const OutgoingCalls = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent text-right w-full"
@@ -301,9 +256,7 @@ const OutgoingCalls = () => {
           )}
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="text-center font-medium">{row.getValue("company")}</div>
-      ),
+      cell: ({ row }) => <div className="text-center font-medium">{row.getValue("company")}</div>,
     },
     {
       accessorKey: "regular_call_time_min",
@@ -311,13 +264,13 @@ const OutgoingCalls = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent text-right w-full"
@@ -332,11 +285,7 @@ const OutgoingCalls = () => {
           )}
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="text-center font-medium">
-          {row.getValue("regular_call_time_min")}
-        </div>
-      ),
+      cell: ({ row }) => <div className="text-center font-medium">{row.getValue("regular_call_time_min")}</div>,
     },
     {
       accessorKey: "company_call_time_min",
@@ -344,13 +293,13 @@ const OutgoingCalls = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent text-right w-full"
@@ -365,11 +314,7 @@ const OutgoingCalls = () => {
           )}
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="text-center font-medium">
-          {row.getValue("company_call_time_min")}
-        </div>
-      ),
+      cell: ({ row }) => <div className="text-center font-medium">{row.getValue("company_call_time_min")}</div>,
     },
     {
       accessorKey: "year",
@@ -377,13 +322,13 @@ const OutgoingCalls = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent"
@@ -405,13 +350,13 @@ const OutgoingCalls = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent"
@@ -427,35 +372,35 @@ const OutgoingCalls = () => {
         </Button>
       ),
     },
-  ];
+  ]
 
   // Fetch data
   const fetchData = useCallback(async () => {
     try {
-      setIsRefreshing(true);
-      const response = await fetch("/api/get-outgoingCalls");
-      const result = await response.json();
+      setIsRefreshing(true)
+      const response = await fetch("/api/get-outgoingCalls")
+      const result = await response.json()
       if (result.success) {
-        setData(result.data);
-        setError(null);
+        setData(result.data)
+        setError(null)
       } else {
-        setData([]);
-        setError(null);
+        setData([])
+        setError(null)
       }
     } catch (err) {
-      console.error(err);
-      setError("An error occurred while fetching data");
+      console.error(err)
+      setError("An error occurred while fetching data")
     } finally {
-      setIsRefreshing(false);
-      setLoading(false);
+      setIsRefreshing(false)
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    fetchData()
+    const interval = setInterval(fetchData, 10000)
+    return () => clearInterval(interval)
+  }, [fetchData])
 
   // Table initialization
   const table = useReactTable({
@@ -480,20 +425,20 @@ const OutgoingCalls = () => {
       columnVisibility,
       rowSelection,
     },
-  });
+  })
 
   // Form submission
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      setIsUploading(true);
+      setIsUploading(true)
       if (fileData.length > 0) {
         // If dialog is closed during upload, show toast
         if (!isAddDialogOpen) {
-          setIsBackgroundUploading(true);
+          setIsBackgroundUploading(true)
           toast({
             title: "Upload In Progress",
             description: "File upload is running in the background",
-          });
+          })
         }
 
         const response = await fetch("/api/upload-outgoingCalls", {
@@ -502,15 +447,15 @@ const OutgoingCalls = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ calls: fileData }),
-        });
-        const result = await response.json();
+        })
+        const result = await response.json()
         if (result.success) {
           toast({
             title: "Success",
             description: `${result.count} outgoing calls added successfully`,
-          });
+          })
         } else {
-          throw new Error(result.message);
+          throw new Error(result.message)
         }
       } else {
         const response = await fetch("/api/add-outgoingCall", {
@@ -519,54 +464,54 @@ const OutgoingCalls = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(values),
-        });
-        const result = await response.json();
+        })
+        const result = await response.json()
         if (result.success) {
           toast({
             title: "Success",
             description: "Outgoing call added successfully",
-          });
+          })
         } else {
-          throw new Error(result.message);
+          throw new Error(result.message)
         }
       }
-      setIsAddDialogOpen(false);
-      form.reset();
-      setFileData([]);
-      fetchData();
+      setIsAddDialogOpen(false)
+      form.reset()
+      setFileData([])
+      fetchData()
     } catch (error) {
-      console.error(error);
+      console.error(error)
       toast({
         title: "Error",
         description: "Failed to add outgoing call(s)",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsUploading(false);
-      setIsBackgroundUploading(false);
+      setIsUploading(false)
+      setIsBackgroundUploading(false)
     }
-  };
+  }
 
   // File upload handler
   const handleFileUpload = (files: File[]) => {
-    const file = files[0];
+    const file = files[0]
     if (file) {
       Papa.parse(file, {
         header: true,
         complete: (results) => {
-          setFileData(results.data as OutgoingCall[]);
-          form.handleSubmit(onSubmit)();
+          setFileData(results.data as OutgoingCall[])
+          form.handleSubmit(onSubmit)()
         },
-      });
+      })
     }
-  };
+  }
 
   // Delete handler
   const handleDelete = async () => {
-    setIsDeleting(true);
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const selectedIds = selectedRows.map((row) => row.original.id);
-    setDeletingCount(selectedIds.length);
+    setIsDeleting(true)
+    const selectedRows = table.getFilteredSelectedRowModel().rows
+    const selectedIds = selectedRows.map((row) => row.original.id)
+    setDeletingCount(selectedIds.length)
 
     for (const id of selectedIds) {
       try {
@@ -576,58 +521,52 @@ const OutgoingCalls = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ outgoingCallId: id }),
-        });
+        })
 
-        const result = await response.json();
+        const result = await response.json()
 
         if (!result.success) {
-          console.error(
-            `Failed to delete outgoing call with ID ${id}:`,
-            result.message
-          );
+          console.error(`Failed to delete outgoing call with ID ${id}:`, result.message)
         } else {
-          setDeletingCount((prev) => prev - 1);
+          setDeletingCount((prev) => prev - 1)
         }
       } catch (error) {
-        console.error(`Error deleting outgoing call with ID ${id}:`, error);
+        console.error(`Error deleting outgoing call with ID ${id}:`, error)
       }
     }
 
-    await fetchData();
-    setRowSelection({});
-    setIsDeleting(false);
-    setDeletingCount(0);
-  };
+    await fetchData()
+    setRowSelection({})
+    setIsDeleting(false)
+    setDeletingCount(0)
+  }
 
   // Filter handlers
   const handleDateChange = (year: string, month: string) => {
-    setSelectedYear(year);
-    setSelectedMonth(month);
+    setSelectedYear(year)
+    setSelectedMonth(month)
 
     if (year && year !== "all") {
-      table.getColumn("year")?.setFilterValue(Number(year)); // Convert year to number
+      table.getColumn("year")?.setFilterValue(Number(year)) // Convert year to number
     } else {
-      table.getColumn("year")?.setFilterValue(undefined);
+      table.getColumn("year")?.setFilterValue(undefined)
     }
 
     if (month && month !== "all") {
-      table.getColumn("monthName")?.setFilterValue(month);
+      table.getColumn("monthName")?.setFilterValue(month)
     } else {
-      table.getColumn("monthName")?.setFilterValue(undefined);
+      table.getColumn("monthName")?.setFilterValue(undefined)
     }
-  };
+  }
 
   const clearFilters = () => {
-    table.resetColumnFilters();
-    setSelectedYear("all");
-    setSelectedMonth("all");
-    setIsFilterOpen(false);
-  };
+    table.resetColumnFilters()
+    setSelectedYear("all")
+    setSelectedMonth("all")
+    setIsFilterOpen(false)
+  }
 
-  const activeFiltersCount =
-    columnFilters.length +
-    (selectedYear !== "all" ? 1 : 0) +
-    (selectedMonth !== "all" ? 1 : 0);
+  const activeFiltersCount = columnFilters.length + (selectedYear !== "all" ? 1 : 0) + (selectedMonth !== "all" ? 1 : 0)
 
   // Loading and error states
   if (loading) {
@@ -635,7 +574,7 @@ const OutgoingCalls = () => {
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -650,7 +589,7 @@ const OutgoingCalls = () => {
           </Button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -690,15 +629,10 @@ const OutgoingCalls = () => {
                       )}
                     </Button>
                   </SheetTrigger>
-                  <SheetContent
-                    side="left"
-                    className="w-[300px] sm:w-[400px] overflow-y-auto dark:text-white"
-                  >
+                  <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto dark:text-white">
                     <SheetHeader className="space-y-4">
                       <SheetTitle>Filters</SheetTitle>
-                      <SheetDescription>
-                        Apply filters to the outgoing calls data
-                      </SheetDescription>
+                      <SheetDescription>Apply filters to the outgoing calls data</SheetDescription>
                       <Separator />
                     </SheetHeader>
                     <div className="mt-8 space-y-6">
@@ -708,16 +642,8 @@ const OutgoingCalls = () => {
                         <Input
                           id="name-filter"
                           placeholder="Filter by name..."
-                          value={
-                            (table
-                              .getColumn("navn")
-                              ?.getFilterValue() as string) ?? ""
-                          }
-                          onChange={(event) =>
-                            table
-                              .getColumn("navn")
-                              ?.setFilterValue(event.target.value)
-                          }
+                          value={(table.getColumn("navn")?.getFilterValue() as string) ?? ""}
+                          onChange={(event) => table.getColumn("navn")?.setFilterValue(event.target.value)}
                         />
                       </div>
 
@@ -725,21 +651,13 @@ const OutgoingCalls = () => {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="year-filter">Year</Label>
-                          <Select
-                            value={selectedYear}
-                            onValueChange={(year) =>
-                              handleDateChange(year, selectedMonth)
-                            }
-                          >
+                          <Select value={selectedYear} onValueChange={(year) => handleDateChange(year, selectedMonth)}>
                             <SelectTrigger id="year-filter">
                               <SelectValue placeholder="Select year" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">All Years</SelectItem>
-                              {Array.from(
-                                { length: 21 },
-                                (_, i) => new Date().getFullYear() - 10 + i
-                              ).map((year) => (
+                              {Array.from({ length: 21 }, (_, i) => new Date().getFullYear() - 10 + i).map((year) => (
                                 <SelectItem key={year} value={year.toString()}>
                                   {year}
                                 </SelectItem>
@@ -752,9 +670,7 @@ const OutgoingCalls = () => {
                           <Label htmlFor="month-filter">Month</Label>
                           <Select
                             value={selectedMonth}
-                            onValueChange={(month) =>
-                              handleDateChange(selectedYear, month)
-                            }
+                            onValueChange={(month) => handleDateChange(selectedYear, month)}
                           >
                             <SelectTrigger id="month-filter">
                               <SelectValue placeholder="Select month" />
@@ -775,11 +691,7 @@ const OutgoingCalls = () => {
                       </div>
 
                       {activeFiltersCount > 0 && (
-                        <Button
-                          variant="outline"
-                          onClick={clearFilters}
-                          className="w-full mt-6"
-                        >
+                        <Button variant="outline" onClick={clearFilters} className="w-full mt-6">
                           Clear all filters
                         </Button>
                       )}
@@ -792,12 +704,7 @@ const OutgoingCalls = () => {
               </div>
               <div className="flex items-center space-x-2">
                 {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                  >
+                  <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
                     {isDeleting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -806,8 +713,7 @@ const OutgoingCalls = () => {
                     ) : (
                       <>
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete (
-                        {table.getFilteredSelectedRowModel().rows.length})
+                        Delete ({table.getFilteredSelectedRowModel().rows.length})
                       </>
                     )}
                   </Button>
@@ -818,22 +724,18 @@ const OutgoingCalls = () => {
                   onOpenChange={(open) => {
                     if (!open && isUploading) {
                       // If trying to close while uploading
-                      setIsBackgroundUploading(true);
+                      setIsBackgroundUploading(true)
                       toast({
                         title: "Upload Continuing",
                         description:
                           "Upload is running in the background. You can reopen this dialog to view progress.",
-                      });
+                      })
                     }
-                    setIsAddDialogOpen(open);
+                    setIsAddDialogOpen(open)
                   }}
                 >
                   <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      className="dark:text-white"
-                      variant="secondary"
-                    >
+                    <Button size="sm" className="dark:text-white" variant="secondary">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Outgoing Call
                     </Button>
@@ -841,23 +743,16 @@ const OutgoingCalls = () => {
                   <DialogContent className="sm:max-w-[425px] dark:text-white">
                     <DialogHeader>
                       <DialogTitle>Add Outgoing Call</DialogTitle>
-                      <DialogDescription>
-                        Create a new outgoing call entry or upload a CSV file
-                      </DialogDescription>
+                      <DialogDescription>Create a new outgoing call entry or upload a CSV file</DialogDescription>
                     </DialogHeader>
                     <Tabs defaultValue="add-new-entry" className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="add-new-entry">
-                          Add New Entry
-                        </TabsTrigger>
+                        <TabsTrigger value="add-new-entry">Add New Entry</TabsTrigger>
                         <TabsTrigger value="upload-csv">Upload CSV</TabsTrigger>
                       </TabsList>
                       <TabsContent value="add-new-entry">
                         <Form {...form}>
-                          <form
-                            onSubmit={form.handleSubmit(onSubmit)}
-                            className="space-y-4"
-                          >
+                          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                             <FormField
                               control={form.control}
                               name="navn"
@@ -865,10 +760,7 @@ const OutgoingCalls = () => {
                                 <FormItem>
                                   <FormLabel>Name</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      placeholder="Enter name"
-                                      {...field}
-                                    />
+                                    <Input placeholder="Enter name" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -881,11 +773,7 @@ const OutgoingCalls = () => {
                                 <FormItem>
                                   <FormLabel>Outgoing Calls</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      type="number"
-                                      placeholder="Enter number of outgoing calls"
-                                      {...field}
-                                    />
+                                    <Input type="number" placeholder="Enter number of outgoing calls" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -898,11 +786,7 @@ const OutgoingCalls = () => {
                                 <FormItem>
                                   <FormLabel>Regular Calls</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      type="number"
-                                      placeholder="Enter number of regular calls"
-                                      {...field}
-                                    />
+                                    <Input type="number" placeholder="Enter number of regular calls" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -915,11 +799,7 @@ const OutgoingCalls = () => {
                                 <FormItem>
                                   <FormLabel>Company Calls</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      type="number"
-                                      placeholder="Enter number of company calls"
-                                      {...field}
-                                    />
+                                    <Input type="number" placeholder="Enter number of company calls" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -932,11 +812,7 @@ const OutgoingCalls = () => {
                                 <FormItem>
                                   <FormLabel>Regular Call Time (min)</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      type="number"
-                                      placeholder="Enter regular call time in minutes"
-                                      {...field}
-                                    />
+                                    <Input type="number" placeholder="Enter regular call time in minutes" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -949,11 +825,7 @@ const OutgoingCalls = () => {
                                 <FormItem>
                                   <FormLabel>Company Call Time (min)</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      type="number"
-                                      placeholder="Enter company call time in minutes"
-                                      {...field}
-                                    />
+                                    <Input type="number" placeholder="Enter company call time in minutes" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -966,28 +838,20 @@ const OutgoingCalls = () => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>Year</FormLabel>
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      defaultValue={field.value}
-                                    >
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                       <FormControl>
                                         <SelectTrigger>
                                           <SelectValue placeholder="Select year" />
                                         </SelectTrigger>
                                       </FormControl>
                                       <SelectContent>
-                                        {Array.from(
-                                          { length: 21 },
-                                          (_, i) =>
-                                            new Date().getFullYear() - 10 + i
-                                        ).map((year) => (
-                                          <SelectItem
-                                            key={year}
-                                            value={year.toString()}
-                                          >
-                                            {year}
-                                          </SelectItem>
-                                        ))}
+                                        {Array.from({ length: 21 }, (_, i) => new Date().getFullYear() - 10 + i).map(
+                                          (year) => (
+                                            <SelectItem key={year} value={year.toString()}>
+                                              {year}
+                                            </SelectItem>
+                                          ),
+                                        )}
                                       </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -1000,10 +864,7 @@ const OutgoingCalls = () => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>Month</FormLabel>
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      defaultValue={field.value}
-                                    >
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                       <FormControl>
                                         <SelectTrigger>
                                           <SelectValue placeholder="Select month" />
@@ -1011,14 +872,8 @@ const OutgoingCalls = () => {
                                       </FormControl>
                                       <SelectContent>
                                         {Array.from({ length: 12 }, (_, i) => ({
-                                          value: format(
-                                            new Date(2000, i),
-                                            "MMMM"
-                                          ),
-                                          label: format(
-                                            new Date(2000, i),
-                                            "MMMM"
-                                          ),
+                                          value: format(new Date(2000, i), "MMMM"),
+                                          label: format(new Date(2000, i), "MMMM"),
                                         })).map(({ value, label }) => (
                                           <SelectItem key={value} value={value}>
                                             {label}
@@ -1034,10 +889,7 @@ const OutgoingCalls = () => {
 
                             {isUploading && (
                               <div className="space-y-2">
-                                <Progress
-                                  value={uploadProgress}
-                                  className="w-full"
-                                />
+                                <Progress value={uploadProgress} className="w-full" />
                                 <p className="text-sm text-muted-foreground">
                                   Uploading: {Math.round(uploadProgress)}%
                                 </p>
@@ -1049,18 +901,14 @@ const OutgoingCalls = () => {
                                 type="button"
                                 variant="outline"
                                 onClick={() => {
-                                  setIsAddDialogOpen(false);
-                                  form.reset();
+                                  setIsAddDialogOpen(false)
+                                  form.reset()
                                 }}
                                 disabled={isUploading}
                               >
                                 Cancel
                               </Button>
-                              <Button
-                                type="submit"
-                                className="dark:text-black"
-                                disabled={isUploading}
-                              >
+                              <Button type="submit" className="dark:text-black" disabled={isUploading}>
                                 Add Outgoing Call
                               </Button>
                             </div>
@@ -1069,20 +917,12 @@ const OutgoingCalls = () => {
                       </TabsContent>
                       <TabsContent value="upload-csv">
                         <div className="space-y-2">
-                          <FileUpload
-                            onChange={handleFileUpload}
-                            accept=".csv"
-                          />
+                          <FileUpload onChange={handleFileUpload} accept=".csv" />
                         </div>
                         {isUploading && (
                           <div className="space-y-2">
-                            <Progress
-                              value={uploadProgress}
-                              className="w-full"
-                            />
-                            <p className="text-sm text-muted-foreground">
-                              Uploading: {Math.round(uploadProgress)}%
-                            </p>
+                            <Progress value={uploadProgress} className="w-full" />
+                            <p className="text-sm text-muted-foreground">Uploading: {Math.round(uploadProgress)}%</p>
                           </div>
                         )}
                       </TabsContent>
@@ -1105,13 +945,11 @@ const OutgoingCalls = () => {
                             key={column.id}
                             className="capitalize"
                             checked={column.getIsVisible()}
-                            onCheckedChange={(value) =>
-                              column.toggleVisibility(!!value)
-                            }
+                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
                           >
                             {column.id}
                           </DropdownMenuCheckboxItem>
-                        );
+                        )
                       })}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -1121,17 +959,11 @@ const OutgoingCalls = () => {
             {/* Table */}
             {data.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 border rounded-md">
-                <h3 className="text-lg font-semibold">
-                  No Outgoing Calls Found
-                </h3>
+                <h3 className="text-lg font-semibold">No Outgoing Calls Found</h3>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Start by adding your first outgoing call using the &quot;Add
-                  Outgoing Call&quot; button above.
+                  Start by adding your first outgoing call using the &quot;Add Outgoing Call&quot; button above.
                 </p>
-                <Dialog
-                  open={isAddDialogOpen}
-                  onOpenChange={setIsAddDialogOpen}
-                >
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="mt-4 dark:text-black">
                       <Plus className="mr-2 h-4 w-4" />
@@ -1150,10 +982,7 @@ const OutgoingCalls = () => {
                           <TableHead key={header.id}>
                             {header.isPlaceholder
                               ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
+                              : flexRender(header.column.columnDef.header, header.getContext())}
                           </TableHead>
                         ))}
                       </TableRow>
@@ -1162,35 +991,22 @@ const OutgoingCalls = () => {
                   <TableBody>
                     {table.getRowModel().rows?.length ? (
                       table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          data-state={row.getIsSelected() && "selected"}
-                        >
+                        <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                           {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell
-                          colSpan={columns.length}
-                          className="h-24 text-center"
-                        >
+                        <TableCell colSpan={columns.length} className="h-24 text-center">
                           <div className="flex flex-col items-center gap-2">
                             <p className="text-sm text-muted-foreground">
                               The filters applied have returned no results
                             </p>
-                            <Button
-                              variant="outline"
-                              onClick={clearFilters}
-                              className="mt-2"
-                            >
+                            <Button variant="outline" onClick={clearFilters} className="mt-2">
                               Remove all filters
                             </Button>
                           </div>
@@ -1204,21 +1020,13 @@ const OutgoingCalls = () => {
 
             {/* Pagination */}
             <div className="sticky bottom-0 left-0 right-0 flex items-center justify-between py-4 bg-background border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                className="mr-4"
-                onClick={() => fetchData()}
-                disabled={isRefreshing}
-              >
-                <RefreshCcw
-                  className={`h-2 w-2 ${isRefreshing ? "animate-spin" : ""}`}
-                />
+              <Button variant="outline" size="sm" className="mr-4" onClick={() => fetchData()} disabled={isRefreshing}>
+                <RefreshCcw className={`h-2 w-2 ${isRefreshing ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
               <div className="flex-1 text-sm text-muted-foreground">
-                {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                {table.getFilteredRowModel().rows.length} row(s) selected
+                {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
+                selected
               </div>
               <div className="space-x-2">
                 <Button
@@ -1229,12 +1037,7 @@ const OutgoingCalls = () => {
                 >
                   Previous
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
+                <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
                   Next
                 </Button>
               </div>
@@ -1243,7 +1046,8 @@ const OutgoingCalls = () => {
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default OutgoingCalls;
+export default OutgoingCalls
+
