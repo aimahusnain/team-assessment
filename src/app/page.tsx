@@ -1,131 +1,180 @@
-"use client";
-
+import React from 'react';
+import { Card } from '@/components/ui/card';
 import {
-  Breadcrumb,
-  BreadcrumbItem,
-  BreadcrumbLink,
-  BreadcrumbList,
-} from "@/components/ui/breadcrumb";
-import { Separator } from "@/components/ui/separator";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import { motion } from "framer-motion";
-import { Building2, Network, User, Users } from "lucide-react";
-import Link from "next/link";
-
-import dashboardLinks from "@/lib/dashboard-links.json";
-
-const iconMap = {
-  User,
+  Bot,
+  SquareTerminal,
+  PieChart,
   Users,
   Building2,
-  Network,
-};
+  Building,
+  Activity,
+  TableProperties,
+  PhoneIncoming,
+  PhoneOutgoing,
+  Settings,
+  ArrowUpRight
+} from 'lucide-react';
+import Link from 'next/link';
 
-const container = {
-  hidden: { opacity: 0 },
-  show: {
-    opacity: 1,
-    transition: {
-      staggerChildren: 0.1
-    }
-  }
-};
+const GlowingBackground = () => (
+  <div className="fixed inset-0 -z-10 overflow-hidden">
+    <div className="absolute top-0 -left-4 w-72 h-72 bg-purple-500 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob" />
+    <div className="absolute top-0 -right-4 w-72 h-72 bg-blue-500 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob animation-delay-2000" />
+    <div className="absolute -bottom-8 left-20 w-72 h-72 bg-pink-500 rounded-full mix-blend-multiply filter blur-2xl opacity-20 animate-blob animation-delay-4000" />
+  </div>
+);
 
-const item = {
-  hidden: { opacity: 0, y: 20 },
-  show: { opacity: 1, y: 0 }
-};
+import { LucideIcon } from "lucide-react";
 
-export default function Home() {
+interface NavigationCardProps {
+  icon: LucideIcon;
+  title: string;
+  description: string;
+  href: string;
+  gradient: string;
+}
+
+const NavigationCard: React.FC<NavigationCardProps> = ({ icon: Icon, title, description, href, gradient }) => (
+  <Link href={href}>
+    <Card className={`group relative overflow-hidden backdrop-blur-sm bg-background/50 border-0 hover:shadow-2xl transition-all duration-300 h-full`}>
+      <div className={`absolute inset-0 opacity-0 group-hover:opacity-10 transition-opacity duration-300 ${gradient}`} />
+      <div className="p-6 relative z-10">
+        <div className="flex items-center justify-between mb-4">
+          <div className="p-3 rounded-xl bg-background/50 backdrop-blur-sm border border-border/50 group-hover:scale-110 transition-transform duration-300">
+            <Icon className="w-6 h-6 text-primary" />
+          </div>
+          <ArrowUpRight className="w-5 h-5 text-muted-foreground opacity-0 group-hover:opacity-100 transform translate-x-2 group-hover:translate-x-0 transition-all duration-300" />
+        </div>
+        <h3 className="font-semibold text-lg mb-2 group-hover:text-primary transition-colors duration-300">{title}</h3>
+        <p className="text-sm text-muted-foreground">{description}</p>
+      </div>
+    </Card>
+  </Link>
+);
+
+const DashboardPage = () => {
   return (
-    <div className="flex flex-col min-h-screen bg-white dark:bg-black">
-      <header className="sticky top-0 z-10 flex h-16 shrink-0 items-center gap-2 border-b border-zinc-200 dark:border-zinc-800 bg-white/80 dark:bg-black/80 px-4 backdrop-blur-sm transition-[width,height] ease-linear">
-        <SidebarTrigger className="-ml-1 text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors" />
-        <Separator orientation="vertical" className="mr-2 h-4 bg-zinc-200 dark:bg-zinc-800" />
-        <Breadcrumb>
-          <BreadcrumbList>
-            <BreadcrumbItem className="hidden md:block">
-              <BreadcrumbLink href="#" className="text-sm font-medium text-zinc-500 hover:text-zinc-900 dark:text-zinc-400 dark:hover:text-white transition-colors">
-                Dashboard
-              </BreadcrumbLink>
-            </BreadcrumbItem>
-          </BreadcrumbList>
-        </Breadcrumb>
-      </header>
+    <div className="min-h-screen bg-background/50 p-8">
+      <GlowingBackground />
+      
+      {/* Header */}
+      <div className="relative">
+        <div className="flex justify-between items-center mb-12">
+          <div>
+            <h1 className="text-4xl font-bold bg-clip-text text-transparent bg-gradient-to-r from-primary to-primary/50">
+              Team Assessment
+            </h1>
+            <p className="text-muted-foreground mt-2">Welcome to your dashboard overview</p>
+          </div>
+        </div>
+      </div>
 
-      <main className="flex-grow p-4 sm:p-6 md:p-8 lg:p-10 bg-gradient-to-b from-white to-zinc-50 dark:from-black dark:to-zinc-900">
-        <motion.h1
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5 }}
-          className="text-3xl sm:text-4xl font-extrabold tracking-tight text-zinc-900 dark:text-transparent dark:bg-clip-text dark:bg-gradient-to-r dark:from-emerald-400 dark:to-cyan-400 mb-2"
-        >
-          Welcome back
-        </motion.h1>
-        
-        <motion.p
-          initial={{ opacity: 0, y: -20 }}
-          animate={{ opacity: 1, y: 0 }}
-          transition={{ duration: 0.5, delay: 0.1 }}
-          className="text-lg text-zinc-500 dark:text-zinc-400 mb-8"
-        >
-          Select a category to manage your application
-        </motion.p>
+      {/* Main Content */}
+      <div className="space-y-12">
+        {/* Dashboard Section */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <Bot className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-2xl font-semibold">Analytics Dashboard</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <NavigationCard
+              icon={Users}
+              title="Individuals"
+              description="Track individual performance metrics"
+              href="/dashboard/individuals"
+              gradient="bg-gradient-to-br from-blue-500 to-purple-500"
+            />
+            <NavigationCard
+              icon={Users}
+              title="Teams"
+              description="Monitor team collaboration"
+              href="/dashboard/teams"
+              gradient="bg-gradient-to-br from-purple-500 to-pink-500"
+            />
+            <NavigationCard
+              icon={Building2}
+              title="Departments"
+              description="Department-wide insights"
+              href="/dashboard/departments"
+              gradient="bg-gradient-to-br from-pink-500 to-orange-500"
+            />
+            <NavigationCard
+              icon={Building}
+              title="Company"
+              description="Overall company metrics"
+              href="/dashboard/company"
+              gradient="bg-gradient-to-br from-orange-500 to-yellow-500"
+            />
+          </div>
+        </section>
 
-        <motion.div 
-          variants={container}
-          initial="hidden"
-          animate="show"
-          className="grid gap-4 sm:gap-6 grid-cols-1 lg:grid-cols-2 xl:grid-cols-4"
-        >
-          {dashboardLinks.links.map((link) => {
-            const Icon = iconMap[link.icon as keyof typeof iconMap];
-            return (
-              <motion.div
-                key={link.href}
-                variants={item}
-                className="group"
-              >
-                <Link href={link.href}>
-                  <div className="relative rounded-xl bg-gradient-to-br from-zinc-100 to-white dark:from-zinc-900 dark:to-zinc-800 p-[1px] transition-all duration-300 hover:-translate-y-1 shadow-sm hover:shadow-md dark:shadow-none">
-                    <div className="absolute inset-0 rounded-xl bg-gradient-to-br from-emerald-400/0 to-cyan-400/0 dark:from-emerald-400/20 dark:to-cyan-400/20 opacity-0 blur transition-opacity duration-300 group-hover:opacity-100" />
-                    
-                    <div className="relative rounded-xl bg-white dark:bg-zinc-900 p-6 transition-all duration-300">
-                      <div className="flex items-center gap-4 mb-4">
-                        <div className={`rounded-lg p-3 bg-zinc-50 dark:bg-zinc-800/50 transition-colors duration-300 group-hover:bg-zinc-100 dark:group-hover:bg-zinc-800`}>
-                          <Icon className={`h-6 w-6 text-zinc-500 group-hover:text-emerald-500 dark:text-emerald-400 dark:group-hover:text-cyan-400 transition-colors duration-300`} />
-                        </div>
-                        <h2 className="text-xl font-semibold text-zinc-900 dark:text-white">
-                          {link.title}
-                        </h2>
-                      </div>
+        {/* Data Entry Section */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <SquareTerminal className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-2xl font-semibold">Data Entry</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <NavigationCard
+              icon={TableProperties}
+              title="Activity Log"
+              description="Track all activities"
+              href="/data-entry/activity-log"
+              gradient="bg-gradient-to-br from-green-500 to-emerald-500"
+            />
+            <NavigationCard
+              icon={PhoneIncoming}
+              title="Incoming Calls"
+              description="Monitor incoming communications"
+              href="/data-entry/incoming-calls"
+              gradient="bg-gradient-to-br from-emerald-500 to-teal-500"
+            />
+            <NavigationCard
+              icon={PhoneOutgoing}
+              title="Outgoing Calls"
+              description="Track outbound communications"
+              href="/data-entry/outgoing-calls"
+              gradient="bg-gradient-to-br from-teal-500 to-cyan-500"
+            />
+            <NavigationCard
+              icon={Settings}
+              title="System Configuration"
+              description="Manage system settings"
+              href="/data-entry/inputs"
+              gradient="bg-gradient-to-br from-cyan-500 to-blue-500"
+            />
+          </div>
+        </section>
 
-                      <p className="text-zinc-500 dark:text-zinc-400 mb-4">{link.description}</p>
-
-                      <div className="flex items-center text-sm font-medium text-emerald-500 group-hover:text-emerald-600 dark:text-emerald-400 dark:group-hover:text-cyan-400 transition-all duration-300">
-                        Learn more
-                        <svg
-                          className="ml-2 h-4 w-4 transition-transform duration-300 group-hover:translate-x-1"
-                          fill="none"
-                          viewBox="0 0 24 24"
-                          stroke="currentColor"
-                        >
-                          <path
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                            strokeWidth={2}
-                            d="M9 5l7 7-7 7"
-                          />
-                        </svg>
-                      </div>
-                    </div>
-                  </div>
-                </Link>
-              </motion.div>
-            );
-          })}
-        </motion.div>
-      </main>
+        {/* Visualization Section */}
+        <section className="space-y-6">
+          <div className="flex items-center gap-3">
+            <div className="p-2 rounded-lg bg-primary/10">
+              <PieChart className="w-5 h-5 text-primary" />
+            </div>
+            <h2 className="text-2xl font-semibold">Visualization</h2>
+          </div>
+          
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
+            <NavigationCard
+              icon={Activity}
+              title="Top 10"
+              description="View top performers"
+              href="/top-10"
+              gradient="bg-gradient-to-br from-violet-500 to-purple-500"
+            />
+          </div>
+        </section>
+      </div>
     </div>
   );
-}
+};
+
+export default DashboardPage;
