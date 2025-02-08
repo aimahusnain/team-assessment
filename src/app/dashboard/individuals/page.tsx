@@ -149,9 +149,7 @@ const IndividualsDashboard = () => {
     },
     {
       accessorKey: "totalCallMinutes",
-      header: () => (
-        <div className="text-center">Total Call Minutes</div>
-      ),
+      header: () => <div className="text-center">Total Call Minutes</div>,
       cell: ({ row }) => (
         <div className="text-center">
           {formatValue(row.getValue("totalCallMinutes"))}
@@ -471,14 +469,19 @@ const IndividualsDashboard = () => {
                   ))}
                 </TableHeader>
                 <TableBody>
-                  {loading ? (
+                  {isRefreshing ? (
                     <TableRow>
                       <TableCell
                         colSpan={columns.length}
-                        className="h-24 text-center relative"
+                        className="h-96 text-center"
                       >
-                        <div className="absolute inset-0 flex items-center justify-center bg-background/60">
-                          <Loader2 className="h-8 w-8 animate-spin" />
+                        <div className="flex flex-col items-center justify-center gap-2">
+                          <div className="animate-spin">
+                            <Loader2 className="h-16 w-16 animate-pulse text-primary" />
+                          </div>
+                          <p className="text-lg text-muted-foreground animate-pulse">
+                            Loading data...
+                          </p>
                         </div>
                       </TableCell>
                     </TableRow>
@@ -499,7 +502,7 @@ const IndividualsDashboard = () => {
                     <TableRow>
                       <TableCell
                         colSpan={columns.length}
-                        className="h-24 text-center"
+                        className="h-96 text-center"
                       >
                         No results found
                       </TableCell>

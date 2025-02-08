@@ -1,4 +1,3 @@
-// api/merged-names/router.ts
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -51,7 +50,8 @@ const formatRatio = (num: number): string => {
 // Enhanced name normalization function
 const normalizeAndTrim = (str: string | null | undefined): string => {
   if (!str) return "";
-  // Remove leading/trailing spaces and replace multiple spaces with single space
+
+  // Trim leading and trailing spaces, then replace multiple spaces with a single space
   return str.trim().replace(/\s+/g, " ");
 };
 
@@ -191,15 +191,46 @@ const getScoreForValue = (
   return matchedLevel || { level: 1, score: "-" };
 };
 
+
 export async function GET(request: Request) {
   try {
-    // Get query parameters
     const url = new URL(request.url);
     const month = url.searchParams.get("month");
     const year = parseInt(
       url.searchParams.get("year") || new Date().getFullYear().toString()
     );
 
+    const dataExists = await Promise.all([
+      prisma.activityLog.count({
+        where: { ...(month && { monthName: month }), year },
+      }),
+      prisma.incomingCalls.count({
+        where: { ...(month && { monthName: month }), year },
+      }),
+      prisma.outgoingCalls.count({
+        where: { ...(month && { monthName: month }), year },
+      }),
+    ]);
+    
+    if (dataExists.every((count) => count === 0)) {
+      return NextResponse.json(
+        { error: "No data found for the specified month and year." },
+        { status: 404 }
+      );
+    }
+    
+
+    // Get unique names with their team and department without filtering
+    const allNamesWithDetails = await prisma.activityLog.findMany({
+      distinct: ["name"],
+      select: {
+        name: true,
+        team: true,
+        department: true,
+      },
+    });
+
+    // Rest of data with month/year filters
     const [activityLogs, incomingCalls, outgoingCalls] = await Promise.all([
       prisma.activityLog.findMany({
         where: {
@@ -208,8 +239,6 @@ export async function GET(request: Request) {
         },
         select: {
           name: true,
-          team: true,
-          department: true,
           verdi: true,
           activity: true,
           monthName: true,
@@ -251,25 +280,31 @@ export async function GET(request: Request) {
         calculateRBSLScore(),
       ]);
 
+    // Create nameDetailsMap from unfiltered data
     const nameDetailsMap = new Map<
       string,
       { team: string; department: string }
     >();
+    allNamesWithDetails.forEach((detail) => {
+      const normalizedName = normalizeAndTrim(detail.name);
+      if (normalizedName) {
+        nameDetailsMap.set(normalizedName, {
+          team: detail.team || "",
+          department: detail.department || "",
+        });
+      }
+    });
+
     const incomingMinutesMap = new Map<string, number>();
     const outgoingMinutesMap = new Map<string, number>();
     const outgoingCallsMap = new Map<string, number>();
     const totalSalesMap = new Map<string, number>();
     const livSalesMap = new Map<string, number>();
 
-    // Process activity logs with normalized names
+    // Process activity logs for sales calculations
     activityLogs.forEach((log) => {
       const normalizedName = normalizeAndTrim(log.name);
       if (normalizedName) {
-        nameDetailsMap.set(normalizedName, {
-          team: log.team || "",
-          department: log.department || "",
-        });
-
         const currentSales = totalSalesMap.get(normalizedName) || 0;
         totalSalesMap.set(normalizedName, currentSales + log.verdi);
 
@@ -280,7 +315,7 @@ export async function GET(request: Request) {
       }
     });
 
-    // Process incoming calls with normalized names
+    // Process incoming calls
     incomingCalls.forEach((call) => {
       const normalizedName = normalizeAndTrim(call.navn);
       if (normalizedName) {
@@ -292,7 +327,7 @@ export async function GET(request: Request) {
       }
     });
 
-    // Process outgoing calls with normalized names
+    // Process outgoing calls
     outgoingCalls.forEach((call) => {
       const normalizedName = normalizeAndTrim(call.navn);
       if (normalizedName) {
@@ -310,7 +345,7 @@ export async function GET(request: Request) {
       }
     });
 
-    // Create a unified set of normalized names
+    // Create unified set of names from all sources
     const uniqueNames = new Set([
       ...Array.from(nameDetailsMap.keys()),
       ...Array.from(incomingMinutesMap.keys()),
