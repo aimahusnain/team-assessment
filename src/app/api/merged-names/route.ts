@@ -37,8 +37,9 @@ const formatNumber = (num: number): string => {
 
 const formatDecimal = (num: number): string => {
   return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 2,
-    maximumFractionDigits: 2,
+    minimumFractionDigits: 1,
+    maximumFractionDigits: 1,
+    style: 'percent'
   }).format(num);
 };
 
@@ -251,7 +252,7 @@ export async function GET() {
         const totalOutgoingCalls = outgoingCallsMap.get(name) || 0;
         const callEfficiency =
           totalCallMinutes > 0
-            ? Number((totalOutgoingCalls / totalCallMinutes).toFixed(2))
+            ? Number((totalOutgoingCalls / totalCallMinutes))  // Removed .toFixed(2) since formatDecimal will handle formatting
             : 0;
         const totalSales = totalSalesMap.get(name) || 0;
         const livSales = livSalesMap.get(name) || 0;
