@@ -1,5 +1,6 @@
 "use client";
 
+import MonthSelector from "@/components/month-selector";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -61,19 +62,17 @@ type IndividualData = {
   name: string;
   team: string | null;
   department: string | null;
-  totalCallMinutes: number;
-  tcmScore: { level: number; score: number | string };
-  callEfficiency: number;
-  ceScore: { level: number; score: number | string };
-  totalSales: number;
-  tsScore: { level: number; score: number | string };
-  livRatio: number;
-  rbslScore: { level: number; score: number | string };
-};
-
-// Helper function to format numeric values
-const formatValue = (value: number) => {
-  return value == 0 ? "-" : value;
+  monthData: {
+    month: string;
+    totalCallMinutes: number;
+    tcmScore: { level: number; score: number | string };
+    callEfficiency: number;
+    ceScore: { level: number; score: number | string };
+    totalSales: number;
+    tsScore: { level: number; score: number | string };
+    livRatio: number;
+    rbslScore: { level: number; score: number | string };
+  }[];
 };
 
 const IndividualsDashboard = () => {
@@ -85,171 +84,213 @@ const IndividualsDashboard = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear()
   );
 
-  const months = [
-    "January",
-    "February",
-    "March",
-    "April",
-    "May",
-    "June",
-    "July",
-    "August",
-    "September",
-    "October",
-    "November",
-    "December",
-  ];
+  console.log(error);
 
   const years = Array.from(
     { length: 5 },
     (_, i) => new Date().getFullYear() - i
   );
 
-  const columns: ColumnDef<IndividualData>[] = [
-    {
-      accessorKey: "name",
-      header: ({ column }) => (
-        <Button
-          variant="ghost"
-          onClick={() => {
-            const currentSort = column.getIsSorted();
-            if (currentSort === false) {
-              column.toggleSorting(false);
-            } else if (currentSort === "asc") {
-              column.toggleSorting(true);
-            } else {
-              column.clearSorting();
-            }
-          }}
-          className="p-0 hover:bg-transparent"
-        >
-          Name
-          {column.getIsSorted() === "asc" ? (
-            <ChevronUp className="ml-2 h-4 w-4" />
-          ) : column.getIsSorted() === "desc" ? (
-            <ChevronDown className="ml-2 h-4 w-4" />
-          ) : (
-            <ArrowUpDown className="ml-2 h-4 w-4" />
-          )}
-        </Button>
-      ),
-    },
-    {
-      accessorKey: "team",
-      header: "Team",
-    },
-    {
-      accessorKey: "department",
-      header: "Department",
-    },
-    {
-      accessorKey: "totalCallMinutes",
-      header: () => <div className="text-center">Total Call Minutes</div>,
-      cell: ({ row }) => (
-        <div className="text-center">
-          {formatValue(row.getValue("totalCallMinutes"))}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "tcmScore",
-      header: () => <div className="text-center">Score</div>,
-      cell: ({ row }) => {
-        const score = row.getValue("tcmScore") as {
-          level: number;
-          score: number | string;
-        };
-        return <div className="text-center">{score.level || "-"}</div>;
+  const getColumns = useCallback((): ColumnDef<IndividualData>[] => {
+    const baseColumns: ColumnDef<IndividualData>[] = [
+      {
+        id: "name",
+        accessorKey: "name",
+        header: ({ column }) => {
+          return (
+            <Button
+              variant="ghost"
+              onClick={() => {
+                const currentSort = column.getIsSorted();
+                if (currentSort === false) {
+                  column.toggleSorting(false);
+                } else if (currentSort === "asc") {
+                  column.toggleSorting(true);
+                } else {
+                  column.clearSorting();
+                }
+              }}
+              className="p-0 hover:bg-transparent"
+            >
+              Name
+              {column.getIsSorted() === "asc" ? (
+                <ChevronUp className="ml-2 h-4 w-4" />
+              ) : column.getIsSorted() === "desc" ? (
+                <ChevronDown className="ml-2 h-4 w-4" />
+              ) : (
+                <ArrowUpDown className="ml-2 h-4 w-4" />
+              )}
+            </Button>
+          );
+        },
+        cell: ({ row }) => (
+          <div className="font-medium">{row.getValue("name")}</div>
+        ),
       },
-    },
-    {
-      accessorKey: "callEfficiency",
-      header: () => <div className="text-center">Call Efficiency</div>,
-      cell: ({ row }) => (
-        <div className="text-center">
-          {formatValue(row.getValue("callEfficiency"))}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "ceScore",
-      header: () => <div className="text-center">Score</div>,
-      cell: ({ row }) => {
-        const score = row.getValue("ceScore") as {
-          level: number;
-          score: number | string;
-        };
-        return <div className="text-center">{score.level || "-"}</div>;
+      {
+        id: "team",
+        accessorKey: "team",
+        header: "Team",
+        cell: ({ row }) => row.getValue("team"),
       },
-    },
-    {
-      accessorKey: "totalSales",
-      header: () => <div className="text-center">Total Sales</div>,
-      cell: ({ row }) => (
-        <div className="text-center">
-          {formatValue(row.getValue("totalSales"))}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "tsScore",
-      header: () => <div className="text-center">Score</div>,
-      cell: ({ row }) => {
-        const score = row.getValue("tsScore") as {
-          level: number;
-          score: number | string;
-        };
-        return <div className="text-center">{score.level || "-"}</div>;
+      {
+        id: "department",
+        accessorKey: "department",
+        header: "Department",
+        cell: ({ row }) => row.getValue("department"),
       },
-    },
-    {
-      accessorKey: "livRatio",
-      header: () => <div className="text-center">LIV Ratio</div>,
-      cell: ({ row }) => (
-        <div className="text-center">
-          {formatValue(row.getValue("livRatio"))}
-        </div>
-      ),
-    },
-    {
-      accessorKey: "rbslScore",
-      header: () => <div className="text-center">Score</div>,
-      cell: ({ row }) => {
-        const score = row.getValue("rbslScore") as {
-          level: number;
-          score: number | string;
-        };
-        return <div className="text-center">{score.level}</div>;
-      },
-    },
-  ];
+    ];
 
+    const monthColumns: ColumnDef<IndividualData>[] = selectedMonths.map(
+      (month) => ({
+        id: month,
+        header: month,
+        columns: [
+          {
+            id: `${month}-totalCallMinutes`,
+            accessorFn: (row: IndividualData) => {
+              const monthData = row.monthData.find((md) => md.month === month);
+              return monthData?.totalCallMinutes ?? 0;
+            },
+            header: () => <div className="text-center">Total Call Minutes</div>,
+            cell: ({ getValue }: { getValue: () => number }) => (
+              <div className="text-center">{formatValue(getValue())}</div>
+            ),
+          },
+          {
+            id: `${month}-tcmScore`,
+            accessorFn: (row: IndividualData) => {
+              const monthData = row.monthData.find((md) => md.month === month);
+              return monthData?.tcmScore.level ?? 0;
+            },
+            header: () => <div className="text-center">TCM Score</div>,
+            cell: ({ getValue }: { getValue: () => number }) => (
+              <div className="text-center">{getValue() || "-"}</div>
+            ),
+          },
+          {
+            id: `${month}-callEfficiency`,
+            accessorFn: (row: IndividualData) => {
+              const monthData = row.monthData.find((md) => md.month === month);
+              return monthData?.callEfficiency ?? 0;
+            },
+            header: () => <div className="text-center">Call Efficiency</div>,
+            cell: ({ getValue }: { getValue: () => number }) => (
+              <div className="text-center">{formatPercentage(getValue())}</div>
+            ),
+          },
+          {
+            id: `${month}-ceScore`,
+            accessorFn: (row: IndividualData) => {
+              const monthData = row.monthData.find((md) => md.month === month);
+              return monthData?.ceScore.level ?? 0;
+            },
+            header: () => <div className="text-center">CE Score</div>,
+            cell: ({ getValue }: { getValue: () => number }) => (
+              <div className="text-center">{getValue() || "-"}</div>
+            ),
+          },
+          {
+            id: `${month}-totalSales`,
+            accessorFn: (row: IndividualData) => {
+              const monthData = row.monthData.find((md) => md.month === month);
+              return monthData?.totalSales ?? 0;
+            },
+            header: () => <div className="text-center">Total Sales</div>,
+            cell: ({ getValue }: { getValue: () => number }) => (
+              <div className="text-center">{formatValue(getValue())}</div>
+            ),
+          },
+          {
+            id: `${month}-tsScore`,
+            accessorFn: (row: IndividualData) => {
+              const monthData = row.monthData.find((md) => md.month === month);
+              return monthData?.tsScore.level ?? 0;
+            },
+            header: () => <div className="text-center">TS Score</div>,
+            cell: ({ getValue }: { getValue: () => number }) => (
+              <div className="text-center">{getValue() || "-"}</div>
+            ),
+          },
+          {
+            id: `${month}-livRatio`,
+            accessorFn: (row: IndividualData) => {
+              const monthData = row.monthData.find((md) => md.month === month);
+              return monthData?.livRatio ?? 0;
+            },
+            header: () => <div className="text-center">LIV Ratio</div>,
+            cell: ({ getValue }: { getValue: () => number }) => (
+              <div className="text-center">{formatPercentage(getValue())}</div>
+            ),
+          },
+          {
+            id: `${month}-rbslScore`,
+            accessorFn: (row: IndividualData) => {
+              const monthData = row.monthData.find((md) => md.month === month);
+              return monthData?.rbslScore.level ?? 0;
+            },
+            header: () => <div className="text-center">RBSL Score</div>,
+            cell: ({ getValue }: { getValue: () => number }) => (
+              <div className="text-center">{getValue() || "-"}</div>
+            ),
+          },
+        ],
+      })
+    );
+
+    return [...baseColumns, ...monthColumns];
+  }, [selectedMonths]);
+
+  // Update the fetchData function:
   const fetchData = useCallback(async () => {
     try {
       setIsRefreshing(true);
       const params = new URLSearchParams();
-      if (selectedMonth) params.append("month", selectedMonth);
+      selectedMonths.forEach((month) => params.append("months", month));
       params.append("year", selectedYear.toString());
 
       const response = await fetch(`/api/merged-names?${params.toString()}`);
       const result = await response.json();
-      if (result.names) {
-        setData(result.names);
-        setError(null);
+
+      if (!response.ok) {
+        throw new Error(result.error || "Failed to fetch data");
       }
+
+      const transformedData = transformApiResponse(result.names);
+      setData(transformedData);
+      setError(null);
     } catch (err) {
       console.error(err);
-      setError("An error occurred while fetching data");
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching data"
+      );
     } finally {
       setIsRefreshing(false);
       setLoading(false);
     }
-  }, [selectedMonth, selectedYear]);
+  }, [selectedMonths, selectedYear]);
+
+  // Also update the formatValue and formatPercentage functions:
+  const formatValue = (value: number) => {
+    if (value === 0) return "-";
+    return new Intl.NumberFormat("en-US").format(value);
+  };
+
+  const formatPercentage = (value: number) => {
+    if (value === 0) return "-";
+    return new Intl.NumberFormat("en-US", {
+      style: "percent",
+      minimumFractionDigits: 1,
+      maximumFractionDigits: 1,
+    }).format(value);
+  };
 
   useEffect(() => {
     fetchData();
@@ -257,7 +298,7 @@ const IndividualsDashboard = () => {
 
   const table = useReactTable({
     data,
-    columns,
+    columns: getColumns(),
     onSortingChange: setSorting,
     onColumnFiltersChange: setColumnFilters,
     getCoreRowModel: getCoreRowModel(),
@@ -285,19 +326,55 @@ const IndividualsDashboard = () => {
     );
   }
 
-  if (error) {
-    return (
-      <div className="flex min-h-[400px] items-center justify-center p-4 dark:text-white">
-        <div className="text-center">
-          <h3 className="mt-4 text-lg font-semibold">Error Loading Data</h3>
-          <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-          <Button onClick={() => fetchData()} className="mt-4 dark:text-black">
-            Try Again
-          </Button>
-        </div>
-      </div>
-    );
+  // First, modify the transformApiResponse function in IndividualsDashboard:
+  interface ApiResponseItem {
+    name: string;
+    team: string | null;
+    department: string | null;
+    month: string;
+    totalCallMinutes: string;
+    tcmScore: { level: number; score: number | string };
+    callEfficiency: string;
+    ceScore: { level: number; score: number | string };
+    totalSales: string;
+    tsScore: { level: number; score: number | string };
+    livRatio: string;
+    rbslScore: { level: number; score: number | string };
   }
+
+  const transformApiResponse = (apiData: ApiResponseItem[]): IndividualData[] => {
+    // Create a map to group data by name
+    const dataMap = new Map<string, IndividualData>();
+
+    apiData.forEach((item) => {
+      const existingEntry = dataMap.get(item.name);
+
+      const monthData = {
+        month: item.month, // Now using the month from API response
+        totalCallMinutes: parseInt(item.totalCallMinutes.replace(/,/g, "")),
+        tcmScore: item.tcmScore,
+        callEfficiency: parseFloat(item.callEfficiency) / 100,
+        ceScore: item.ceScore,
+        totalSales: parseInt(item.totalSales.replace(/,/g, "")),
+        tsScore: item.tsScore,
+        livRatio: parseFloat(item.livRatio) / 100,
+        rbslScore: item.rbslScore,
+      };
+
+      if (existingEntry) {
+        existingEntry.monthData.push(monthData);
+      } else {
+        dataMap.set(item.name, {
+          name: item.name,
+          team: item.team,
+          department: item.department,
+          monthData: [monthData],
+        });
+      }
+    });
+
+    return Array.from(dataMap.values());
+  };
 
   return (
     <>
@@ -360,18 +437,11 @@ const IndividualsDashboard = () => {
                 </Sheet>
 
                 <div className="flex items-center gap-2">
-                  <select
-                    className="rounded-md border px-3 py-2 text-sm"
-                    value={selectedMonth}
-                    onChange={(e) => setSelectedMonth(e.target.value)}
-                  >
-                    <option value="">All Months</option>
-                    {months.map((month) => (
-                      <option key={month} value={month}>
-                        {month}
-                      </option>
-                    ))}
-                  </select>
+                  <MonthSelector
+                    selectedMonths={selectedMonths}
+                    onChange={setSelectedMonths}
+                    disabled={isRefreshing}
+                  />
 
                   <select
                     className="rounded-md border px-3 py-2 text-sm"
@@ -388,7 +458,8 @@ const IndividualsDashboard = () => {
 
                 <span className="text-sm text-muted-foreground">
                   {table.getFilteredRowModel().rows.length} total individuals
-                  {selectedMonth && ` for ${selectedMonth} ${selectedYear}`}
+                  {selectedMonths.length > 0 &&
+                    ` for ${selectedMonths.join(", ")} ${selectedYear}`}
                 </span>
               </div>
 
@@ -407,20 +478,19 @@ const IndividualsDashboard = () => {
                   Refresh
                 </Button>
 
-                {/* Add a clear filters button */}
-                {(selectedMonth ||
-                  selectedYear !== new Date().getFullYear()) && (
+                {selectedMonths.length > 0 && (
                   <Button
                     variant="outline"
                     size="sm"
                     onClick={() => {
-                      setSelectedMonth("");
+                      setSelectedMonths([]);
                       setSelectedYear(new Date().getFullYear());
                     }}
                   >
                     Clear Filters
                   </Button>
                 )}
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -450,7 +520,7 @@ const IndividualsDashboard = () => {
               </div>
             </div>
 
-            <div className="rounded-md border">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
                 <TableHeader>
                   {table.getHeaderGroups().map((headerGroup) => (
@@ -472,7 +542,7 @@ const IndividualsDashboard = () => {
                   {isRefreshing ? (
                     <TableRow>
                       <TableCell
-                        colSpan={columns.length}
+                        colSpan={table.getAllColumns().length}
                         className="h-96 text-center"
                       >
                         <div className="flex flex-col items-center justify-center gap-2">
@@ -501,7 +571,7 @@ const IndividualsDashboard = () => {
                   ) : (
                     <TableRow>
                       <TableCell
-                        colSpan={columns.length}
+                        colSpan={table.getAllColumns().length}
                         className="h-96 text-center"
                       >
                         No results found
@@ -513,7 +583,10 @@ const IndividualsDashboard = () => {
             </div>
 
             <div className="sticky bottom-0 left-0 right-0 flex items-center justify-between py-4 bg-background border-t">
-              <div></div>
+              <div className="flex-1 text-sm text-muted-foreground">
+                {table.getFilteredRowModel().rows.length} of{" "}
+                {table.getCoreRowModel().rows.length} row(s) shown.
+              </div>
               <div className="flex items-center justify-end space-x-2">
                 <Button
                   variant="outline"
