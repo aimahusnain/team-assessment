@@ -1,3 +1,4 @@
+// api/merged-names/router.ts
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
 
@@ -39,7 +40,7 @@ const formatDecimal = (num: number): string => {
   return new Intl.NumberFormat("en-US", {
     minimumFractionDigits: 1,
     maximumFractionDigits: 1,
-    style: 'percent'
+    style: "percent",
   }).format(num);
 };
 
@@ -47,8 +48,11 @@ const formatRatio = (num: number): string => {
   return (num * 100).toFixed(1) + "%";
 };
 
-const safeTrim = (str: string | null | undefined): string => {
-  return (str || "").trim();
+// Enhanced name normalization function
+const normalizeAndTrim = (str: string | null | undefined): string => {
+  if (!str) return "";
+  // Remove leading/trailing spaces and replace multiple spaces with single space
+  return str.trim().replace(/\s+/g, " ");
 };
 
 const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
@@ -75,8 +79,12 @@ const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
   const inputs = await prisma.inputs.findFirst();
   if (!inputs) return null;
 
-  const benchmark = parseFloat(inputs.individual_score_ce_benchmark || "0");
-  const interval = parseFloat(inputs.individual_score_ce_interval || "0");
+  const benchmark = Number.parseFloat(
+    inputs.individual_score_ce_benchmark || "0"
+  );
+  const interval = Number.parseFloat(
+    inputs.individual_score_ce_interval || "0"
+  );
 
   return {
     benchmark,
@@ -117,18 +125,29 @@ const calculateRBSLScore = async (): Promise<ScoreMatrix | null> => {
   const inputs = await prisma.inputs.findFirst();
   if (!inputs) return null;
 
-  const benchmark = parseFloat(inputs.individual_score_rbsl_benchmark || "0");
-  const interval = parseFloat(inputs.individual_score_rbsl_interval || "0");
+  const benchmark = Number.parseFloat(
+    inputs.individual_score_rbsl_benchmark || "0"
+  );
+  const interval = Number.parseFloat(
+    inputs.individual_score_rbsl_interval || "0"
+  );
 
   return {
     benchmark,
     interval,
     levels: Array.from({ length: 10 }, (_, i) => {
       const level = 10 - i;
-      if (level === 1) return { level, score: "-" };
-      const steps = level - 5;
-      const score = benchmark + steps * interval;
-      return { level, score };
+      if (level === 10) {
+        return { level, score: benchmark + 5 * interval };
+      } else if (level > 5) {
+        return { level, score: benchmark + (level - 5) * interval };
+      } else if (level === 5) {
+        return { level, score: benchmark };
+      } else if (level === 1) {
+        return { level, score: 0 };
+      } else {
+        return { level, score: benchmark - (5 - level) * interval };
+      }
     }),
   };
 };
@@ -136,9 +155,26 @@ const calculateRBSLScore = async (): Promise<ScoreMatrix | null> => {
 const getScoreForValue = (
   value: number,
   scoreMatrix: ScoreMatrix | null,
-  isDescending = true
+  isDescending = true,
+  isRBSL = false
 ): ScoreLevel => {
   if (!scoreMatrix) return { level: 1, score: "-" };
+
+  if (isRBSL) {
+    const valueAsPercent = value * 100;
+    const sortedLevels = scoreMatrix.levels
+      .filter(({ score }) => score !== "-")
+      .sort((a, b) => {
+        const aScore = Number(a.score);
+        const bScore = Number(b.score);
+        return bScore - aScore;
+      });
+
+    const matchedLevel = sortedLevels.find(
+      ({ score }) => valueAsPercent >= Number(score)
+    );
+    return matchedLevel || { level: 1, score: "0" };
+  }
 
   const sortedLevels = scoreMatrix.levels
     .filter(({ score }) => score !== "-")
@@ -155,26 +191,61 @@ const getScoreForValue = (
   return matchedLevel || { level: 1, score: "-" };
 };
 
-export async function GET() {
+// Add these interface definitions at the top
+interface QueryParams {
+  month?: string;
+  year?: number;
+}
+
+export async function GET(request: Request) {
   try {
-    const [activityLogs, incomingCalls, outgoingCalls] = await Promise.all([
-      prisma.activityLog.findMany({
-        select: {
-          name: true,
-          team: true,
-          department: true,
-          verdi: true,
-          activity: true,
-        },
-      }),
-      prisma.incomingCalls.findMany({
-        select: { navn: true, min: true },
-        distinct: ["navn"],
-      }),
-      prisma.outgoingCalls.findMany({
-        select: { navn: true, outgoing: true, regular_call_time_min: true },
-      }),
-    ]);
+        // Get query parameters
+        const url = new URL(request.url);
+        const month = url.searchParams.get('month');
+        const year = parseInt(url.searchParams.get('year') || new Date().getFullYear().toString());
+    
+        const [activityLogs, incomingCalls, outgoingCalls] = await Promise.all([
+          prisma.activityLog.findMany({
+            where: {
+              ...(month && { monthName: month }),
+              year: year
+            },
+            select: {
+              name: true,
+              team: true,
+              department: true,
+              verdi: true,
+              activity: true,
+              monthName: true,
+              year: true,
+            },
+          }),
+          prisma.incomingCalls.findMany({
+            where: {
+              ...(month && { monthName: month }),
+              year: year
+            },
+            select: { 
+              navn: true, 
+              min: true,
+              monthName: true,
+              year: true,
+            },
+          }),
+          prisma.outgoingCalls.findMany({
+            where: {
+              ...(month && { monthName: month }),
+              year: year
+            },
+            select: { 
+              navn: true, 
+              outgoing: true, 
+              regular_call_time_min: true,
+              monthName: true,
+              year: true,
+            },
+          }),
+        ]);
 
     const [tcmScoreMatrix, ceScoreMatrix, tsScoreMatrix, rbslScoreMatrix] =
       await Promise.all([
@@ -194,55 +265,63 @@ export async function GET() {
     const totalSalesMap = new Map<string, number>();
     const livSalesMap = new Map<string, number>();
 
+    // Process activity logs with normalized names
     activityLogs.forEach((log) => {
-      const trimmedName = safeTrim(log.name);
-      if (trimmedName) {
-        nameDetailsMap.set(trimmedName, {
-          team: log.team,
-          department: log.department,
+      const normalizedName = normalizeAndTrim(log.name);
+      if (normalizedName) {
+        nameDetailsMap.set(normalizedName, {
+          team: log.team || "",
+          department: log.department || "",
         });
 
-        const currentSales = totalSalesMap.get(trimmedName) || 0;
-        totalSalesMap.set(trimmedName, currentSales + log.verdi);
+        const currentSales = totalSalesMap.get(normalizedName) || 0;
+        totalSalesMap.set(normalizedName, currentSales + log.verdi);
 
         if (log.activity === "2. liv") {
-          const currentLivSales = livSalesMap.get(trimmedName) || 0;
-          livSalesMap.set(trimmedName, currentLivSales + log.verdi);
+          const currentLivSales = livSalesMap.get(normalizedName) || 0;
+          livSalesMap.set(normalizedName, currentLivSales + log.verdi);
         }
       }
     });
 
+    // Process incoming calls with normalized names
     incomingCalls.forEach((call) => {
-      const trimmedName = safeTrim(call.navn);
-      if (trimmedName) {
-        incomingMinutesMap.set(trimmedName, call.min || 0);
+      const normalizedName = normalizeAndTrim(call.navn);
+      if (normalizedName) {
+        const currentMinutes = incomingMinutesMap.get(normalizedName) || 0;
+        incomingMinutesMap.set(
+          normalizedName,
+          currentMinutes + (call.min || 0)
+        );
       }
     });
 
+    // Process outgoing calls with normalized names
     outgoingCalls.forEach((call) => {
-      const trimmedName = safeTrim(call.navn);
-      if (trimmedName) {
-        const currentMinutes = outgoingMinutesMap.get(trimmedName) || 0;
-        const currentCalls = outgoingCallsMap.get(trimmedName) || 0;
+      const normalizedName = normalizeAndTrim(call.navn);
+      if (normalizedName) {
+        const currentMinutes = outgoingMinutesMap.get(normalizedName) || 0;
+        const currentCalls = outgoingCallsMap.get(normalizedName) || 0;
 
         outgoingMinutesMap.set(
-          trimmedName,
-          currentMinutes + (parseInt(call.regular_call_time_min) || 0)
+          normalizedName,
+          currentMinutes + (Number.parseInt(call.regular_call_time_min) || 0)
         );
         outgoingCallsMap.set(
-          trimmedName,
-          currentCalls + (parseInt(call.outgoing) || 0)
+          normalizedName,
+          currentCalls + (Number.parseInt(call.outgoing) || 0)
         );
       }
     });
 
-    const allNameDetails: NameDetails[] = [
-      ...new Set([
-        ...activityLogs.map((log) => safeTrim(log.name)),
-        ...incomingCalls.map((call) => safeTrim(call.navn)),
-        ...outgoingCalls.map((call) => safeTrim(call.navn)),
-      ]),
-    ]
+    // Create a unified set of normalized names
+    const uniqueNames = new Set([
+      ...Array.from(nameDetailsMap.keys()),
+      ...Array.from(incomingMinutesMap.keys()),
+      ...Array.from(outgoingMinutesMap.keys()),
+    ]);
+
+    const allNameDetails: NameDetails[] = Array.from(uniqueNames)
       .filter(Boolean)
       .map((name) => {
         const details = nameDetailsMap.get(name);
@@ -252,7 +331,7 @@ export async function GET() {
         const totalOutgoingCalls = outgoingCallsMap.get(name) || 0;
         const callEfficiency =
           totalCallMinutes > 0
-            ? Number((totalOutgoingCalls / totalCallMinutes))  // Removed .toFixed(2) since formatDecimal will handle formatting
+            ? Number(totalOutgoingCalls / totalCallMinutes)
             : 0;
         const totalSales = totalSalesMap.get(name) || 0;
         const livSales = livSalesMap.get(name) || 0;
@@ -269,7 +348,7 @@ export async function GET() {
           totalSales: formatNumber(totalSales),
           tsScore: getScoreForValue(totalSales, tsScoreMatrix, true),
           livRatio: formatRatio(livRatio),
-          rbslScore: getScoreForValue(livRatio, rbslScoreMatrix, true),
+          rbslScore: getScoreForValue(livRatio, rbslScoreMatrix, true, true),
         };
       });
 

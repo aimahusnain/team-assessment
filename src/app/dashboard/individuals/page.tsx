@@ -71,6 +71,11 @@ type IndividualData = {
   rbslScore: { level: number; score: number | string };
 };
 
+// Helper function to format numeric values
+const formatValue = (value: number) => {
+  return value == 0 ? "-" : value;
+};
+
 const IndividualsDashboard = () => {
   const [data, setData] = useState<IndividualData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -80,6 +85,30 @@ const IndividualsDashboard = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedMonth, setSelectedMonth] = useState<string>("");
+  const [selectedYear, setSelectedYear] = useState<number>(
+    new Date().getFullYear()
+  );
+
+  const months = [
+    "January",
+    "February",
+    "March",
+    "April",
+    "May",
+    "June",
+    "July",
+    "August",
+    "September",
+    "October",
+    "November",
+    "December",
+  ];
+
+  const years = Array.from(
+    { length: 5 },
+    (_, i) => new Date().getFullYear() - i
+  );
 
   const columns: ColumnDef<IndividualData>[] = [
     {
@@ -120,68 +149,78 @@ const IndividualsDashboard = () => {
     },
     {
       accessorKey: "totalCallMinutes",
-      header: "Total Call Minutes",
+      header: ({ column }) => (
+        <div className="text-center">Total Call Minutes</div>
+      ),
       cell: ({ row }) => (
-        <div className="text-center">{row.getValue("totalCallMinutes")}</div>
+        <div className="text-center">
+          {formatValue(row.getValue("totalCallMinutes"))}
+        </div>
       ),
     },
     {
       accessorKey: "tcmScore",
-      header: "Score",
+      header: () => <div className="text-center">Score</div>,
       cell: ({ row }) => {
         const score = row.getValue("tcmScore") as {
           level: number;
           score: number | string;
         };
-        return <div className="text-center">{score.level}</div>;
+        return <div className="text-center">{score.level || "-"}</div>;
       },
     },
     {
       accessorKey: "callEfficiency",
-      header: "Call Efficiency",
+      header: () => <div className="text-center">Call Efficiency</div>,
       cell: ({ row }) => (
-        <div className="text-center">{row.getValue("callEfficiency")}</div>
+        <div className="text-center">
+          {formatValue(row.getValue("callEfficiency"))}
+        </div>
       ),
     },
     {
       accessorKey: "ceScore",
-      header: "Score",
+      header: () => <div className="text-center">Score</div>,
       cell: ({ row }) => {
         const score = row.getValue("ceScore") as {
           level: number;
           score: number | string;
         };
-        return <div className="text-center">{score.level}</div>;
+        return <div className="text-center">{score.level || "-"}</div>;
       },
     },
     {
       accessorKey: "totalSales",
-      header: "Total Sales",
+      header: () => <div className="text-center">Total Sales</div>,
       cell: ({ row }) => (
-        <div className="text-left">{row.getValue("totalSales")}</div>
+        <div className="text-center">
+          {formatValue(row.getValue("totalSales"))}
+        </div>
       ),
     },
     {
       accessorKey: "tsScore",
-      header: "Score",
+      header: () => <div className="text-center">Score</div>,
       cell: ({ row }) => {
         const score = row.getValue("tsScore") as {
           level: number;
           score: number | string;
         };
-        return <div className="text-center">{score.level}</div>;
+        return <div className="text-center">{score.level || "-"}</div>;
       },
     },
     {
       accessorKey: "livRatio",
-      header: "LIV Ratio",
+      header: () => <div className="text-center">LIV Ratio</div>,
       cell: ({ row }) => (
-        <div className="text-left">{row.getValue("livRatio")}</div>
+        <div className="text-center">
+          {formatValue(row.getValue("livRatio"))}
+        </div>
       ),
     },
     {
       accessorKey: "rbslScore",
-      header: "Score",
+      header: () => <div className="text-center">Score</div>,
       cell: ({ row }) => {
         const score = row.getValue("rbslScore") as {
           level: number;
@@ -195,7 +234,11 @@ const IndividualsDashboard = () => {
   const fetchData = useCallback(async () => {
     try {
       setIsRefreshing(true);
-      const response = await fetch("/api/merged-names");
+      const params = new URLSearchParams();
+      if (selectedMonth) params.append("month", selectedMonth);
+      params.append("year", selectedYear.toString());
+
+      const response = await fetch(`/api/merged-names?${params.toString()}`);
       const result = await response.json();
       if (result.names) {
         setData(result.names);
@@ -208,7 +251,7 @@ const IndividualsDashboard = () => {
       setIsRefreshing(false);
       setLoading(false);
     }
-  }, []);
+  }, [selectedMonth, selectedYear]);
 
   useEffect(() => {
     fetchData();
@@ -317,10 +360,40 @@ const IndividualsDashboard = () => {
                     </div>
                   </SheetContent>
                 </Sheet>
+
+                <div className="flex items-center gap-2">
+                  <select
+                    className="rounded-md border px-3 py-2 text-sm"
+                    value={selectedMonth}
+                    onChange={(e) => setSelectedMonth(e.target.value)}
+                  >
+                    <option value="">All Months</option>
+                    {months.map((month) => (
+                      <option key={month} value={month}>
+                        {month}
+                      </option>
+                    ))}
+                  </select>
+
+                  <select
+                    className="rounded-md border px-3 py-2 text-sm"
+                    value={selectedYear}
+                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                  >
+                    {years.map((year) => (
+                      <option key={year} value={year}>
+                        {year}
+                      </option>
+                    ))}
+                  </select>
+                </div>
+
                 <span className="text-sm text-muted-foreground">
                   {table.getFilteredRowModel().rows.length} total individuals
+                  {selectedMonth && ` for ${selectedMonth} ${selectedYear}`}
                 </span>
               </div>
+
               <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
@@ -335,6 +408,21 @@ const IndividualsDashboard = () => {
                   />
                   Refresh
                 </Button>
+
+                {/* Add a clear filters button */}
+                {(selectedMonth ||
+                  selectedYear !== new Date().getFullYear()) && (
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => {
+                      setSelectedMonth("");
+                      setSelectedYear(new Date().getFullYear());
+                    }}
+                  >
+                    Clear Filters
+                  </Button>
+                )}
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -383,7 +471,18 @@ const IndividualsDashboard = () => {
                   ))}
                 </TableHeader>
                 <TableBody>
-                  {table.getRowModel().rows?.length ? (
+                  {loading ? (
+                    <TableRow>
+                      <TableCell
+                        colSpan={columns.length}
+                        className="h-24 text-center relative"
+                      >
+                        <div className="absolute inset-0 flex items-center justify-center bg-background/60">
+                          <Loader2 className="h-8 w-8 animate-spin" />
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ) : table.getRowModel().rows?.length ? (
                     table.getRowModel().rows.map((row) => (
                       <TableRow key={row.id}>
                         {row.getVisibleCells().map((cell) => (
@@ -402,7 +501,7 @@ const IndividualsDashboard = () => {
                         colSpan={columns.length}
                         className="h-24 text-center"
                       >
-                        No results.
+                        No results found
                       </TableCell>
                     </TableRow>
                   )}
