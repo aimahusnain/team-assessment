@@ -214,7 +214,7 @@ export async function GET() {
     incomingCalls.forEach((call) => {
       const trimmedName = safeTrim(call.navn);
       if (trimmedName) {
-        incomingMinutesMap.set(trimmedName, parseInt(call.min) || 0);
+        incomingMinutesMap.set(trimmedName, call.min || 0);
       }
     });
 
