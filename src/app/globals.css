@@ -103,6 +103,6 @@ body {
 }
 
 ::selection {
-  background-color: #6ee7b7;
-  color: #333 !important
+  background-color: #CBFBF1 !important;
+  color: #007A55 !important;
 }

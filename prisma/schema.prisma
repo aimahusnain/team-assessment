@@ -26,7 +26,7 @@ model ActivityLog {
 model IncomingCalls {
   id        Int      @id @default(autoincrement())
   navn      String
-  min       String // Total time of answered calls (min)
+  min       Int // Total time of answered calls (min)
   year      Int
   monthName String
   createdAt DateTime @default(now())

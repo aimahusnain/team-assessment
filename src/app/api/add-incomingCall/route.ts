@@ -1,26 +1,32 @@
-import { db } from "@/lib/db";
-import { NextResponse } from "next/server";
+import { NextResponse } from "next/server"
+import { PrismaClient } from "@prisma/client"
 
-export async function POST(req: Request) {
+const prisma = new PrismaClient()
+
+export async function POST(request: Request) {
   try {
-    const body = await req.json();
-    const { navn, min, year, monthName } = body;
+    const body = await request.json()
+    const { navn, min, year, monthName } = body
 
-    const incomingCall = await db.incomingCalls.create({
+    if (!navn || !min || !year || !monthName) {
+      return NextResponse.json({ success: false, message: "Missing required fields" }, { status: 400 })
+    }
+
+    const newIncomingCall = await prisma.incomingCalls.create({
       data: {
         navn,
-        min,
-        year: parseInt(year),
+        min: Number.parseInt(min),
+        year: Number.parseInt(year),
         monthName,
       },
-    });
+    })
 
-    return NextResponse.json({ success: true, data: incomingCall });
+    return NextResponse.json({ success: true, data: newIncomingCall }, { status: 201 })
   } catch (error) {
-    console.error("Error adding incoming call:", error);
-    return NextResponse.json(
-      { success: false, message: "Failed to add incoming call" },
-      { status: 500 }
-    );
+    console.error("Error adding incoming call:", error)
+    return NextResponse.json({ success: false, message: "Error adding incoming call" }, { status: 500 })
+  } finally {
+    await prisma.$disconnect()
   }
 }
+
