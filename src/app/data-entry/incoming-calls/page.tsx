@@ -101,6 +101,8 @@ const IncomingCalls = () => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [failedRecords, setFailedRecords] = useState<FailedRecord[]>([])
 
+  console.log(isBackgroundUploading)
+
   const form = useForm<z.infer<typeof formSchema>>({
     resolver: zodResolver(formSchema),
     defaultValues: {
@@ -233,7 +235,7 @@ const IncomingCalls = () => {
 
   useEffect(() => {
     fetchData()
-    const interval = setInterval(fetchData, 10000)
+    const interval = setInterval(fetchData, 30000)
     return () => clearInterval(interval)
   }, [fetchData])
 
