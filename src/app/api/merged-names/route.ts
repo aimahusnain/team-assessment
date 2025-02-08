@@ -191,61 +191,57 @@ const getScoreForValue = (
   return matchedLevel || { level: 1, score: "-" };
 };
 
-// Add these interface definitions at the top
-interface QueryParams {
-  month?: string;
-  year?: number;
-}
-
 export async function GET(request: Request) {
   try {
-        // Get query parameters
-        const url = new URL(request.url);
-        const month = url.searchParams.get('month');
-        const year = parseInt(url.searchParams.get('year') || new Date().getFullYear().toString());
-    
-        const [activityLogs, incomingCalls, outgoingCalls] = await Promise.all([
-          prisma.activityLog.findMany({
-            where: {
-              ...(month && { monthName: month }),
-              year: year
-            },
-            select: {
-              name: true,
-              team: true,
-              department: true,
-              verdi: true,
-              activity: true,
-              monthName: true,
-              year: true,
-            },
-          }),
-          prisma.incomingCalls.findMany({
-            where: {
-              ...(month && { monthName: month }),
-              year: year
-            },
-            select: { 
-              navn: true, 
-              min: true,
-              monthName: true,
-              year: true,
-            },
-          }),
-          prisma.outgoingCalls.findMany({
-            where: {
-              ...(month && { monthName: month }),
-              year: year
-            },
-            select: { 
-              navn: true, 
-              outgoing: true, 
-              regular_call_time_min: true,
-              monthName: true,
-              year: true,
-            },
-          }),
-        ]);
+    // Get query parameters
+    const url = new URL(request.url);
+    const month = url.searchParams.get("month");
+    const year = parseInt(
+      url.searchParams.get("year") || new Date().getFullYear().toString()
+    );
+
+    const [activityLogs, incomingCalls, outgoingCalls] = await Promise.all([
+      prisma.activityLog.findMany({
+        where: {
+          ...(month && { monthName: month }),
+          year: year,
+        },
+        select: {
+          name: true,
+          team: true,
+          department: true,
+          verdi: true,
+          activity: true,
+          monthName: true,
+          year: true,
+        },
+      }),
+      prisma.incomingCalls.findMany({
+        where: {
+          ...(month && { monthName: month }),
+          year: year,
+        },
+        select: {
+          navn: true,
+          min: true,
+          monthName: true,
+          year: true,
+        },
+      }),
+      prisma.outgoingCalls.findMany({
+        where: {
+          ...(month && { monthName: month }),
+          year: year,
+        },
+        select: {
+          navn: true,
+          outgoing: true,
+          regular_call_time_min: true,
+          monthName: true,
+          year: true,
+        },
+      }),
+    ]);
 
     const [tcmScoreMatrix, ceScoreMatrix, tsScoreMatrix, rbslScoreMatrix] =
       await Promise.all([

@@ -149,7 +149,7 @@ const IndividualsDashboard = () => {
     },
     {
       accessorKey: "totalCallMinutes",
-      header: ({ column }) => (
+      header: () => (
         <div className="text-center">Total Call Minutes</div>
       ),
       cell: ({ row }) => (
