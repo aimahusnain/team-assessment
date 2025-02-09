@@ -10,7 +10,7 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Card, CardContent } from "@/components/ui/card";
 import {
   Command,
   CommandEmpty,
@@ -26,6 +26,7 @@ import {
   PopoverContent,
   PopoverTrigger,
 } from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -85,6 +86,21 @@ type IndividualData = {
   }[];
 };
 
+const months = [
+  "January",
+  "February",
+  "March",
+  "April",
+  "May",
+  "June",
+  "July",
+  "August",
+  "September",
+  "October",
+  "November",
+  "December",
+];
+
 const IndividualsDashboard = () => {
   const [data, setData] = useState<IndividualData[]>([]);
   const [loading, setLoading] = useState(true);
@@ -109,12 +125,38 @@ const IndividualsDashboard = () => {
     "RBSL Score",
   ]);
 
+  useEffect(() => {
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    setSelectedMonths([months[previousMonth]]);
+  }, []);
+
   console.log(error);
 
   const years = Array.from(
     { length: 5 },
     (_, i) => new Date().getFullYear() - i
   );
+
+  const getMonthColor = (month: string) => {
+    const colors = [
+      "bg-blue-200 dark:bg-blue-800",
+      "bg-green-200 dark:bg-green-800",
+      "bg-yellow-200 dark:bg-yellow-800",
+      "bg-red-200 dark:bg-red-800",
+      "bg-purple-200 dark:bg-purple-800",
+      "bg-pink-200 dark:bg-pink-800",
+      "bg-indigo-200 dark:bg-indigo-800",
+      "bg-teal-200 dark:bg-teal-800",
+      "bg-orange-200 dark:bg-orange-800",
+      "bg-cyan-200 dark:bg-cyan-800",
+      "bg-lime-200 dark:bg-lime-800",
+      "bg-emerald-200 dark:bg-emerald-800",
+    ];
+    const monthIndex = months.indexOf(month);
+    return colors[monthIndex];
+  };
 
   const getColumns = useCallback((): ColumnDef<IndividualData>[] => {
     const baseColumns: ColumnDef<IndividualData>[] = [
@@ -166,7 +208,11 @@ const IndividualsDashboard = () => {
       },
     ];
 
-    const monthColumns: ColumnDef<IndividualData>[] = selectedMonths.map(
+    const sortedSelectedMonths = selectedMonths.sort(
+      (a, b) => months.indexOf(a) - months.indexOf(b)
+    );
+
+    const monthColumns: ColumnDef<IndividualData>[] = sortedSelectedMonths.map(
       (month) => ({
         id: month,
         header: month,
@@ -177,7 +223,7 @@ const IndividualsDashboard = () => {
               accessorFn: (row: IndividualData) =>
                 row.monthData.find((md) => md.month === month)
                   ?.totalCallMinutes ?? 0,
-              header: "Total Call Minutes",
+              header: `Total Call Minutes - ${month}`,
               cell: ({ getValue }: { getValue: () => number }) => (
                 <div className="text-center">{formatValue(getValue())}</div>
               ),
@@ -187,7 +233,7 @@ const IndividualsDashboard = () => {
               accessorFn: (row: IndividualData) =>
                 row.monthData.find((md) => md.month === month)?.tcmScore
                   .level ?? 0,
-              header: "TCM Score",
+              header: `TCM Score  - ${month}`,
               cell: ({ getValue }: { getValue: () => number }) => (
                 <div className="text-center">{getValue() || "-"}</div>
               ),
@@ -197,7 +243,9 @@ const IndividualsDashboard = () => {
               accessorFn: (row: IndividualData) =>
                 row.monthData.find((md) => md.month === month)
                   ?.callEfficiency ?? 0,
-              header: () => <div className="text-center">Call Efficiency</div>,
+              header: () => (
+                <div className="text-center">Call Efficiency - {month}</div>
+              ),
               cell: ({ getValue }: { getValue: () => number }) => (
                 <div className="text-center">
                   {formatPercentage(getValue())}
@@ -209,7 +257,9 @@ const IndividualsDashboard = () => {
               accessorFn: (row: IndividualData) =>
                 row.monthData.find((md) => md.month === month)?.ceScore.level ??
                 0,
-              header: () => <div className="text-center">CE Score</div>,
+              header: () => (
+                <div className="text-center">CE Score - {month}</div>
+              ),
               cell: ({ getValue }: { getValue: () => number }) => (
                 <div className="text-center">{getValue() || "-"}</div>
               ),
@@ -218,7 +268,9 @@ const IndividualsDashboard = () => {
               id: `${month}-totalSales`,
               accessorFn: (row: IndividualData) =>
                 row.monthData.find((md) => md.month === month)?.totalSales ?? 0,
-              header: () => <div className="text-center">Total Sales</div>,
+              header: () => (
+                <div className="text-center">Total Sales - {month}</div>
+              ),
               cell: ({ getValue }: { getValue: () => number }) => (
                 <div className="text-center">{formatValue(getValue())}</div>
               ),
@@ -228,7 +280,9 @@ const IndividualsDashboard = () => {
               accessorFn: (row: IndividualData) =>
                 row.monthData.find((md) => md.month === month)?.tsScore.level ??
                 0,
-              header: () => <div className="text-center">TS Score</div>,
+              header: () => (
+                <div className="text-center">TS Score - {month}</div>
+              ),
               cell: ({ getValue }: { getValue: () => number }) => (
                 <div className="text-center">{getValue() || "-"}</div>
               ),
@@ -237,7 +291,9 @@ const IndividualsDashboard = () => {
               id: `${month}-livRatio`,
               accessorFn: (row: IndividualData) =>
                 row.monthData.find((md) => md.month === month)?.livRatio ?? 0,
-              header: () => <div className="text-center">LIV Ratio</div>,
+              header: () => (
+                <div className="text-center">LIV Ratio - {month}</div>
+              ),
               cell: ({ getValue }: { getValue: () => number }) => (
                 <div className="text-center">
                   {formatPercentage(getValue())}
@@ -249,7 +305,9 @@ const IndividualsDashboard = () => {
               accessorFn: (row: IndividualData) =>
                 row.monthData.find((md) => md.month === month)?.rbslScore
                   .level ?? 0,
-              header: () => <div className="text-center">RBSL Score</div>,
+              header: () => (
+                <div className="text-center">RBSL Score - {month}</div>
+              ),
               cell: ({ getValue }: { getValue: () => number }) => (
                 <div className="text-center">{getValue() || "-"}</div>
               ),
@@ -264,6 +322,13 @@ const IndividualsDashboard = () => {
   }, [selectedMonths, selectedColumns]);
 
   const fetchData = useCallback(async () => {
+    if (selectedMonths.length === 0) {
+      setData([]);
+      setLoading(false);
+      setIsRefreshing(false);
+      return;
+    }
+
     try {
       setIsRefreshing(true);
       const params = new URLSearchParams();
@@ -393,27 +458,6 @@ const IndividualsDashboard = () => {
     return Array.from(dataMap.values());
   };
 
-  // Update the getMonthColor function
-  const getMonthColor = (month: string) => {
-    const colors = [
-      "bg-emerald-200 dark:bg-emerald-800",
-      "bg-indigo-200 dark:bg-indigo-800",
-      "bg-teal-200 dark:bg-teal-800",
-      "bg-cyan-200 dark:bg-cyan-800",
-      "bg-lime-200 dark:bg-lime-800",
-      "bg-red-200 dark:bg-red-800",
-      "bg-blue-200 dark:bg-blue-800",
-      "bg-green-200 dark:bg-green-800",
-      "bg-yellow-200 dark:bg-yellow-800",
-      "bg-purple-200 dark:bg-purple-800",
-      "bg-pink-200 dark:bg-pink-800",
-      "bg-orange-200 dark:bg-orange-800",
-    ];
-    const monthIndex = selectedMonths.indexOf(month);
-    return colors[monthIndex % colors.length];
-  };
-
-  // Update the renderHeader function
   const renderHeader = (header: Header<IndividualData, unknown>) => {
     const monthHeader = header.column.parent;
     if (
@@ -461,15 +505,16 @@ const IndividualsDashboard = () => {
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
-      <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
-        <div className="container flex h-16 items-center">
-          <SidebarTrigger className="mr-4" />
+      <header className="flex h-16 shrink-0 items-center gap-2 transition-[width,height] ease-linear group-has-[[data-collapsible=icon]]/sidebar-wrapper:h-12">
+        <div className="flex items-center gap-2 px-4">
+          <SidebarTrigger className="-ml-1" />
+          <Separator orientation="vertical" className="mr-2 h-4" />
           <Breadcrumb>
             <BreadcrumbList>
-              <BreadcrumbItem>
+              <BreadcrumbItem className="hidden md:block">
                 <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator />
+              <BreadcrumbSeparator className="hidden md:block" />
               <BreadcrumbItem>
                 <BreadcrumbPage>Individuals</BreadcrumbPage>
               </BreadcrumbItem>
@@ -477,233 +522,215 @@ const IndividualsDashboard = () => {
           </Breadcrumb>
         </div>
       </header>
-
-      <main className="flex-1 py-6 container">
-        <Card>
-          <CardHeader>
-            <CardTitle>Individuals Dashboard</CardTitle>
-          </CardHeader>
+      <main className="flex flex-1 flex-col gap-4 p-4">
+        <Card className="border-none">
           <CardContent>
             <div className="space-y-4">
-              <div className="flex flex-wrap items-center gap-4">
-                <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
-                  <SheetTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      <SlidersHorizontal className="mr-2 h-4 w-4" />
-                      Filters
-                    </Button>
-                  </SheetTrigger>
-                  <SheetContent side="left" className="w-[300px] sm:w-[400px]">
-                    <SheetHeader>
-                      <SheetTitle>Filters</SheetTitle>
-                      <SheetDescription>
-                        Apply filters to the individuals data
-                      </SheetDescription>
-                    </SheetHeader>
-                    <div className="mt-4 space-y-4">
-                      <div className="space-y-2">
-                        <Label>Name</Label>
-                        <Input
-                          placeholder="Filter by name..."
-                          value={
-                            (table
-                              .getColumn("name")
-                              ?.getFilterValue() as string) ?? ""
-                          }
-                          onChange={(event) =>
-                            table
-                              .getColumn("name")
-                              ?.setFilterValue(event.target.value)
-                          }
-                        />
+              <div className="flex flex-wrap items-center justify-start gap-2">
+                  <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
+                    <SheetTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        <SlidersHorizontal className="mr-2 h-4 w-4" />
+                        Filters
+                      </Button>
+                    </SheetTrigger>
+                    <SheetContent
+                      side="left"
+                      className="w-[300px] sm:w-[400px]"
+                    >
+                      <SheetHeader>
+                        <SheetTitle>Filters</SheetTitle>
+                        <SheetDescription>
+                          Apply filters to the individuals data
+                        </SheetDescription>
+                      </SheetHeader>
+                      <div className="mt-4 space-y-4">
+                        <div className="space-y-2">
+                          <Label>Name</Label>
+                          <Input
+                            placeholder="Filter by name..."
+                            value={
+                              (table
+                                .getColumn("name")
+                                ?.getFilterValue() as string) ?? ""
+                            }
+                            onChange={(event) =>
+                              table
+                                .getColumn("name")
+                                ?.setFilterValue(event.target.value)
+                            }
+                          />
+                        </div>
                       </div>
-                    </div>
-                  </SheetContent>
-                </Sheet>
+                    </SheetContent>
+                  </Sheet>
 
-                <div className="flex items-center gap-2">
-                  <MonthSelector
-                    selectedMonths={selectedMonths}
-                    onChange={setSelectedMonths}
-                    disabled={isRefreshing}
-                  />
+                  <div className="flex items-center gap-2">
+                    <MonthSelector
+                      selectedMonths={selectedMonths}
+                      onChange={setSelectedMonths}
+                      disabled={isRefreshing}
+                    />
 
-                  <select
-                    className="rounded-md border px-3 py-2 text-sm"
-                    value={selectedYear}
-                    onChange={(e) =>
-                      setSelectedYear(Number.parseInt(e.target.value))
-                    }
-                  >
-                    {years.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </div>
+                    <select
+                      className="rounded-md border px-3 py-2 text-sm"
+                      value={selectedYear}
+                      onChange={(e) =>
+                        setSelectedYear(Number.parseInt(e.target.value))
+                      }
+                    >
+                      {years.map((year) => (
+                        <option key={year} value={year}>
+                          {year}
+                        </option>
+                      ))}
+                    </select>
+                  </div>
 
-                <Button
-                  variant="default"
-                  className="dark:text-black"
-                  size="sm"
-                  onClick={() => fetchData()}
-                  disabled={isRefreshing}
-                >
-                  Apply Filters
-                </Button>
-
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => fetchData()}
-                  disabled={isRefreshing}
-                >
-                  <RefreshCcw
-                    className={`mr-2 h-4 w-4 ${
-                      isRefreshing ? "animate-spin" : ""
-                    }`}
-                  />
-                  Refresh
-                </Button>
-
-                {selectedMonths.length > 0 && (
                   <Button
                     variant="outline"
-                    size="sm"
-                    onClick={() => {
-                      setSelectedMonths([]);
-                      setSelectedYear(new Date().getFullYear());
-                    }}
+                    size="icon"
+                    onClick={() => fetchData()}
+                    disabled={isRefreshing}
                   >
-                    Clear Filters
+                    <RefreshCcw
+                      className={`h-4 w-4 ${
+                        isRefreshing ? "animate-spin" : ""
+                      }`}
+                    />
                   </Button>
-                )}
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button variant="outline" size="sm">
-                      Columns <ChevronDown className="ml-2 h-4 w-4" />
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-[200px] p-0" align="end">
-                    <Command>
-                      <CommandInput placeholder="Search columns..." />
-                      <CommandList>
-                        <CommandEmpty>No column found.</CommandEmpty>
-                        <CommandGroup>
-                          {[
-                            "Total Call Minutes",
-                            "TCM Score",
-                            "Call Efficiency",
-                            "CE Score",
-                            "Total Sales",
-                            "TS Score",
-                            "LIV Ratio",
-                            "RBSL Score",
-                          ].map((column) => (
-                            <CommandItem
-                              key={column}
-                              onSelect={() => handleColumnSelection(column)}
-                              className="cursor-pointer"
-                            >
-                              <Check
-                                className={cn(
-                                  "mr-2 h-4 w-4",
-                                  selectedColumns.includes(column)
-                                    ? "opacity-100"
-                                    : "opacity-0"
-                                )}
-                              />
-                              {column}
-                            </CommandItem>
-                          ))}
-                        </CommandGroup>
-                      </CommandList>
-                    </Command>
-                  </PopoverContent>
-                </Popover>
               </div>
 
               <div className="rounded-md border shadow-sm overflow-hidden">
                 <div className="overflow-x-auto">
-                  <Table>
-                    <TableHeader>
-                      {table.getHeaderGroups().map((headerGroup) => (
-                        <TableRow key={headerGroup.id}>
-                          {headerGroup.headers.map(renderHeader)}
-                        </TableRow>
-                      ))}
-                    </TableHeader>
-                    <TableBody>
-                      {isRefreshing ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={table.getAllColumns().length}
-                            className="h-96 text-center"
-                          >
-                            <div className="flex flex-col items-center justify-center gap-2">
-                              <div className="animate-spin">
-                                <Loader2 className="h-16 w-16 animate-pulse text-primary" />
-                              </div>
-                              <p className="text-lg text-muted-foreground animate-pulse">
-                                Loading data...
-                              </p>
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ) : table.getRowModel().rows?.length ? (
-                        table.getRowModel().rows.map((row) => (
-                          <TableRow
-                            key={row.id}
-                            className="hover:bg-muted/50 transition-colors"
-                          >
-                            {row.getVisibleCells().map((cell) => (
-                              <TableCell key={cell.id}>
-                                {flexRender(
-                                  cell.column.columnDef.cell,
-                                  cell.getContext()
-                                )}
-                              </TableCell>
-                            ))}
+                  {selectedMonths.length === 0 ? (
+                    <div className="h-96 flex items-center justify-center text-center text-muted-foreground">
+                      Please select a month to see the data.
+                    </div>
+                  ) : (
+                    <Table>
+                      <TableHeader>
+                        {table.getHeaderGroups().map((headerGroup) => (
+                          <TableRow key={headerGroup.id}>
+                            {headerGroup.headers.map(renderHeader)}
                           </TableRow>
-                        ))
-                      ) : (
-                        <TableRow>
-                          <TableCell
-                            colSpan={table.getAllColumns().length}
-                            className="h-96 text-center"
-                          >
-                            No results found
-                          </TableCell>
-                        </TableRow>
-                      )}
-                    </TableBody>
-                  </Table>
+                        ))}
+                      </TableHeader>
+                      <TableBody>
+                        {isRefreshing ? (
+                          <TableRow>
+                            <TableCell
+                              colSpan={table.getAllColumns().length}
+                              className="h-96 text-center"
+                            >
+                              <div className="flex flex-col items-center justify-center gap-2">
+                                <div className="animate-spin">
+                                  <Loader2 className="h-16 w-16 animate-pulse text-primary" />
+                                </div>
+                                <p className="text-lg text-muted-foreground animate-pulse">
+                                  Loading data...
+                                </p>
+                              </div>
+                            </TableCell>
+                          </TableRow>
+                        ) : table.getRowModel().rows?.length ? (
+                          table.getRowModel().rows.map((row) => (
+                            <TableRow
+                              key={row.id}
+                              className="hover:bg-muted/50 transition-colors"
+                            >
+                              {row.getVisibleCells().map((cell) => (
+                                <TableCell key={cell.id}>
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                  )}
+                                </TableCell>
+                              ))}
+                            </TableRow>
+                          ))
+                        ) : (
+                          <TableRow>
+                            <TableCell
+                              colSpan={table.getAllColumns().length}
+                              className="h-96 text-center"
+                            >
+                              No results found
+                            </TableCell>
+                          </TableRow>
+                        )}
+                      </TableBody>
+                    </Table>
+                  )}
                 </div>
               </div>
 
-              <div className="flex items-center fixed justify-between py-2 bottom-5 rounded-full shadow-lg bg-background z-10 border-t gap-20 left-[35%] px-5">
-                <div className="flex-1 text-sm text-muted-foreground">
-                  {table.getFilteredRowModel().rows.length} of {table.getCoreRowModel().rows.length} row(s) shown.
-                </div>
-                <div className="flex items-center space-x-2">
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.previousPage()}
-                    disabled={!table.getCanPreviousPage()}
-                  >
-                    Previous
-                  </Button>
-                  <Button
-                    variant="outline"
-                    size="sm"
-                    onClick={() => table.nextPage()}
-                    disabled={!table.getCanNextPage()}
-                  >
-                    Next
-                  </Button>
+              <div className="fixed bottom-5 left-0 right-0 flex justify-center z-10">
+                <div className="flex items-center justify-between py-2 rounded-full shadow-lg bg-background border-t gap-20 px-5 w-fit">
+                  <div className="flex-1 text-sm text-muted-foreground">
+                    {table.getCoreRowModel().rows.length} records found
+                  </div>
+                  <Popover>
+                    <PopoverTrigger asChild>
+                      <Button variant="secondary" size="sm">
+                        Columns <ChevronDown className="ml-2 h-4 w-4" />
+                      </Button>
+                    </PopoverTrigger>
+                    <PopoverContent className="w-[200px] p-0" align="end">
+                      <Command>
+                        <CommandInput placeholder="Search columns..." />
+                        <CommandList>
+                          <CommandEmpty>No column found.</CommandEmpty>
+                          <CommandGroup>
+                            {[
+                              "Total Call Minutes",
+                              "TCM Score",
+                              "Call Efficiency",
+                              "CE Score",
+                              "Total Sales",
+                              "TS Score",
+                              "LIV Ratio",
+                              "RBSL Score",
+                            ].map((column) => (
+                              <CommandItem
+                                key={column}
+                                onSelect={() => handleColumnSelection(column)}
+                                className="cursor-pointer"
+                              >
+                                <Check
+                                  className={cn(
+                                    "mr-2 h-4 w-4",
+                                    selectedColumns.includes(column)
+                                      ? "opacity-100"
+                                      : "opacity-0"
+                                  )}
+                                />
+                                {column}
+                              </CommandItem>
+                            ))}
+                          </CommandGroup>
+                        </CommandList>
+                      </Command>
+                    </PopoverContent>
+                  </Popover>
+                  <div className="flex items-center space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.previousPage()}
+                      disabled={!table.getCanPreviousPage()}
+                    >
+                      Previous
+                    </Button>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => table.nextPage()}
+                      disabled={!table.getCanNextPage()}
+                    >
+                      Next
+                    </Button>
+                  </div>
                 </div>
               </div>
             </div>
