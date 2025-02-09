@@ -157,7 +157,7 @@ const IndividualsDashboard = () => {
               const monthData = row.monthData.find((md) => md.month === month);
               return monthData?.totalCallMinutes ?? 0;
             },
-            header: () => <div className="text-center">Total Call Minutes</div>,
+            header: () => <div className="text-center">Total Call Minutes - {month}</div>,
             cell: ({ getValue }: { getValue: () => number }) => (
               <div className="text-center">{formatValue(getValue())}</div>
             ),
@@ -168,7 +168,7 @@ const IndividualsDashboard = () => {
               const monthData = row.monthData.find((md) => md.month === month);
               return monthData?.tcmScore.level ?? 0;
             },
-            header: () => <div className="text-center">TCM Score</div>,
+            header: () => <div className="text-center">TCM Score - {month}</div>,
             cell: ({ getValue }: { getValue: () => number }) => (
               <div className="text-center">{getValue() || "-"}</div>
             ),
@@ -179,7 +179,7 @@ const IndividualsDashboard = () => {
               const monthData = row.monthData.find((md) => md.month === month);
               return monthData?.callEfficiency ?? 0;
             },
-            header: () => <div className="text-center">Call Efficiency</div>,
+            header: () => <div className="text-center">Call Efficiency - {month}</div>,
             cell: ({ getValue }: { getValue: () => number }) => (
               <div className="text-center">{formatPercentage(getValue())}</div>
             ),
@@ -190,7 +190,7 @@ const IndividualsDashboard = () => {
               const monthData = row.monthData.find((md) => md.month === month);
               return monthData?.ceScore.level ?? 0;
             },
-            header: () => <div className="text-center">CE Score</div>,
+            header: () => <div className="text-center">CE Score - {month}</div>,
             cell: ({ getValue }: { getValue: () => number }) => (
               <div className="text-center">{getValue() || "-"}</div>
             ),
@@ -201,7 +201,7 @@ const IndividualsDashboard = () => {
               const monthData = row.monthData.find((md) => md.month === month);
               return monthData?.totalSales ?? 0;
             },
-            header: () => <div className="text-center">Total Sales</div>,
+            header: () => <div className="text-center">Total Sales - {month}</div>,
             cell: ({ getValue }: { getValue: () => number }) => (
               <div className="text-center">{formatValue(getValue())}</div>
             ),
@@ -212,7 +212,7 @@ const IndividualsDashboard = () => {
               const monthData = row.monthData.find((md) => md.month === month);
               return monthData?.tsScore.level ?? 0;
             },
-            header: () => <div className="text-center">TS Score</div>,
+            header: () => <div className="text-center">TS Score - {month}</div>,
             cell: ({ getValue }: { getValue: () => number }) => (
               <div className="text-center">{getValue() || "-"}</div>
             ),
@@ -223,7 +223,7 @@ const IndividualsDashboard = () => {
               const monthData = row.monthData.find((md) => md.month === month);
               return monthData?.livRatio ?? 0;
             },
-            header: () => <div className="text-center">LIV Ratio</div>,
+            header: () => <div className="text-center">LIV Ratio - {month}</div>,
             cell: ({ getValue }: { getValue: () => number }) => (
               <div className="text-center">{formatPercentage(getValue())}</div>
             ),
@@ -234,7 +234,7 @@ const IndividualsDashboard = () => {
               const monthData = row.monthData.find((md) => md.month === month);
               return monthData?.rbslScore.level ?? 0;
             },
-            header: () => <div className="text-center">RBSL Score</div>,
+            header: () => <div className="text-center">RBSL Score - {month}</div>,
             cell: ({ getValue }: { getValue: () => number }) => (
               <div className="text-center">{getValue() || "-"}</div>
             ),
