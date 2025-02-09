@@ -1,6 +1,6 @@
-"use client"
+"use client";
 
-import MonthSelector from "@/components/month-selector"
+import MonthSelector from "@/components/month-selector";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,17 +8,36 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb"
-import { Button } from "@/components/ui/button"
-import { Card, CardContent } from "@/components/ui/card"
-import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
-import { Input } from "@/components/ui/input"
-import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Separator } from "@/components/ui/separator"
-import { SidebarTrigger } from "@/components/ui/sidebar"
-import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { cn } from "@/lib/utils"
+} from "@/components/ui/breadcrumb";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent } from "@/components/ui/card";
 import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import { Input } from "@/components/ui/input";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { Separator } from "@/components/ui/separator";
+import { SidebarTrigger } from "@/components/ui/sidebar";
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from "@/components/ui/table";
+import { cn } from "@/lib/utils";
+import {
+  type Column,
   type ColumnDef,
   type ColumnFiltersState,
   type Header,
@@ -30,26 +49,33 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table"
-import { ArrowUpDown, Check, ChevronDown, ChevronUp, Loader2, RefreshCcw } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
+} from "@tanstack/react-table";
+import {
+  ArrowUpDown,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Loader2,
+  RefreshCcw,
+} from "lucide-react";
+import { useCallback, useEffect, useState } from "react";
 
 type IndividualData = {
-  name: string
-  team: string | null
-  department: string | null
+  name: string;
+  team: string | null;
+  department: string | null;
   monthData: {
-    month: string
-    totalCallMinutes: number
-    tcmScore: { level: number; score: number | string }
-    callEfficiency: number
-    ceScore: { level: number; score: number | string }
-    totalSales: number
-    tsScore: { level: number; score: number | string }
-    livRatio: number
-    rbslScore: { level: number; score: number | string }
-  }[]
-}
+    month: string;
+    totalCallMinutes: number;
+    tcmScore: { level: number; score: number | string };
+    callEfficiency: number;
+    ceScore: { level: number; score: number | string };
+    totalSales: number;
+    tsScore: { level: number; score: number | string };
+    livRatio: number;
+    rbslScore: { level: number; score: number | string };
+  }[];
+};
 
 const months = [
   "January",
@@ -64,18 +90,55 @@ const months = [
   "October",
   "November",
   "December",
-]
+];
+
+// Add SortableHeader component
+const SortableHeader = ({
+  column,
+  title,
+}: {
+  column: Column<any, any>;
+  title: string;
+}) => {
+  return (
+    <Button
+      variant="ghost"
+      onClick={() => {
+        const currentSort = column.getIsSorted();
+        if (currentSort === false) {
+          column.toggleSorting(false);
+        } else if (currentSort === "asc") {
+          column.toggleSorting(true);
+        } else {
+          column.clearSorting();
+        }
+      }}
+      className="p-0 hover:bg-transparent hover:text-white"
+    >
+      {title}
+      {column.getIsSorted() === "asc" ? (
+        <ChevronUp className="ml-2 h-4 w-4" />
+      ) : column.getIsSorted() === "desc" ? (
+        <ChevronDown className="ml-2 h-4 w-4" />
+      ) : (
+        <ArrowUpDown className="ml-2 h-4 w-4" />
+      )}
+    </Button>
+  );
+};
 
 const IndividualsDashboard = () => {
-  const [data, setData] = useState<IndividualData[]>([])
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState<string | null>(null)
-  const [sorting, setSorting] = useState<SortingState>([])
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [isRefreshing, setIsRefreshing] = useState(false)
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([])
-  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
+  const [data, setData] = useState<IndividualData[]>([]);
+  const [loading, setLoading] = useState(true);
+  const [error, setError] = useState<string | null>(null);
+  const [sorting, setSorting] = useState<SortingState>([]);
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
+  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
+  const [selectedYear, setSelectedYear] = useState<number>(
+    new Date().getFullYear()
+  );
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
     "Total Call Minutes",
     "TCM Score",
@@ -85,18 +148,21 @@ const IndividualsDashboard = () => {
     "TS Score",
     "LIV Ratio",
     "RBSL Score",
-  ])
+  ]);
 
   useEffect(() => {
-    const currentDate = new Date()
-    const currentMonth = currentDate.getMonth()
-    const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1
-    setSelectedMonths([months[previousMonth]])
-  }, [])
+    const currentDate = new Date();
+    const currentMonth = currentDate.getMonth();
+    const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
+    setSelectedMonths([months[previousMonth]]);
+  }, []);
 
-  console.log(error)
+  console.log(error);
 
-  const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i)
+  const years = Array.from(
+    { length: 5 },
+    (_, i) => new Date().getFullYear() - i
+  );
 
   const getMonthColor = (month: string) => {
     const colors = [
@@ -112,222 +178,311 @@ const IndividualsDashboard = () => {
       "bg-sky-400 dark:bg-sky-500",
       "bg-blue-400 dark:bg-blue-500",
       "bg-indigo-400 dark:bg-indigo-500",
-    ]
-    const monthIndex = months.indexOf(month)
-    return colors[monthIndex]
-  }
+    ];
+    const monthIndex = months.indexOf(month);
+    return colors[monthIndex];
+  };
 
   const getColumns = useCallback((): ColumnDef<IndividualData>[] => {
     const baseColumns: ColumnDef<IndividualData>[] = [
       {
         id: "name",
         accessorKey: "name",
-        header: ({ column }) => {
-          return (
-            <Button
-              variant="ghost"
-              onClick={() => {
-                const currentSort = column.getIsSorted()
-                if (currentSort === false) {
-                  column.toggleSorting(false)
-                } else if (currentSort === "asc") {
-                  column.toggleSorting(true)
-                } else {
-                  column.clearSorting()
-                }
-              }}
-              className="p-0 hover:bg-transparent"
-            >
-              Name
-              {column.getIsSorted() === "asc" ? (
-                <ChevronUp className="ml-2 h-4 w-4" />
-              ) : column.getIsSorted() === "desc" ? (
-                <ChevronDown className="ml-2 h-4 w-4" />
-              ) : (
-                <ArrowUpDown className="ml-2 h-4 w-4" />
-              )}
-            </Button>
-          )
-        },
-        cell: ({ row }) => <div className="font-medium">{row.getValue("name")}</div>,
+        header: ({ column }) => <SortableHeader column={column} title="Name" />,
+        cell: ({ row }) => (
+          <div className="font-medium">{row.getValue("name")}</div>
+        ),
       },
       {
         id: "team",
         accessorKey: "team",
-        header: "Team",
+        header: ({ column }) => <SortableHeader column={column} title="Team" />,
         cell: ({ row }) => row.getValue("team"),
       },
       {
         id: "department",
         accessorKey: "department",
-        header: "Department",
+        header: ({ column }) => (
+          <SortableHeader column={column} title="Department" />
+        ),
         cell: ({ row }) => row.getValue("department"),
       },
-    ]
+    ];
 
-    const sortedSelectedMonths = selectedMonths.sort((a, b) => months.indexOf(a) - months.indexOf(b))
+    const sortedSelectedMonths = selectedMonths.sort(
+      (a, b) => months.indexOf(a) - months.indexOf(b)
+    );
 
-    const monthColumns: ColumnDef<IndividualData>[] = sortedSelectedMonths.map((month) => ({
-      id: month,
-      header: month,
-      columns: [
-        // Enforce specific column order regardless of selection
-        ...(selectedColumns.includes("Total Call Minutes")
-          ? [
-              {
-                id: `${month}-totalCallMinutes`,
-                accessorFn: (row: IndividualData) =>
-                  row.monthData.find((md) => md.month === month)?.totalCallMinutes ?? 0,
-                header: () => <div className="text-center dark:text-white">Total Call Minutes - {month}</div>,
-                cell: ({ getValue }: { getValue: () => number }) => (
-                  <div className="text-center">{formatValue(getValue())}</div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("TCM Score")
-          ? [
-              {
-                id: `${month}-tcmScore`,
-                accessorFn: (row: IndividualData) =>
-                  row.monthData.find((md) => md.month === month)?.tcmScore.level ?? 0,
-                header: () => <div className="text-center dark:text-white">TCM Score - {month}</div>,
-                cell: ({ getValue }: { getValue: () => number }) => (
-                  <div className="text-center">{getValue() || "-"}</div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("Call Efficiency")
-          ? [
-              {
-                id: `${month}-callEfficiency`,
-                accessorFn: (row: IndividualData) =>
-                  row.monthData.find((md) => md.month === month)?.callEfficiency ?? 0,
-                header: () => <div className="text-center dark:text-white">Call Efficiency - {month}</div>,
-                cell: ({ getValue }: { getValue: () => number }) => (
-                  <div className="text-center">{formatPercentage(getValue())}</div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("CE Score")
-          ? [
-              {
-                id: `${month}-ceScore`,
-                accessorFn: (row: IndividualData) => row.monthData.find((md) => md.month === month)?.ceScore.level ?? 0,
-                header: () => <div className="text-center dark:text-white">CE Score - {month}</div>,
-                cell: ({ getValue }: { getValue: () => number }) => (
-                  <div className="text-center">{getValue() || "-"}</div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("Total Sales")
-          ? [
-              {
-                id: `${month}-totalSales`,
-                accessorFn: (row: IndividualData) => row.monthData.find((md) => md.month === month)?.totalSales ?? 0,
-                header: () => <div className="text-center dark:text-white">Total Sales - {month}</div>,
-                cell: ({ getValue }: { getValue: () => number }) => (
-                  <div className="text-center">{formatValue(getValue())}</div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("TS Score")
-          ? [
-              {
-                id: `${month}-tsScore`,
-                accessorFn: (row: IndividualData) => row.monthData.find((md) => md.month === month)?.tsScore.level ?? 0,
-                header: () => <div className="text-center dark:text-white">TS Score - {month}</div>,
-                cell: ({ getValue }: { getValue: () => number }) => (
-                  <div className="text-center">{getValue() || "-"}</div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("LIV Ratio")
-          ? [
-              {
-                id: `${month}-livRatio`,
-                accessorFn: (row: IndividualData) => row.monthData.find((md) => md.month === month)?.livRatio ?? 0,
-                header: () => <div className="text-center dark:text-white">LIV Ratio - {month}</div>,
-                cell: ({ getValue }: { getValue: () => number }) => (
-                  <div className="text-center">{formatPercentage(getValue())}</div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("RBSL Score")
-          ? [
-              {
-                id: `${month}-rbslScore`,
-                accessorFn: (row: IndividualData) =>
-                  row.monthData.find((md) => md.month === month)?.rbslScore.level ?? 0,
-                header: () => <div className="text-center dark:text-white">RBSL Score - {month}</div>,
-                cell: ({ getValue }: { getValue: () => number }) => (
-                  <div className="text-center">{getValue() || "-"}</div>
-                ),
-              },
-            ]
-          : []),
-      ],
-    }))
+    const monthColumns: ColumnDef<IndividualData>[] = sortedSelectedMonths.map(
+      (month) => ({
+        id: month,
+        header: month,
+        columns: [
+          ...(selectedColumns.includes("Total Call Minutes")
+            ? [
+                {
+                  id: `${month}-totalCallMinutes`,
+                  accessorFn: (row: IndividualData) =>
+                    row.monthData.find((md) => md.month === month)
+                      ?.totalCallMinutes ?? 0,
+                  header: ({
+                    column,
+                  }: {
+                    column: Column<IndividualData, unknown>;
+                  }) => (
+                    <div className="text-center dark:text-white">
+                      <SortableHeader
+                        column={column}
+                        title={`Total Call Minutes - ${month}`}
+                      />
+                    </div>
+                  ),
+                  cell: ({ getValue }: { getValue: () => number }) => (
+                    <div className="text-center">{formatValue(getValue())}</div>
+                  ),
+                },
+              ]
+            : []),
+          ...(selectedColumns.includes("TCM Score")
+            ? [
+                {
+                  id: `${month}-tcmScore`,
+                  accessorFn: (row: IndividualData) =>
+                    row.monthData.find((md) => md.month === month)?.tcmScore
+                      .level ?? 0,
+                  header: ({
+                    column,
+                  }: {
+                    column: Column<IndividualData, unknown>;
+                  }) => (
+                    <div className="text-center dark:text-white">
+                      <SortableHeader
+                        column={column}
+                        title={`TCM Score - ${month}`}
+                      />
+                    </div>
+                  ),
+                  cell: ({ getValue }: { getValue: () => number }) => (
+                    <div className="text-center">{getValue() || "-"}</div>
+                  ),
+                },
+              ]
+            : []),
+          ...(selectedColumns.includes("Call Efficiency")
+            ? [
+                {
+                  id: `${month}-callEfficiency`,
+                  accessorFn: (row: IndividualData) =>
+                    row.monthData.find((md) => md.month === month)
+                      ?.callEfficiency ?? 0,
+                  header: ({
+                    column,
+                  }: {
+                    column: Column<IndividualData, unknown>;
+                  }) => (
+                    <div className="text-center dark:text-white">
+                      <SortableHeader
+                        column={column}
+                        title={`Call Efficiency - ${month}`}
+                      />
+                    </div>
+                  ),
+                  cell: ({ getValue }: { getValue: () => number }) => (
+                    <div className="text-center">
+                      {formatPercentage(getValue())}
+                    </div>
+                  ),
+                },
+              ]
+            : []),
+          ...(selectedColumns.includes("CE Score")
+            ? [
+                {
+                  id: `${month}-ceScore`,
+                  accessorFn: (row: IndividualData) =>
+                    row.monthData.find((md) => md.month === month)?.ceScore
+                      .level ?? 0,
+                  header: ({
+                    column,
+                  }: {
+                    column: Column<IndividualData, unknown>;
+                  }) => (
+                    <div className="text-center dark:text-white">
+                      <SortableHeader
+                        column={column}
+                        title={`CE Score - ${month}`}
+                      />
+                    </div>
+                  ),
+                  cell: ({ getValue }: { getValue: () => number }) => (
+                    <div className="text-center">{getValue() || "-"}</div>
+                  ),
+                },
+              ]
+            : []),
+          ...(selectedColumns.includes("Total Sales")
+            ? [
+                {
+                  id: `${month}-totalSales`,
+                  accessorFn: (row: IndividualData) =>
+                    row.monthData.find((md) => md.month === month)
+                      ?.totalSales ?? 0,
+                  header: ({
+                    column,
+                  }: {
+                    column: Column<IndividualData, unknown>;
+                  }) => (
+                    <div className="text-center dark:text-white">
+                      <SortableHeader
+                        column={column}
+                        title={`Total Sales - ${month}`}
+                      />
+                    </div>
+                  ),
+                  cell: ({ getValue }: { getValue: () => number }) => (
+                    <div className="text-center">{formatValue(getValue())}</div>
+                  ),
+                },
+              ]
+            : []),
+          ...(selectedColumns.includes("TS Score")
+            ? [
+                {
+                  id: `${month}-tsScore`,
+                  accessorFn: (row: IndividualData) =>
+                    row.monthData.find((md) => md.month === month)?.tsScore
+                      .level ?? 0,
+                  header: ({
+                    column,
+                  }: {
+                    column: Column<IndividualData, unknown>;
+                  }) => (
+                    <div className="text-center dark:text-white">
+                      <SortableHeader
+                        column={column}
+                        title={`TS Score - ${month}`}
+                      />
+                    </div>
+                  ),
+                  cell: ({ getValue }: { getValue: () => number }) => (
+                    <div className="text-center">{getValue() || "-"}</div>
+                  ),
+                },
+              ]
+            : []),
+          ...(selectedColumns.includes("LIV Ratio")
+            ? [
+                {
+                  id: `${month}-livRatio`,
+                  accessorFn: (row: IndividualData) =>
+                    row.monthData.find((md) => md.month === month)?.livRatio ??
+                    0,
+                  header: ({
+                    column,
+                  }: {
+                    column: Column<IndividualData, unknown>;
+                  }) => (
+                    <div className="text-center dark:text-white">
+                      <SortableHeader
+                        column={column}
+                        title={`LIV Ratio - ${month}`}
+                      />
+                    </div>
+                  ),
+                  cell: ({ getValue }: { getValue: () => number }) => (
+                    <div className="text-center">
+                      {formatPercentage(getValue())}
+                    </div>
+                  ),
+                },
+              ]
+            : []),
+          ...(selectedColumns.includes("RBSL Score")
+            ? [
+                {
+                  id: `${month}-rbslScore`,
+                  accessorFn: (row: IndividualData) =>
+                    row.monthData.find((md) => md.month === month)?.rbslScore
+                      .level ?? 0,
+                  header: ({
+                    column,
+                  }: {
+                    column: Column<IndividualData, unknown>;
+                  }) => (
+                    <div className="text-center dark:text-white">
+                      <SortableHeader
+                        column={column}
+                        title={`RBSL Score - ${month}`}
+                      />
+                    </div>
+                  ),
+                  cell: ({ getValue }: { getValue: () => number }) => (
+                    <div className="text-center">{getValue() || "-"}</div>
+                  ),
+                },
+              ]
+            : []),
+        ],
+      })
+    );
 
-    return [...baseColumns, ...monthColumns]
-  }, [selectedMonths, selectedColumns])
+    return [...baseColumns, ...monthColumns];
+  }, [selectedMonths, selectedColumns]);
 
   const fetchData = useCallback(async () => {
     if (selectedMonths.length === 0) {
-      setData([])
-      setLoading(false)
-      setIsRefreshing(false)
-      return
+      setData([]);
+      setLoading(false);
+      setIsRefreshing(false);
+      return;
     }
 
     try {
-      setIsRefreshing(true)
-      const params = new URLSearchParams()
-      selectedMonths.forEach((month) => params.append("months", month))
-      params.append("year", selectedYear.toString())
+      setIsRefreshing(true);
+      const params = new URLSearchParams();
+      selectedMonths.forEach((month) => params.append("months", month));
+      params.append("year", selectedYear.toString());
 
-      const response = await fetch(`/api/merged-names?${params.toString()}`)
-      const result = await response.json()
+      const response = await fetch(`/api/merged-names?${params.toString()}`);
+      const result = await response.json();
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to fetch data")
+        throw new Error(result.error || "Failed to fetch data");
       }
 
-      const transformedData = transformApiResponse(result.names)
-      setData(transformedData)
-      setError(null)
+      const transformedData = transformApiResponse(result.names);
+      setData(transformedData);
+      setError(null);
     } catch (err) {
-      console.error(err)
-      setError(err instanceof Error ? err.message : "An error occurred while fetching data")
+      console.error(err);
+      setError(
+        err instanceof Error
+          ? err.message
+          : "An error occurred while fetching data"
+      );
     } finally {
-      setIsRefreshing(false)
-      setLoading(false)
+      setIsRefreshing(false);
+      setLoading(false);
     }
-  }, [selectedMonths, selectedYear])
+  }, [selectedMonths, selectedYear]);
 
   const formatValue = (value: number) => {
-    if (value === 0) return "-"
-    return new Intl.NumberFormat("en-US").format(value)
-  }
+    if (value === 0) return "-";
+    return new Intl.NumberFormat("en-US").format(value);
+  };
 
   const formatPercentage = (value: number) => {
-    if (value === 0) return "-"
+    if (value === 0) return "-";
     return new Intl.NumberFormat("en-US", {
       style: "percent",
       minimumFractionDigits: 1,
       maximumFractionDigits: 1,
-    }).format(value)
-  }
+    }).format(value);
+  };
 
   useEffect(() => {
-    fetchData()
-  }, [fetchData])
+    fetchData();
+  }, [fetchData]);
 
   const table = useReactTable({
     data,
@@ -349,40 +504,44 @@ const IndividualsDashboard = () => {
       columnFilters,
       columnVisibility,
     },
-  })
+  });
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
-    )
+    );
   }
 
   interface ApiResponseItem {
-    name: string
-    team: string | null
-    department: string | null
-    month: string
-    totalCallMinutes: string
-    tcmScore: { level: number; score: number | string }
-    callEfficiency: string
-    ceScore: { level: number; score: number | string }
-    totalSales: string
-    tsScore: { level: number; score: number | string }
-    livRatio: string
-    rbslScore: { level: number; score: number | string }
+    name: string;
+    team: string | null;
+    department: string | null;
+    month: string;
+    totalCallMinutes: string;
+    tcmScore: { level: number; score: number | string };
+    callEfficiency: string;
+    ceScore: { level: number; score: number | string };
+    totalSales: string;
+    tsScore: { level: number; score: number | string };
+    livRatio: string;
+    rbslScore: { level: number; score: number | string };
   }
 
-  const transformApiResponse = (apiData: ApiResponseItem[]): IndividualData[] => {
-    const dataMap = new Map<string, IndividualData>()
+  const transformApiResponse = (
+    apiData: ApiResponseItem[]
+  ): IndividualData[] => {
+    const dataMap = new Map<string, IndividualData>();
 
     apiData.forEach((item) => {
-      const existingEntry = dataMap.get(item.name)
+      const existingEntry = dataMap.get(item.name);
 
       const monthData = {
         month: item.month,
-        totalCallMinutes: Number.parseInt(item.totalCallMinutes.replace(/,/g, "")),
+        totalCallMinutes: Number.parseInt(
+          item.totalCallMinutes.replace(/,/g, "")
+        ),
         tcmScore: item.tcmScore,
         callEfficiency: Number.parseFloat(item.callEfficiency) / 100,
         ceScore: item.ceScore,
@@ -390,54 +549,67 @@ const IndividualsDashboard = () => {
         tsScore: item.tsScore,
         livRatio: Number.parseFloat(item.livRatio) / 100,
         rbslScore: item.rbslScore,
-      }
+      };
 
       if (existingEntry) {
-        existingEntry.monthData.push(monthData)
+        existingEntry.monthData.push(monthData);
       } else {
         dataMap.set(item.name, {
           name: item.name,
           team: item.team,
           department: item.department,
           monthData: [monthData],
-        })
+        });
       }
-    })
+    });
 
-    return Array.from(dataMap.values())
-  }
+    return Array.from(dataMap.values());
+  };
 
   const renderHeader = (header: Header<IndividualData, unknown>) => {
-    const monthHeader = header.column.parent
-    if (monthHeader && monthHeader.id !== "name" && monthHeader.id !== "team" && monthHeader.id !== "department") {
+    const monthHeader = header.column.parent;
+    if (
+      monthHeader &&
+      monthHeader.id !== "name" &&
+      monthHeader.id !== "team" &&
+      monthHeader.id !== "department"
+    ) {
       return (
         <th
           key={header.id}
           colSpan={header.colSpan}
           className={`${getMonthColor(
-            monthHeader.id,
+            monthHeader.id
           )} px-4 py-2 text-center font-semibold transition-colors duration-200`}
         >
           {monthHeader.id === header.column.id ? (
-            <div className="text-lg font-bold mb-2 text-primary-foreground">{monthHeader.id}</div>
+            <div className="text-lg font-bold mb-2 text-primary-foreground">
+              {monthHeader.id}
+            </div>
           ) : (
             <div className="text-primary-foreground">
               {flexRender(header.column.columnDef.header, header.getContext())}
             </div>
           )}
         </th>
-      )
+      );
     }
     return (
       <TableHead key={header.id} colSpan={header.colSpan}>
-        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+        {header.isPlaceholder
+          ? null
+          : flexRender(header.column.columnDef.header, header.getContext())}
       </TableHead>
-    )
-  }
+    );
+  };
 
   const handleColumnSelection = (column: string) => {
-    setSelectedColumns((prev) => (prev.includes(column) ? prev.filter((c) => c !== column) : [...prev, column]))
-  }
+    setSelectedColumns((prev) =>
+      prev.includes(column)
+        ? prev.filter((c) => c !== column)
+        : [...prev, column]
+    );
+  };
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
@@ -487,17 +659,27 @@ const IndividualsDashboard = () => {
                 <Input
                   placeholder="Search by name..."
                   className="max-w-64"
-                  value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-                  onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
+                  value={
+                    (table.getColumn("name")?.getFilterValue() as string) ?? ""
+                  }
+                  onChange={(event) =>
+                    table.getColumn("name")?.setFilterValue(event.target.value)
+                  }
                 />
 
                 <div className="flex items-center gap-2">
-                  <MonthSelector selectedMonths={selectedMonths} onChange={setSelectedMonths} disabled={isRefreshing} />
+                  <MonthSelector
+                    selectedMonths={selectedMonths}
+                    onChange={setSelectedMonths}
+                    disabled={isRefreshing}
+                  />
 
                   <select
                     className="rounded-md border px-3 py-2 text-sm"
                     value={selectedYear}
-                    onChange={(e) => setSelectedYear(Number.parseInt(e.target.value))}
+                    onChange={(e) =>
+                      setSelectedYear(Number.parseInt(e.target.value))
+                    }
                   >
                     {years.map((year) => (
                       <option key={year} value={year}>
@@ -507,8 +689,15 @@ const IndividualsDashboard = () => {
                   </select>
                 </div>
 
-                <Button variant="outline" size="icon" onClick={() => fetchData()} disabled={isRefreshing}>
-                  <RefreshCcw className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`} />
+                <Button
+                  variant="outline"
+                  size="icon"
+                  onClick={() => fetchData()}
+                  disabled={isRefreshing}
+                >
+                  <RefreshCcw
+                    className={`h-4 w-4 ${isRefreshing ? "animate-spin" : ""}`}
+                  />
                 </Button>
               </div>
 
@@ -522,34 +711,50 @@ const IndividualsDashboard = () => {
                     <Table>
                       <TableHeader>
                         {table.getHeaderGroups().map((headerGroup) => (
-                          <TableRow key={headerGroup.id}>{headerGroup.headers.map(renderHeader)}</TableRow>
+                          <TableRow key={headerGroup.id}>
+                            {headerGroup.headers.map(renderHeader)}
+                          </TableRow>
                         ))}
                       </TableHeader>
                       <TableBody>
                         {isRefreshing ? (
                           <TableRow>
-                            <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
+                            <TableCell
+                              colSpan={table.getAllColumns().length}
+                              className="h-96 text-center"
+                            >
                               <div className="flex flex-col items-center justify-center gap-2">
                                 <div className="animate-spin">
                                   <Loader2 className="h-16 w-16 text-primary" />
                                 </div>
-                                <p className="text-lg text-muted-foreground">Loading data...</p>
+                                <p className="text-lg text-muted-foreground">
+                                  Loading data...
+                                </p>
                               </div>
                             </TableCell>
                           </TableRow>
                         ) : table.getRowModel().rows?.length ? (
                           table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id} className="hover:bg-muted/50 transition-colors">
+                            <TableRow
+                              key={row.id}
+                              className="hover:bg-muted/50 transition-colors"
+                            >
                               {row.getVisibleCells().map((cell) => (
                                 <TableCell key={cell.id}>
-                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                  {flexRender(
+                                    cell.column.columnDef.cell,
+                                    cell.getContext()
+                                  )}
                                 </TableCell>
                               ))}
                             </TableRow>
                           ))
                         ) : (
                           <TableRow>
-                            <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
+                            <TableCell
+                              colSpan={table.getAllColumns().length}
+                              className="h-96 text-center"
+                            >
                               No results found
                             </TableCell>
                           </TableRow>
@@ -595,7 +800,9 @@ const IndividualsDashboard = () => {
                                 <Check
                                   className={cn(
                                     "mr-2 h-4 w-4",
-                                    selectedColumns.includes(column) ? "opacity-100" : "opacity-0",
+                                    selectedColumns.includes(column)
+                                      ? "opacity-100"
+                                      : "opacity-0"
                                   )}
                                 />
                                 {column}
@@ -631,7 +838,7 @@ const IndividualsDashboard = () => {
         </Card>
       </main>
     </div>
-  )
-}
+  );
+};
 
-export default IndividualsDashboard
+export default IndividualsDashboard;
