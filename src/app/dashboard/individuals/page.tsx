@@ -92,14 +92,13 @@ const months = [
   "December",
 ];
 
-// Add SortableHeader component
-const SortableHeader = ({
-  column,
-  title,
-}: {
-  column: Column<any, any>;
+interface SortableHeaderProps {
+  column: Column<IndividualData, unknown>;
   title: string;
-}) => {
+}
+
+// Add SortableHeader component
+const SortableHeader = ({ column, title }: SortableHeaderProps) => {
   return (
     <Button
       variant="ghost"
