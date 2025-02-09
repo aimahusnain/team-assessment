@@ -10,15 +10,8 @@ import {
   BreadcrumbSeparator,
 } from "@/components/ui/breadcrumb";
 import { Button } from "@/components/ui/button";
-import {
-  DropdownMenu,
-  DropdownMenuCheckboxItem,
-  DropdownMenuContent,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import { Input } from "@/components/ui/input";
 import { Label } from "@/components/ui/label";
-import { Separator } from "@/components/ui/separator";
 import {
   Sheet,
   SheetContent,
@@ -39,6 +32,7 @@ import {
 import {
   type ColumnDef,
   type ColumnFiltersState,
+  type Header,
   type SortingState,
   type VisibilityState,
   flexRender,
@@ -57,6 +51,22 @@ import {
   SlidersHorizontal,
 } from "lucide-react";
 import { useCallback, useEffect, useState } from "react";
+import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card";
+import { Check } from "lucide-react";
+import {
+  Command,
+  CommandEmpty,
+  CommandGroup,
+  CommandInput,
+  CommandItem,
+  CommandList,
+} from "@/components/ui/command";
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from "@/components/ui/popover";
+import { cn } from "@/lib/utils";
 
 type IndividualData = {
   name: string;
@@ -88,6 +98,16 @@ const IndividualsDashboard = () => {
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear()
   );
+  const [selectedColumns, setSelectedColumns] = useState<string[]>([
+    "Total Call Minutes",
+    "TCM Score",
+    "Call Efficiency",
+    "CE Score",
+    "Total Sales",
+    "TS Score",
+    "LIV Ratio",
+    "RBSL Score",
+  ]);
 
   console.log(error);
 
@@ -150,103 +170,99 @@ const IndividualsDashboard = () => {
       (month) => ({
         id: month,
         header: month,
-        columns: [
-          {
-            id: `${month}-totalCallMinutes`,
-            accessorFn: (row: IndividualData) => {
-              const monthData = row.monthData.find((md) => md.month === month);
-              return monthData?.totalCallMinutes ?? 0;
+        columns: selectedColumns.map((column) => {
+          const columnConfig = {
+            "Total Call Minutes": {
+              id: `${month}-totalCallMinutes`,
+              accessorFn: (row: IndividualData) =>
+                row.monthData.find((md) => md.month === month)
+                  ?.totalCallMinutes ?? 0,
+              header: "Total Call Minutes",
+              cell: ({ getValue }: { getValue: () => number }) => (
+                <div className="text-center">{formatValue(getValue())}</div>
+              ),
             },
-            header: () => <div className="text-center">Total Call Minutes - {month}</div>,
-            cell: ({ getValue }: { getValue: () => number }) => (
-              <div className="text-center">{formatValue(getValue())}</div>
-            ),
-          },
-          {
-            id: `${month}-tcmScore`,
-            accessorFn: (row: IndividualData) => {
-              const monthData = row.monthData.find((md) => md.month === month);
-              return monthData?.tcmScore.level ?? 0;
+            "TCM Score": {
+              id: `${month}-tcmScore`,
+              accessorFn: (row: IndividualData) =>
+                row.monthData.find((md) => md.month === month)?.tcmScore
+                  .level ?? 0,
+              header: "TCM Score",
+              cell: ({ getValue }: { getValue: () => number }) => (
+                <div className="text-center">{getValue() || "-"}</div>
+              ),
             },
-            header: () => <div className="text-center">TCM Score - {month}</div>,
-            cell: ({ getValue }: { getValue: () => number }) => (
-              <div className="text-center">{getValue() || "-"}</div>
-            ),
-          },
-          {
-            id: `${month}-callEfficiency`,
-            accessorFn: (row: IndividualData) => {
-              const monthData = row.monthData.find((md) => md.month === month);
-              return monthData?.callEfficiency ?? 0;
+            "Call Efficiency": {
+              id: `${month}-callEfficiency`,
+              accessorFn: (row: IndividualData) =>
+                row.monthData.find((md) => md.month === month)
+                  ?.callEfficiency ?? 0,
+              header: () => <div className="text-center">Call Efficiency</div>,
+              cell: ({ getValue }: { getValue: () => number }) => (
+                <div className="text-center">
+                  {formatPercentage(getValue())}
+                </div>
+              ),
             },
-            header: () => <div className="text-center">Call Efficiency - {month}</div>,
-            cell: ({ getValue }: { getValue: () => number }) => (
-              <div className="text-center">{formatPercentage(getValue())}</div>
-            ),
-          },
-          {
-            id: `${month}-ceScore`,
-            accessorFn: (row: IndividualData) => {
-              const monthData = row.monthData.find((md) => md.month === month);
-              return monthData?.ceScore.level ?? 0;
+            "CE Score": {
+              id: `${month}-ceScore`,
+              accessorFn: (row: IndividualData) =>
+                row.monthData.find((md) => md.month === month)?.ceScore.level ??
+                0,
+              header: () => <div className="text-center">CE Score</div>,
+              cell: ({ getValue }: { getValue: () => number }) => (
+                <div className="text-center">{getValue() || "-"}</div>
+              ),
             },
-            header: () => <div className="text-center">CE Score - {month}</div>,
-            cell: ({ getValue }: { getValue: () => number }) => (
-              <div className="text-center">{getValue() || "-"}</div>
-            ),
-          },
-          {
-            id: `${month}-totalSales`,
-            accessorFn: (row: IndividualData) => {
-              const monthData = row.monthData.find((md) => md.month === month);
-              return monthData?.totalSales ?? 0;
+            "Total Sales": {
+              id: `${month}-totalSales`,
+              accessorFn: (row: IndividualData) =>
+                row.monthData.find((md) => md.month === month)?.totalSales ?? 0,
+              header: () => <div className="text-center">Total Sales</div>,
+              cell: ({ getValue }: { getValue: () => number }) => (
+                <div className="text-center">{formatValue(getValue())}</div>
+              ),
             },
-            header: () => <div className="text-center">Total Sales - {month}</div>,
-            cell: ({ getValue }: { getValue: () => number }) => (
-              <div className="text-center">{formatValue(getValue())}</div>
-            ),
-          },
-          {
-            id: `${month}-tsScore`,
-            accessorFn: (row: IndividualData) => {
-              const monthData = row.monthData.find((md) => md.month === month);
-              return monthData?.tsScore.level ?? 0;
+            "TS Score": {
+              id: `${month}-tsScore`,
+              accessorFn: (row: IndividualData) =>
+                row.monthData.find((md) => md.month === month)?.tsScore.level ??
+                0,
+              header: () => <div className="text-center">TS Score</div>,
+              cell: ({ getValue }: { getValue: () => number }) => (
+                <div className="text-center">{getValue() || "-"}</div>
+              ),
             },
-            header: () => <div className="text-center">TS Score - {month}</div>,
-            cell: ({ getValue }: { getValue: () => number }) => (
-              <div className="text-center">{getValue() || "-"}</div>
-            ),
-          },
-          {
-            id: `${month}-livRatio`,
-            accessorFn: (row: IndividualData) => {
-              const monthData = row.monthData.find((md) => md.month === month);
-              return monthData?.livRatio ?? 0;
+            "LIV Ratio": {
+              id: `${month}-livRatio`,
+              accessorFn: (row: IndividualData) =>
+                row.monthData.find((md) => md.month === month)?.livRatio ?? 0,
+              header: () => <div className="text-center">LIV Ratio</div>,
+              cell: ({ getValue }: { getValue: () => number }) => (
+                <div className="text-center">
+                  {formatPercentage(getValue())}
+                </div>
+              ),
             },
-            header: () => <div className="text-center">LIV Ratio - {month}</div>,
-            cell: ({ getValue }: { getValue: () => number }) => (
-              <div className="text-center">{formatPercentage(getValue())}</div>
-            ),
-          },
-          {
-            id: `${month}-rbslScore`,
-            accessorFn: (row: IndividualData) => {
-              const monthData = row.monthData.find((md) => md.month === month);
-              return monthData?.rbslScore.level ?? 0;
+            "RBSL Score": {
+              id: `${month}-rbslScore`,
+              accessorFn: (row: IndividualData) =>
+                row.monthData.find((md) => md.month === month)?.rbslScore
+                  .level ?? 0,
+              header: () => <div className="text-center">RBSL Score</div>,
+              cell: ({ getValue }: { getValue: () => number }) => (
+                <div className="text-center">{getValue() || "-"}</div>
+              ),
             },
-            header: () => <div className="text-center">RBSL Score - {month}</div>,
-            cell: ({ getValue }: { getValue: () => number }) => (
-              <div className="text-center">{getValue() || "-"}</div>
-            ),
-          },
-        ],
+          };
+          return columnConfig[column as keyof typeof columnConfig];
+        }),
       })
     );
 
     return [...baseColumns, ...monthColumns];
-  }, [selectedMonths]);
+  }, [selectedMonths, selectedColumns]);
 
-  // Update the fetchData function:
   const fetchData = useCallback(async () => {
     try {
       setIsRefreshing(true);
@@ -277,7 +293,6 @@ const IndividualsDashboard = () => {
     }
   }, [selectedMonths, selectedYear]);
 
-  // Also update the formatValue and formatPercentage functions:
   const formatValue = (value: number) => {
     if (value === 0) return "-";
     return new Intl.NumberFormat("en-US").format(value);
@@ -326,7 +341,6 @@ const IndividualsDashboard = () => {
     );
   }
 
-  // First, modify the transformApiResponse function in IndividualsDashboard:
   interface ApiResponseItem {
     name: string;
     team: string | null;
@@ -342,22 +356,25 @@ const IndividualsDashboard = () => {
     rbslScore: { level: number; score: number | string };
   }
 
-  const transformApiResponse = (apiData: ApiResponseItem[]): IndividualData[] => {
-    // Create a map to group data by name
+  const transformApiResponse = (
+    apiData: ApiResponseItem[]
+  ): IndividualData[] => {
     const dataMap = new Map<string, IndividualData>();
 
     apiData.forEach((item) => {
       const existingEntry = dataMap.get(item.name);
 
       const monthData = {
-        month: item.month, // Now using the month from API response
-        totalCallMinutes: parseInt(item.totalCallMinutes.replace(/,/g, "")),
+        month: item.month,
+        totalCallMinutes: Number.parseInt(
+          item.totalCallMinutes.replace(/,/g, "")
+        ),
         tcmScore: item.tcmScore,
-        callEfficiency: parseFloat(item.callEfficiency) / 100,
+        callEfficiency: Number.parseFloat(item.callEfficiency) / 100,
         ceScore: item.ceScore,
-        totalSales: parseInt(item.totalSales.replace(/,/g, "")),
+        totalSales: Number.parseInt(item.totalSales.replace(/,/g, "")),
         tsScore: item.tsScore,
-        livRatio: parseFloat(item.livRatio) / 100,
+        livRatio: Number.parseFloat(item.livRatio) / 100,
         rbslScore: item.rbslScore,
       };
 
@@ -376,18 +393,83 @@ const IndividualsDashboard = () => {
     return Array.from(dataMap.values());
   };
 
+  // Update the getMonthColor function
+  const getMonthColor = (month: string) => {
+    const colors = [
+      "bg-emerald-200 dark:bg-emerald-800",
+      "bg-indigo-200 dark:bg-indigo-800",
+      "bg-teal-200 dark:bg-teal-800",
+      "bg-cyan-200 dark:bg-cyan-800",
+      "bg-lime-200 dark:bg-lime-800",
+      "bg-red-200 dark:bg-red-800",
+      "bg-blue-200 dark:bg-blue-800",
+      "bg-green-200 dark:bg-green-800",
+      "bg-yellow-200 dark:bg-yellow-800",
+      "bg-purple-200 dark:bg-purple-800",
+      "bg-pink-200 dark:bg-pink-800",
+      "bg-orange-200 dark:bg-orange-800",
+    ];
+    const monthIndex = selectedMonths.indexOf(month);
+    return colors[monthIndex % colors.length];
+  };
+
+  // Update the renderHeader function
+  const renderHeader = (header: Header<IndividualData, unknown>) => {
+    const monthHeader = header.column.parent;
+    if (
+      monthHeader &&
+      monthHeader.id !== "name" &&
+      monthHeader.id !== "team" &&
+      monthHeader.id !== "department"
+    ) {
+      return (
+        <th
+          key={header.id}
+          colSpan={header.colSpan}
+          className={`${getMonthColor(
+            monthHeader.id
+          )} px-4 py-2 text-center font-semibold transition-colors duration-200`}
+        >
+          {monthHeader.id === header.column.id ? (
+            <div className="text-lg font-bold mb-2 text-primary-foreground">
+              {monthHeader.id}
+            </div>
+          ) : (
+            <div className="text-primary-foreground">
+              {flexRender(header.column.columnDef.header, header.getContext())}
+            </div>
+          )}
+        </th>
+      );
+    }
+    return (
+      <TableHead key={header.id} colSpan={header.colSpan}>
+        {header.isPlaceholder
+          ? null
+          : flexRender(header.column.columnDef.header, header.getContext())}
+      </TableHead>
+    );
+  };
+
+  const handleColumnSelection = (column: string) => {
+    setSelectedColumns((prev) =>
+      prev.includes(column)
+        ? prev.filter((c) => c !== column)
+        : [...prev, column]
+    );
+  };
+
   return (
-    <>
-      <header className="flex h-16 shrink-0 items-center gap-2">
-        <div className="flex items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
+    <div className="flex flex-col min-h-screen bg-background">
+      <header className="w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60">
+        <div className="container flex h-16 items-center">
+          <SidebarTrigger className="mr-4" />
           <Breadcrumb>
             <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
+              <BreadcrumbItem>
                 <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
               </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
+              <BreadcrumbSeparator />
               <BreadcrumbItem>
                 <BreadcrumbPage>Individuals</BreadcrumbPage>
               </BreadcrumbItem>
@@ -396,11 +478,14 @@ const IndividualsDashboard = () => {
         </div>
       </header>
 
-      <div className="flex flex-1 flex-col gap-4 p-4 pt-0 dark:text-white">
-        <div className="w-full relative">
-          <div className="space-y-4">
-            <div className="flex items-center justify-between">
-              <div className="flex items-center gap-4">
+      <main className="flex-1 py-6 container">
+        <Card>
+          <CardHeader>
+            <CardTitle>Individuals Dashboard</CardTitle>
+          </CardHeader>
+          <CardContent>
+            <div className="space-y-4">
+              <div className="flex flex-wrap items-center gap-4">
                 <Sheet open={isFilterOpen} onOpenChange={setIsFilterOpen}>
                   <SheetTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -446,7 +531,9 @@ const IndividualsDashboard = () => {
                   <select
                     className="rounded-md border px-3 py-2 text-sm"
                     value={selectedYear}
-                    onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                    onChange={(e) =>
+                      setSelectedYear(Number.parseInt(e.target.value))
+                    }
                   >
                     {years.map((year) => (
                       <option key={year} value={year}>
@@ -456,14 +543,16 @@ const IndividualsDashboard = () => {
                   </select>
                 </div>
 
-                <span className="text-sm text-muted-foreground">
-                  {table.getFilteredRowModel().rows.length} total individuals
-                  {selectedMonths.length > 0 &&
-                    ` for ${selectedMonths.join(", ")} ${selectedYear}`}
-                </span>
-              </div>
+                <Button
+                  variant="default"
+                  className="dark:text-black"
+                  size="sm"
+                  onClick={() => fetchData()}
+                  disabled={isRefreshing}
+                >
+                  Apply Filters
+                </Button>
 
-              <div className="flex items-center space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
@@ -491,125 +580,137 @@ const IndividualsDashboard = () => {
                   </Button>
                 )}
 
-                <DropdownMenu>
-                  <DropdownMenuTrigger asChild>
+                <Popover>
+                  <PopoverTrigger asChild>
                     <Button variant="outline" size="sm">
                       Columns <ChevronDown className="ml-2 h-4 w-4" />
                     </Button>
-                  </DropdownMenuTrigger>
-                  <DropdownMenuContent align="end">
-                    {table
-                      .getAllColumns()
-                      .filter((column) => column.getCanHide())
-                      .map((column) => {
-                        return (
-                          <DropdownMenuCheckboxItem
-                            key={column.id}
-                            className="capitalize"
-                            checked={column.getIsVisible()}
-                            onCheckedChange={(value) =>
-                              column.toggleVisibility(!!value)
-                            }
-                          >
-                            {column.id}
-                          </DropdownMenuCheckboxItem>
-                        );
-                      })}
-                  </DropdownMenuContent>
-                </DropdownMenu>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-[200px] p-0" align="end">
+                    <Command>
+                      <CommandInput placeholder="Search columns..." />
+                      <CommandList>
+                        <CommandEmpty>No column found.</CommandEmpty>
+                        <CommandGroup>
+                          {[
+                            "Total Call Minutes",
+                            "TCM Score",
+                            "Call Efficiency",
+                            "CE Score",
+                            "Total Sales",
+                            "TS Score",
+                            "LIV Ratio",
+                            "RBSL Score",
+                          ].map((column) => (
+                            <CommandItem
+                              key={column}
+                              onSelect={() => handleColumnSelection(column)}
+                              className="cursor-pointer"
+                            >
+                              <Check
+                                className={cn(
+                                  "mr-2 h-4 w-4",
+                                  selectedColumns.includes(column)
+                                    ? "opacity-100"
+                                    : "opacity-0"
+                                )}
+                              />
+                              {column}
+                            </CommandItem>
+                          ))}
+                        </CommandGroup>
+                      </CommandList>
+                    </Command>
+                  </PopoverContent>
+                </Popover>
               </div>
-            </div>
 
-            <div className="rounded-md border overflow-x-auto">
-              <Table>
-                <TableHeader>
-                  {table.getHeaderGroups().map((headerGroup) => (
-                    <TableRow key={headerGroup.id}>
-                      {headerGroup.headers.map((header) => (
-                        <TableHead key={header.id}>
-                          {header.isPlaceholder
-                            ? null
-                            : flexRender(
-                                header.column.columnDef.header,
-                                header.getContext()
-                              )}
-                        </TableHead>
+              <div className="rounded-md border shadow-sm overflow-hidden">
+                <div className="overflow-x-auto">
+                  <Table>
+                    <TableHeader>
+                      {table.getHeaderGroups().map((headerGroup) => (
+                        <TableRow key={headerGroup.id}>
+                          {headerGroup.headers.map(renderHeader)}
+                        </TableRow>
                       ))}
-                    </TableRow>
-                  ))}
-                </TableHeader>
-                <TableBody>
-                  {isRefreshing ? (
-                    <TableRow>
-                      <TableCell
-                        colSpan={table.getAllColumns().length}
-                        className="h-96 text-center"
-                      >
-                        <div className="flex flex-col items-center justify-center gap-2">
-                          <div className="animate-spin">
-                            <Loader2 className="h-16 w-16 animate-pulse text-primary" />
-                          </div>
-                          <p className="text-lg text-muted-foreground animate-pulse">
-                            Loading data...
-                          </p>
-                        </div>
-                      </TableCell>
-                    </TableRow>
-                  ) : table.getRowModel().rows?.length ? (
-                    table.getRowModel().rows.map((row) => (
-                      <TableRow key={row.id}>
-                        {row.getVisibleCells().map((cell) => (
-                          <TableCell key={cell.id}>
-                            {flexRender(
-                              cell.column.columnDef.cell,
-                              cell.getContext()
-                            )}
+                    </TableHeader>
+                    <TableBody>
+                      {isRefreshing ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={table.getAllColumns().length}
+                            className="h-96 text-center"
+                          >
+                            <div className="flex flex-col items-center justify-center gap-2">
+                              <div className="animate-spin">
+                                <Loader2 className="h-16 w-16 animate-pulse text-primary" />
+                              </div>
+                              <p className="text-lg text-muted-foreground animate-pulse">
+                                Loading data...
+                              </p>
+                            </div>
                           </TableCell>
-                        ))}
-                      </TableRow>
-                    ))
-                  ) : (
-                    <TableRow>
-                      <TableCell
-                        colSpan={table.getAllColumns().length}
-                        className="h-96 text-center"
-                      >
-                        No results found
-                      </TableCell>
-                    </TableRow>
-                  )}
-                </TableBody>
-              </Table>
-            </div>
+                        </TableRow>
+                      ) : table.getRowModel().rows?.length ? (
+                        table.getRowModel().rows.map((row) => (
+                          <TableRow
+                            key={row.id}
+                            className="hover:bg-muted/50 transition-colors"
+                          >
+                            {row.getVisibleCells().map((cell) => (
+                              <TableCell key={cell.id}>
+                                {flexRender(
+                                  cell.column.columnDef.cell,
+                                  cell.getContext()
+                                )}
+                              </TableCell>
+                            ))}
+                          </TableRow>
+                        ))
+                      ) : (
+                        <TableRow>
+                          <TableCell
+                            colSpan={table.getAllColumns().length}
+                            className="h-96 text-center"
+                          >
+                            No results found
+                          </TableCell>
+                        </TableRow>
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </div>
 
-            <div className="sticky bottom-0 left-0 right-0 flex items-center justify-between py-4 bg-background border-t">
-              <div className="flex-1 text-sm text-muted-foreground">
-                {table.getFilteredRowModel().rows.length} of{" "}
-                {table.getCoreRowModel().rows.length} row(s) shown.
-              </div>
-              <div className="flex items-center justify-end space-x-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
-                >
-                  Previous
-                </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
-                  Next
-                </Button>
+              <div className="flex items-center fixed justify-between py-2 bottom-5 rounded-full shadow-lg bg-background z-10 border-t gap-20 left-[35%] px-5">
+                <div className="flex-1 text-sm text-muted-foreground">
+                  {table.getFilteredRowModel().rows.length} of {table.getCoreRowModel().rows.length} row(s) shown.
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.previousPage()}
+                    disabled={!table.getCanPreviousPage()}
+                  >
+                    Previous
+                  </Button>
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => table.nextPage()}
+                    disabled={!table.getCanNextPage()}
+                  >
+                    Next
+                  </Button>
+                </div>
               </div>
             </div>
-          </div>
-        </div>
-      </div>
-    </>
+          </CardContent>
+        </Card>
+      </main>
+    </div>
   );
 };
 
