@@ -442,7 +442,7 @@ const IndividualsDashboard = () => {
       selectedMonths.forEach((month) => params.append("months", month));
       params.append("year", selectedYear.toString());
 
-      const response = await fetch(`/api/merged-names?${params.toString()}`);
+      const response = await fetch(`/api/merged-names-individual?${params.toString()}`);
       const result = await response.json();
 
       if (!response.ok) {
