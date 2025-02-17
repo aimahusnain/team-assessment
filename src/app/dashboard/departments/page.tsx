@@ -44,21 +44,6 @@ type DepartmentData = {
   avgTotalScore: number
 }
 
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-]
-
 interface SortableHeaderProps<TData> {
   column: Column<TData>
   title: string
@@ -104,6 +89,8 @@ const DepartmentsDashboard = () => {
     "RBSL Score",
     "Avg Total Score",
   ])
+
+  console.log(error)
 
   const years = Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i)
 

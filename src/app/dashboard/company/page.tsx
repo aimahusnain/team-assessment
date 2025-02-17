@@ -68,21 +68,6 @@ type CompanyData = {
   avgTotalScore: number;
 };
 
-const months = [
-  "January",
-  "February",
-  "March",
-  "April",
-  "May",
-  "June",
-  "July",
-  "August",
-  "September",
-  "October",
-  "November",
-  "December",
-];
-
 interface SortableHeaderProps<TData> {
   column: Column<TData>;
   title: string;
@@ -120,6 +105,9 @@ const CompanyDashboard = () => {
   const [selectedYear, setSelectedYear] = useState<number>(
     new Date().getFullYear()
   );
+
+  console.log(error)
+
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
     "Avg Total Call Minutes",
     "TCM Score",

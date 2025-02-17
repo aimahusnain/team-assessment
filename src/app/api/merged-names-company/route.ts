@@ -5,19 +5,6 @@ const prisma = new PrismaClient();
 
 const CALL_MINUTES_THRESHOLD = 750;
 
-interface CompanyDetails {
-  avgTotalCallMinutes: string;
-  tcmScore: ScoreLevel;
-  avgCallEfficiency: string;
-  ceScore: ScoreLevel;
-  avgTotalSales: string;
-  tsScore: ScoreLevel;
-  avgRatioBetweenSkadeAndLiv: string;
-  rbslScore: ScoreLevel;
-  avgTotalScore: number;
-  month: string;
-}
-
 interface ScoreLevel {
   level: number;
   score: number | string;
