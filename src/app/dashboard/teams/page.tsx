@@ -37,7 +37,7 @@ import { useCallback, useEffect, useState } from "react"
 
 type TeamData = {
   team: string
-  department: string | null
+  // department: string | null
   monthData: {
     month: string
     avgTotalCallMinutes: number
@@ -158,12 +158,12 @@ const TeamsDashboard = () => {
         header: ({ column }) => <SortableHeader column={column} title="Team" />,
         cell: ({ row }) => <div className="font-medium">{row.getValue("team")}</div>,
       },
-      {
-        id: "department",
-        accessorKey: "department",
-        header: ({ column }) => <SortableHeader column={column} title="Department" />,
-        cell: ({ row }) => row.getValue("department"),
-      },
+      // {
+      //   id: "department",
+      //   accessorKey: "department",
+      //   header: ({ column }) => <SortableHeader column={column} title="Department" />,
+      //   cell: ({ row }) => row.getValue("department"),
+      // },
     ]
 
     const sortedSelectedMonths = selectedMonths.sort((a, b) => months.indexOf(a) - months.indexOf(b))
@@ -457,7 +457,7 @@ const TeamsDashboard = () => {
       } else {
         dataMap.set(item.team, {
           team: item.team,
-          department: item.department,
+          // department: item.department,
           monthData: [monthData],
         })
       }
