@@ -338,7 +338,7 @@ export async function GET(request: Request) {
       },
       {
         headers: {
-          "Cache-Control": "public, max-age=300",
+          "Cache-Control": "s-maxage=300, stale-while-revalidate",
           "Content-Type": "application/json",
         },
       }

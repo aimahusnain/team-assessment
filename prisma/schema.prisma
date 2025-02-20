@@ -3,13 +3,12 @@ generator client {
 }
 
 datasource db {
-  provider  = "postgresql"
+  provider  = "mongodb"
   url       = env("DATABASE_URL")
-  directUrl = env("DIRECT_URL")
 }
 
 model ActivityLog {
-  id         Int      @id @default(autoincrement())
+  id         String  @id @default(cuid()) @map("_id")
   name       String
   team       String
   activity   String
@@ -24,7 +23,7 @@ model ActivityLog {
 }
 
 model IncomingCalls {
-  id        Int      @id @default(autoincrement())
+  id         String  @id @default(cuid()) @map("_id")
   navn      String
   min       Int // Total time of answered calls (min)
   year      Int
@@ -36,7 +35,7 @@ model IncomingCalls {
 }
 
 model OutgoingCalls {
-  id                    Int      @id @default(autoincrement())
+  id         String  @id @default(cuid()) @map("_id")
   navn                  String
   outgoing              String // Total number of outgoing calls (min)
   regular               String // Number of calls with regular number
@@ -52,7 +51,7 @@ model OutgoingCalls {
 }
 
 model Inputs {
-  id                   String @id @default(uuid())
+  id         String  @id @default(cuid()) @map("_id")
   call_mins_thr        Int
   team_members_thr     String
   score_tcm_weightage  String
@@ -90,7 +89,7 @@ model Inputs {
 }
 
 model User {
-  id        Int     @id @default(autoincrement())
+  id         String  @id @default(cuid()) @map("_id")
   username  String  @unique
   email     String  @unique
   picture   String?
