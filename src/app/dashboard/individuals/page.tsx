@@ -252,7 +252,8 @@ const IndividualsDashboard = () => {
                 accessorFn: (row: IndividualData) =>
                   row.monthData.find((md) => md.month === month)
                     ?.totalCallMinutes ?? 0,
-                    // @ts-expect-error
+                   // @ts-expect-error Type definition issue in table column configuration
+
                 header: ({ column }) => (
                   <div className="space-y-2 flex items-center justify-center flex-col gap-0">
                     <div
@@ -275,6 +276,8 @@ const IndividualsDashboard = () => {
                     </div>
                   </div>
                 ),
+                // @ts-expect-error Type definition issue in table column configuration
+
                 cell: ({ getValue }) => (
                   <div className="text-center">{formatValue(getValue())}</div>
                 ),
@@ -287,7 +290,8 @@ const IndividualsDashboard = () => {
                 id: `${month}-tcmScore`,
                 accessorFn: (row: IndividualData) =>
                   row.monthData.find((md) => md.month === month)?.tcmScore
-                    .level ?? 0,             // @ts-expect-error
+                    .level ?? 0,            // @ts-expect-error Type definition issue in table column configuration
+
                 header: ({ column }) => (
                   <div className="space-y-2 flex items-center justify-center flex-col gap-0">
                     <div
@@ -309,7 +313,8 @@ const IndividualsDashboard = () => {
                       </Tooltip>
                     </div>
                   </div>
-                ),             // @ts-expect-error
+                ),            // @ts-expect-error Type definition issue in table column configuration
+
                 cell: ({ getValue }) => (
                   <div className="text-center">{getValue() || "-"}</div>
                 ),
@@ -322,7 +327,8 @@ const IndividualsDashboard = () => {
                 id: `${month}-callEfficiency`,
                 accessorFn: (row: IndividualData) =>
                   row.monthData.find((md) => md.month === month)
-                    ?.callEfficiency ?? 0,             // @ts-expect-error
+                    ?.callEfficiency ?? 0,            // @ts-expect-error Type definition issue in table column configuration
+
                 header: ({ column }) => (
                   <div className="space-y-2 flex items-center justify-center flex-col gap-0">
                     <div
@@ -344,7 +350,8 @@ const IndividualsDashboard = () => {
                       </Tooltip>
                     </div>
                   </div>
-                ),             // @ts-expect-error
+                ),            // @ts-expect-error Type definition issue in table column configuration
+
                 cell: ({ getValue }) => (
                   <div className="text-center">
                     {formatPercentage(getValue())}
@@ -359,7 +366,8 @@ const IndividualsDashboard = () => {
                 id: `${month}-ceScore`,
                 accessorFn: (row: IndividualData) =>
                   row.monthData.find((md) => md.month === month)?.ceScore
-                    .level ?? 0,             // @ts-expect-error
+                    .level ?? 0,            // @ts-expect-error Type definition issue in table column configuration
+
                 header: ({ column }) => (
                   <div className="space-y-2 flex items-center justify-center flex-col gap-0">
                     <div
@@ -381,7 +389,8 @@ const IndividualsDashboard = () => {
                       </Tooltip>
                     </div>
                   </div>
-                ),             // @ts-expect-error
+                ),            // @ts-expect-error Type definition issue in table column configuration
+
                 cell: ({ getValue }) => (
                   <div className="text-center">{getValue() || "-"}</div>
                 ),
@@ -394,7 +403,8 @@ const IndividualsDashboard = () => {
                 id: `${month}-totalSales`,
                 accessorFn: (row: IndividualData) =>
                   row.monthData.find((md) => md.month === month)?.totalSales ??
-                  0,             // @ts-expect-error
+                  0,            // @ts-expect-error Type definition issue in table column configuration
+
                 header: ({ column }) => (
                   <div className="space-y-2 flex items-center justify-center flex-col gap-0">
                     <div
@@ -416,7 +426,8 @@ const IndividualsDashboard = () => {
                       </Tooltip>
                     </div>
                   </div>
-                ),             // @ts-expect-error
+                ),            // @ts-expect-error Type definition issue in table column configuration
+
                 cell: ({ getValue }) => (
                   <div className="text-center">{formatValue(getValue())}</div>
                 ),
@@ -429,7 +440,8 @@ const IndividualsDashboard = () => {
                 id: `${month}-tsScore`,
                 accessorFn: (row: IndividualData) =>
                   row.monthData.find((md) => md.month === month)?.tsScore
-                    .level ?? 0,             // @ts-expect-error
+                    .level ?? 0,            // @ts-expect-error Type definition issue in table column configuration
+
                 header: ({ column }) => (
                   <div className="space-y-2 flex items-center justify-center flex-col gap-0">
                     <div
@@ -451,7 +463,8 @@ const IndividualsDashboard = () => {
                       </Tooltip>
                     </div>
                   </div>
-                ),             // @ts-expect-error
+                ),            // @ts-expect-error Type definition issue in table column configuration
+
                 cell: ({ getValue }) => (
                   <div className="text-center">{getValue() || "-"}</div>
                 ),
@@ -464,7 +477,8 @@ const IndividualsDashboard = () => {
                 id: `${month}-livRatio`,
                 accessorFn: (row: IndividualData) =>
                   row.monthData.find((md) => md.month === month)?.livRatio ?? 0,
-                             // @ts-expect-error
+                            // @ts-expect-error Type definition issue in table column configuration
+
                 header: ({ column }) => (
                   <div className="space-y-2 flex items-center justify-center flex-col gap-0">
                     <div
@@ -487,7 +501,8 @@ const IndividualsDashboard = () => {
                     </div>
                   </div>
                 ),
-                             // @ts-expect-error
+                            // @ts-expect-error Type definition issue in table column configuration
+
                 cell: ({ getValue }) => (
                   <div className="text-center">
                     {formatPercentage(getValue())}
@@ -503,7 +518,8 @@ const IndividualsDashboard = () => {
                 accessorFn: (row: IndividualData) =>
                   row.monthData.find((md) => md.month === month)?.rbslScore
                     .level ?? 0,
-                                 // @ts-expect-error
+                                // @ts-expect-error Type definition issue in table column configuration
+
                 header: ({ column }) => (
                   <div className="space-y-2 flex items-center justify-center flex-col gap-0">
                     <div
@@ -526,7 +542,8 @@ const IndividualsDashboard = () => {
                     </div>
                   </div>
                 ),
-                             // @ts-expect-error
+                            // @ts-expect-error Type definition issue in table column configuration
+
                 cell: ({ getValue }) => (
                   <div className="text-center">{getValue() || "-"}</div>
                 ),
