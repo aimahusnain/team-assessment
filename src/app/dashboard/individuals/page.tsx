@@ -51,6 +51,7 @@ import {
 } from "@tanstack/react-table";
 import {
   ArrowUpDown,
+  CalendarIcon,
   Check,
   ChevronDown,
   ChevronUp,
@@ -58,6 +59,9 @@ import {
   SendHorizontal,
 } from "lucide-react";
 import { useCallback, useEffect, useMemo, useState } from "react";
+import { format } from "date-fns";
+import React from "react";
+import { MonthPicker } from "@/components/ui/monthpicker";
 
 type IndividualData = {
   name: string;
@@ -133,6 +137,7 @@ const IndividualsDashboard = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [date, setDate] = React.useState<Date>();
 
   console.log(error);
 
@@ -639,7 +644,41 @@ const IndividualsDashboard = () => {
                   }
                 />
 
-                <div className="flex items-center gap-2">
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className={cn(
+                        "w-[280px] justify-start text-left font-normal",
+                        !filterValues.months.length && "text-muted-foreground"
+                      )}
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {filterValues.months.length > 0 ? (
+                        `${filterValues.months.length} month${
+                          filterValues.months.length > 1 ? "s" : ""
+                        } selected (${filterValues.year})`
+                      ) : (
+                        <span>Pick months</span>
+                      )}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0" align="end">
+                    <MonthPicker
+                      selectedMonths={filterValues.months}
+                      selectedYear={filterValues.year}
+                      onSelect={(months, year) => {
+                        setFilterValues((prev) => ({
+                          ...prev,
+                          months,
+                          year,
+                        }));
+                      }}
+                    />
+                  </PopoverContent>
+                </Popover>
+
+                {/* <div className="flex items-center gap-2">
                   <MonthSelector
                     selectedMonths={filterValues.months}
                     onChange={(months) =>
@@ -667,7 +706,7 @@ const IndividualsDashboard = () => {
                       </option>
                     ))}
                   </select>
-                </div>
+                </div> */}
 
                 <Button
                   size="icon"

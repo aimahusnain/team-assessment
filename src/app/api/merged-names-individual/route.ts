@@ -189,6 +189,26 @@ export async function GET(request: Request) {
     const months = url.searchParams.getAll("months");
     const year = parseInt(url.searchParams.get("year") || new Date().getFullYear().toString());
 
+    // Fetch team and department data without month and year filters
+    const allActivityLogs = await prisma.activityLog.findMany({
+      select: {
+        name: true,
+        team: true,
+        department: true,
+      },
+    });
+
+    const nameDetailsMap = new Map<string, { team: string; department: string }>();
+    allActivityLogs.forEach((log) => {
+      const normalizedName = normalizeAndTrim(log.name);
+      if (normalizedName) {
+        nameDetailsMap.set(normalizedName, {
+          team: log.team || "",
+          department: log.department || "",
+        });
+      }
+    });
+
     const monthlyData = await Promise.all(
       months.map(async (month) => {
         const [activityLogs, incomingCalls, outgoingCalls] = await Promise.all([
@@ -198,8 +218,6 @@ export async function GET(request: Request) {
               name: true,
               verdi: true,
               activity: true,
-              team: true,
-              department: true,
             },
           }),
           prisma.incomingCalls.findMany({
@@ -226,17 +244,6 @@ export async function GET(request: Request) {
             calculateTSScore(),
             calculateRBSLScore(),
           ]);
-
-        const nameDetailsMap = new Map<string, { team: string; department: string }>();
-        activityLogs.forEach((log) => {
-          const normalizedName = normalizeAndTrim(log.name);
-          if (normalizedName) {
-            nameDetailsMap.set(normalizedName, {
-              team: log.team || "",
-              department: log.department || "",
-            });
-          }
-        });
 
         const incomingMinutesMap = new Map<string, number>();
         const outgoingMinutesMap = new Map<string, number>();
