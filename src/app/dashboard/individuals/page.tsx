@@ -141,20 +141,20 @@ const IndividualsDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasFilterChanges, setHasFilterChanges] = useState(false);
 
-  // Modify the filter values state setter to track changes
-  const handleFilterChange = (months: string[], year: number) => {
-    setFilterValues((prev) => {
-      const newValues = { months, year };
-      // Check if values actually changed
-      const changed =
-        prev.year !== year ||
-        prev.months.length !== months.length ||
-        !prev.months.every((m) => months.includes(m));
-
-      setHasFilterChanges(changed);
-      return newValues;
-    });
-  };
+    // Modify the filter values state setter to track changes
+    const handleFilterChange = (months: string[], year: number) => {
+      setFilterValues((prev) => {
+        const newValues = { months, year };
+        // Check if values actually changed
+        const changed = 
+          prev.year !== year || 
+          prev.months.length !== months.length ||
+          !prev.months.every(m => months.includes(m));
+        
+        setHasFilterChanges(changed);
+        return newValues;
+      });
+    };
 
   console.log(error);
 
@@ -550,22 +550,20 @@ const IndividualsDashboard = () => {
 
   const getMonthColor = (month: string) => {
     const colors = {
-      January: "bg-red-500/90 dark:bg-red-500",
-      February: "bg-orange-500/90 dark:bg-orange-500",
-      March: "bg-amber-500/90 dark:bg-amber-500",
-      April: "bg-yellow-500/90 dark:bg-yellow-500",
-      May: "bg-lime-500/90 dark:bg-lime-500",
-      June: "bg-green-500/90 dark:bg-green-500",
-      July: "bg-emerald-500/90 dark:bg-emerald-500",
-      August: "bg-teal-500/90 dark:bg-teal-500",
-      September: "bg-cyan-500/90 dark:bg-cyan-500",
-      October: "bg-sky-500/90 dark:bg-sky-500",
-      November: "bg-blue-500/90 dark:bg-blue-500",
-      December: "bg-indigo-500/90 dark:bg-indigo-500",
+      January: "bg-red-500 text-white border-red-600",
+      February: "bg-orange-500 text-white border-orange-600",
+      March: "bg-amber-500 text-white border-amber-600",
+      April: "bg-yellow-500 text-white border-yellow-600",
+      May: "bg-lime-500 text-white border-lime-600",
+      June: "bg-green-500 text-white border-green-600",
+      July: "bg-emerald-500 text-white border-emerald-600",
+      August: "bg-teal-500 text-white border-teal-600",
+      September: "bg-cyan-500 text-white border-cyan-600",
+      October: "bg-sky-500 text-white border-sky-600",
+      November: "bg-blue-500 text-white border-blue-600",
+      December: "bg-indigo-500 text-white border-indigo-600",
     };
-    return (
-      colors[month as keyof typeof colors] || "bg-gray-500/90 dark:bg-gray-500"
-    );
+    return colors[month as keyof typeof colors] || "bg-gray-500 text-white border-gray-600";
   };
 
   // Apply filters function - now only for month and year
@@ -670,16 +668,14 @@ const IndividualsDashboard = () => {
         </div>
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4">
-        <Card className="border-none">
+      <Card className="border-none">
           <CardContent>
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-start gap-2">
                 <Input
                   placeholder="Search by name..."
                   className="max-w-64"
-                  value={
-                    (table.getColumn("name")?.getFilterValue() as string) ?? ""
-                  }
+                  value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
                   onChange={(event) =>
                     table.getColumn("name")?.setFilterValue(event.target.value)
                   }
@@ -720,16 +716,13 @@ const IndividualsDashboard = () => {
                   disabled={isRefreshing}
                   className={cn(
                     "transition-all duration-300",
-                    hasFilterChanges &&
-                      "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                    hasFilterChanges && "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
                   )}
                 >
-                  <SendHorizontal
-                    className={cn(
-                      "transition-colors",
-                      hasFilterChanges && "text-yellow-400"
-                    )}
-                  />
+                  <SendHorizontal className={cn(
+                    "transition-colors",
+                    hasFilterChanges && "text-yellow-400"
+                  )} />
                 </Button>
               </div>
 
