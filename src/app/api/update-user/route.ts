@@ -6,7 +6,7 @@ export async function PUT(request: Request) {
     const { id, username, email, picture } = await request.json()
 
     const updatedUser = await db.user.update({
-      where: { id: Number.parseInt(id) },
+      where: { id },
       data: { username, email, picture },
     })
 
