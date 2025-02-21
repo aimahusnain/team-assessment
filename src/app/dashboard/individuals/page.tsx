@@ -32,7 +32,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, Check, ChevronDown, ChevronUp, Loader2, RefreshCcw } from "lucide-react"
+import { ArrowUpDown, Check, ChevronDown, ChevronUp, Loader2 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 type IndividualData = {
@@ -109,6 +109,8 @@ const IndividualsDashboard = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
+
+  console.log(error)
 
   // Filter states
   const [filterValues, setFilterValues] = useState({
@@ -509,32 +511,32 @@ const IndividualsDashboard = () => {
     return Array.from(dataMap.values())
   }
 
-  const renderHeader = (header: Header<IndividualData, unknown>) => {
-    const monthHeader = header.column.parent
-    if (monthHeader && monthHeader.id !== "name" && monthHeader.id !== "team" && monthHeader.id !== "department") {
-      return (
-        <th
-          key={header.id}
-          colSpan={header.colSpan}
-          className={cn(
-            getMonthColor(monthHeader.id),
-            "px-4 py-2 text-center font-semibold transition-colors duration-200",
-          )}
-        >
-          {monthHeader.id === header.column.id ? (
-            <div className="text-lg font-bold mb-2 text-white">{monthHeader.id}</div>
-          ) : (
-            <div className="text-white">{flexRender(header.column.columnDef.header, header.getContext())}</div>
-          )}
-        </th>
-      )
-    }
-    return (
-      <TableHead key={header.id} colSpan={header.colSpan}>
-        {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
-      </TableHead>
-    )
-  }
+  // const renderHeader = (header: Header<IndividualData, unknown>) => {
+  //   const monthHeader = header.column.parent
+  //   if (monthHeader && monthHeader.id !== "name" && monthHeader.id !== "team" && monthHeader.id !== "department") {
+  //     return (
+  //       <th
+  //         key={header.id}
+  //         colSpan={header.colSpan}
+  //         className={cn(
+  //           getMonthColor(monthHeader.id),
+  //           "px-4 py-2 text-center font-semibold transition-colors duration-200",
+  //         )}
+  //       >
+  //         {monthHeader.id === header.column.id ? (
+  //           <div className="text-lg font-bold mb-2 text-white">{monthHeader.id}</div>
+  //         ) : (
+  //           <div className="text-white">{flexRender(header.column.columnDef.header, header.getContext())}</div>
+  //         )}
+  //       </th>
+  //     )
+  //   }
+  //   return (
+  //     <TableHead key={header.id} colSpan={header.colSpan}>
+  //       {header.isPlaceholder ? null : flexRender(header.column.columnDef.header, header.getContext())}
+  //     </TableHead>
+  //   )
+  // }
 
   return (
     <div className="flex flex-col min-h-screen bg-background">
