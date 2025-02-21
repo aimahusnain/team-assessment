@@ -252,7 +252,7 @@ const IndividualsDashboard = () => {
                 accessorFn: (row: IndividualData) =>
                   row.monthData.find((md) => md.month === month)
                     ?.totalCallMinutes ?? 0,
-                    // @ts-ignore: any problem
+                    // @ts-expect-error
                 header: ({ column }) => (
                   <div className="space-y-2 flex items-center justify-center flex-col gap-0">
                     <div
