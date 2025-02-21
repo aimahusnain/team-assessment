@@ -58,7 +58,7 @@ import {
   Loader2,
   SendHorizontal,
 } from "lucide-react";
-import React, { useCallback, useEffect, useMemo, useState } from "react";
+import { useCallback, useEffect, useState } from "react";
 
 type IndividualData = {
   name: string;
