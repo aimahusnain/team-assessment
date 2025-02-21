@@ -22,7 +22,6 @@ import {
   type Column,
   type ColumnDef,
   type ColumnFiltersState,
-  type Header,
   type SortingState,
   type VisibilityState,
   flexRender,
@@ -30,7 +29,7 @@ import {
   getFilteredRowModel,
   getPaginationRowModel,
   getSortedRowModel,
-  useReactTable,
+  useReactTable
 } from "@tanstack/react-table"
 import { ArrowUpDown, Check, ChevronDown, ChevronUp, Loader2 } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
