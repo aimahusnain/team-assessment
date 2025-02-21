@@ -6,7 +6,7 @@ import { db } from "@/lib/db"
 async function getUserById(id: number) {
   try {
     const user = await db.user.findUnique({
-      where: { id },
+      where: { id: id.toString() },
     })
     return user
   } catch (error) {
@@ -32,7 +32,7 @@ export default async function AccountPage() {
           <CardDescription>Update your account information here.</CardDescription>
         </CardHeader>
         <CardContent>
-          <UpdateUserForm user={{ ...user, picture: user.picture || '' }} />
+          <UpdateUserForm user={{ ...user, id: Number(user.id), picture: user.picture || '' }} />
         </CardContent>
       </Card>
     </div>
