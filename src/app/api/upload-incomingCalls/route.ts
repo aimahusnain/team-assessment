@@ -22,14 +22,14 @@ export async function POST(req: Request) {
       })),
     });
 
-    return NextResponse.json({ 
-      success: true, 
-      count: createdCalls.count 
+    return NextResponse.json({
+      success: true,
+      count: createdCalls.count
     });
   } catch (error) {
     console.error("Error uploading incoming calls:", error);
     return NextResponse.json(
-      { success: false, message: "Failed to upload incoming calls" },
+      { success: false, message: "Failed to upload incoming calls"},
       { status: 500 }
     );
   }

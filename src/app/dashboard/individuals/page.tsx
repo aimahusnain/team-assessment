@@ -31,7 +31,7 @@ import {
   getSortedRowModel,
   useReactTable
 } from "@tanstack/react-table"
-import { ArrowUpDown, Check, ChevronDown, ChevronUp, Loader2 } from "lucide-react"
+import { ArrowUpDown, Check, ChevronDown, ChevronUp, Loader2, SendHorizontal } from "lucide-react"
 import { useCallback, useEffect, useMemo, useState } from "react"
 
 type IndividualData = {
@@ -619,8 +619,8 @@ const IndividualsDashboard = () => {
                   </select>
                 </div>
 
-                <Button variant="secondary" onClick={applyFilters} disabled={isRefreshing}>
-                  Apply Filters
+                <Button size="icon" variant="secondary" onClick={applyFilters} disabled={isRefreshing}>
+                  <SendHorizontal />
                 </Button>
               </div>
 
