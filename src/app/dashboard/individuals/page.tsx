@@ -97,6 +97,24 @@ const months = [
   "December",
 ];
 
+const abbreviateMonth = (month: string): string => {
+  const abbreviations: { [key: string]: string } = {
+    January: "Jan",
+    February: "Feb",
+    March: "Mar",
+    April: "Apr",
+    May: "May",
+    June: "Jun",
+    July: "Jul",
+    August: "Aug",
+    September: "Sep",
+    October: "Oct",
+    November: "Nov",
+    December: "Dec",
+  };
+  return abbreviations[month] || month;
+};
+
 interface SortableHeaderProps {
   column: Column<IndividualData, unknown>;
   title: string;
@@ -141,20 +159,20 @@ const IndividualsDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasFilterChanges, setHasFilterChanges] = useState(false);
 
-    // Modify the filter values state setter to track changes
-    const handleFilterChange = (months: string[], year: number) => {
-      setFilterValues((prev) => {
-        const newValues = { months, year };
-        // Check if values actually changed
-        const changed = 
-          prev.year !== year || 
-          prev.months.length !== months.length ||
-          !prev.months.every(m => months.includes(m));
-        
-        setHasFilterChanges(changed);
-        return newValues;
-      });
-    };
+  // Modify the filter values state setter to track changes
+  const handleFilterChange = (months: string[], year: number) => {
+    setFilterValues((prev) => {
+      const newValues = { months, year };
+      // Check if values actually changed
+      const changed =
+        prev.year !== year ||
+        prev.months.length !== months.length ||
+        !prev.months.every((m) => months.includes(m));
+
+      setHasFilterChanges(changed);
+      return newValues;
+    });
+  };
 
   console.log(error);
 
@@ -214,7 +232,7 @@ const IndividualsDashboard = () => {
       {
         id: "department",
         accessorKey: "department",
-        header: ({ column }) => (
+        header: ({ column }: { column: Column<IndividualData, unknown> }) => (
           <SortableHeader column={column} title="Department" />
         ),
         cell: ({ row }) => row.getValue("department"),
@@ -225,23 +243,26 @@ const IndividualsDashboard = () => {
       (a, b) => months.indexOf(a) - months.indexOf(b)
     );
 
-    const monthColumns: ColumnDef<IndividualData>[] = sortedSelectedMonths.map(
-      (month) => ({
-        id: month,
-        header: month,
-        columns: [
-          ...(selectedColumns.includes("Total Call Minutes")
-            ? [
-                {
-                  id: `${month}-totalCallMinutes`,
-                  accessorFn: (row: IndividualData) =>
-                    row.monthData.find((md) => md.month === month)
-                      ?.totalCallMinutes ?? 0,
-                  header: ({
-                    column,
-                  }: {
-                    column: Column<IndividualData, unknown>;
-                  }) => (
+    const monthColumns: ColumnDef<IndividualData>[] =
+      sortedSelectedMonths.flatMap((month) => [
+        ...(selectedColumns.includes("Total Call Minutes")
+          ? [
+              {
+                id: `${month}-totalCallMinutes`,
+                accessorFn: (row: IndividualData) =>
+                  row.monthData.find((md) => md.month === month)
+                    ?.totalCallMinutes ?? 0,
+                    // @ts-ignore: any problem
+                header: ({ column }) => (
+                  <div className="space-y-2 flex items-center justify-center flex-col gap-0">
+                    <div
+                      className={cn(
+                        getMonthColor(month),
+                        "px-2 py-1 rounded-md text-center text-xs font-bold"
+                      )}
+                    >
+                      {month.substring(0, 3)}
+                    </div>
                     <div className="text-center dark:text-white">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -252,25 +273,31 @@ const IndividualsDashboard = () => {
                         <TooltipContent>Total Call Minutes</TooltipContent>
                       </Tooltip>
                     </div>
-                  ),
-                  cell: ({ getValue }: { getValue: () => number }) => (
-                    <div className="text-center">{formatValue(getValue())}</div>
-                  ),
-                },
-              ]
-            : []),
-          ...(selectedColumns.includes("TCM Score")
-            ? [
-                {
-                  id: `${month}-tcmScore`,
-                  accessorFn: (row: IndividualData) =>
-                    row.monthData.find((md) => md.month === month)?.tcmScore
-                      .level ?? 0,
-                  header: ({
-                    column,
-                  }: {
-                    column: Column<IndividualData, unknown>;
-                  }) => (
+                  </div>
+                ),
+                cell: ({ getValue }) => (
+                  <div className="text-center">{formatValue(getValue())}</div>
+                ),
+              },
+            ]
+          : []),
+        ...(selectedColumns.includes("TCM Score")
+          ? [
+              {
+                id: `${month}-tcmScore`,
+                accessorFn: (row: IndividualData) =>
+                  row.monthData.find((md) => md.month === month)?.tcmScore
+                    .level ?? 0,
+                header: ({ column }) => (
+                  <div className="space-y-2 flex items-center justify-center flex-col gap-0">
+                    <div
+                      className={cn(
+                        getMonthColor(month),
+                        "px-2 py-1 rounded-md text-center text-xs font-bold"
+                      )}
+                    >
+                      {month.substring(0, 3)}
+                    </div>
                     <div className="text-center dark:text-white">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -281,25 +308,31 @@ const IndividualsDashboard = () => {
                         <TooltipContent>TCM Score</TooltipContent>
                       </Tooltip>
                     </div>
-                  ),
-                  cell: ({ getValue }: { getValue: () => number }) => (
-                    <div className="text-center">{getValue() || "-"}</div>
-                  ),
-                },
-              ]
-            : []),
-          ...(selectedColumns.includes("Call Efficiency")
-            ? [
-                {
-                  id: `${month}-callEfficiency`,
-                  accessorFn: (row: IndividualData) =>
-                    row.monthData.find((md) => md.month === month)
-                      ?.callEfficiency ?? 0,
-                  header: ({
-                    column,
-                  }: {
-                    column: Column<IndividualData, unknown>;
-                  }) => (
+                  </div>
+                ),
+                cell: ({ getValue }) => (
+                  <div className="text-center">{getValue() || "-"}</div>
+                ),
+              },
+            ]
+          : []),
+        ...(selectedColumns.includes("Call Efficiency")
+          ? [
+              {
+                id: `${month}-callEfficiency`,
+                accessorFn: (row: IndividualData) =>
+                  row.monthData.find((md) => md.month === month)
+                    ?.callEfficiency ?? 0,
+                header: ({ column }) => (
+                  <div className="space-y-2 flex items-center justify-center flex-col gap-0">
+                    <div
+                      className={cn(
+                        getMonthColor(month),
+                        "px-2 py-1 rounded-md text-center text-xs font-bold"
+                      )}
+                    >
+                      {month.substring(0, 3)}
+                    </div>
                     <div className="text-center dark:text-white">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -310,27 +343,33 @@ const IndividualsDashboard = () => {
                         <TooltipContent>Call Efficiency</TooltipContent>
                       </Tooltip>
                     </div>
-                  ),
-                  cell: ({ getValue }: { getValue: () => number }) => (
-                    <div className="text-center">
-                      {formatPercentage(getValue())}
+                  </div>
+                ),
+                cell: ({ getValue }) => (
+                  <div className="text-center">
+                    {formatPercentage(getValue())}
+                  </div>
+                ),
+              },
+            ]
+          : []),
+        ...(selectedColumns.includes("CE Score")
+          ? [
+              {
+                id: `${month}-ceScore`,
+                accessorFn: (row: IndividualData) =>
+                  row.monthData.find((md) => md.month === month)?.ceScore
+                    .level ?? 0,
+                header: ({ column }) => (
+                  <div className="space-y-2 flex items-center justify-center flex-col gap-0">
+                    <div
+                      className={cn(
+                        getMonthColor(month),
+                        "px-2 py-1 rounded-md text-center text-xs font-bold"
+                      )}
+                    >
+                      {month.substring(0, 3)}
                     </div>
-                  ),
-                },
-              ]
-            : []),
-          ...(selectedColumns.includes("CE Score")
-            ? [
-                {
-                  id: `${month}-ceScore`,
-                  accessorFn: (row: IndividualData) =>
-                    row.monthData.find((md) => md.month === month)?.ceScore
-                      .level ?? 0,
-                  header: ({
-                    column,
-                  }: {
-                    column: Column<IndividualData, unknown>;
-                  }) => (
                     <div className="text-center dark:text-white">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -341,25 +380,31 @@ const IndividualsDashboard = () => {
                         <TooltipContent>CE Score</TooltipContent>
                       </Tooltip>
                     </div>
-                  ),
-                  cell: ({ getValue }: { getValue: () => number }) => (
-                    <div className="text-center">{getValue() || "-"}</div>
-                  ),
-                },
-              ]
-            : []),
-          ...(selectedColumns.includes("Total Sales")
-            ? [
-                {
-                  id: `${month}-totalSales`,
-                  accessorFn: (row: IndividualData) =>
-                    row.monthData.find((md) => md.month === month)
-                      ?.totalSales ?? 0,
-                  header: ({
-                    column,
-                  }: {
-                    column: Column<IndividualData, unknown>;
-                  }) => (
+                  </div>
+                ),
+                cell: ({ getValue }) => (
+                  <div className="text-center">{getValue() || "-"}</div>
+                ),
+              },
+            ]
+          : []),
+        ...(selectedColumns.includes("Total Sales")
+          ? [
+              {
+                id: `${month}-totalSales`,
+                accessorFn: (row: IndividualData) =>
+                  row.monthData.find((md) => md.month === month)?.totalSales ??
+                  0,
+                header: ({ column }) => (
+                  <div className="space-y-2 flex items-center justify-center flex-col gap-0">
+                    <div
+                      className={cn(
+                        getMonthColor(month),
+                        "px-2 py-1 rounded-md text-center text-xs font-bold"
+                      )}
+                    >
+                      {month.substring(0, 3)}
+                    </div>
                     <div className="text-center dark:text-white">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -370,25 +415,31 @@ const IndividualsDashboard = () => {
                         <TooltipContent>Total Sales</TooltipContent>
                       </Tooltip>
                     </div>
-                  ),
-                  cell: ({ getValue }: { getValue: () => number }) => (
-                    <div className="text-center">{formatValue(getValue())}</div>
-                  ),
-                },
-              ]
-            : []),
-          ...(selectedColumns.includes("TS Score")
-            ? [
-                {
-                  id: `${month}-tsScore`,
-                  accessorFn: (row: IndividualData) =>
-                    row.monthData.find((md) => md.month === month)?.tsScore
-                      .level ?? 0,
-                  header: ({
-                    column,
-                  }: {
-                    column: Column<IndividualData, unknown>;
-                  }) => (
+                  </div>
+                ),
+                cell: ({ getValue }) => (
+                  <div className="text-center">{formatValue(getValue())}</div>
+                ),
+              },
+            ]
+          : []),
+        ...(selectedColumns.includes("TS Score")
+          ? [
+              {
+                id: `${month}-tsScore`,
+                accessorFn: (row: IndividualData) =>
+                  row.monthData.find((md) => md.month === month)?.tsScore
+                    .level ?? 0,
+                header: ({ column }) => (
+                  <div className="space-y-2 flex items-center justify-center flex-col gap-0">
+                    <div
+                      className={cn(
+                        getMonthColor(month),
+                        "px-2 py-1 rounded-md text-center text-xs font-bold"
+                      )}
+                    >
+                      {month.substring(0, 3)}
+                    </div>
                     <div className="text-center dark:text-white">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -399,25 +450,30 @@ const IndividualsDashboard = () => {
                         <TooltipContent>TS Score</TooltipContent>
                       </Tooltip>
                     </div>
-                  ),
-                  cell: ({ getValue }: { getValue: () => number }) => (
-                    <div className="text-center">{getValue() || "-"}</div>
-                  ),
-                },
-              ]
-            : []),
-          ...(selectedColumns.includes("LIV Ratio")
-            ? [
-                {
-                  id: `${month}-livRatio`,
-                  accessorFn: (row: IndividualData) =>
-                    row.monthData.find((md) => md.month === month)?.livRatio ??
-                    0,
-                  header: ({
-                    column,
-                  }: {
-                    column: Column<IndividualData, unknown>;
-                  }) => (
+                  </div>
+                ),
+                cell: ({ getValue }) => (
+                  <div className="text-center">{getValue() || "-"}</div>
+                ),
+              },
+            ]
+          : []),
+        ...(selectedColumns.includes("LIV Ratio")
+          ? [
+              {
+                id: `${month}-livRatio`,
+                accessorFn: (row: IndividualData) =>
+                  row.monthData.find((md) => md.month === month)?.livRatio ?? 0,
+                header: ({ column }) => (
+                  <div className="space-y-2 flex items-center justify-center flex-col gap-0">
+                    <div
+                      className={cn(
+                        getMonthColor(month),
+                        "px-2 py-1 rounded-md text-center text-xs font-bold"
+                      )}
+                    >
+                      {month.substring(0, 3)}
+                    </div>
                     <div className="text-center dark:text-white">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -428,27 +484,33 @@ const IndividualsDashboard = () => {
                         <TooltipContent>LIV Ratio</TooltipContent>
                       </Tooltip>
                     </div>
-                  ),
-                  cell: ({ getValue }: { getValue: () => number }) => (
-                    <div className="text-center">
-                      {formatPercentage(getValue())}
+                  </div>
+                ),
+                cell: ({ getValue }) => (
+                  <div className="text-center">
+                    {formatPercentage(getValue())}
+                  </div>
+                ),
+              },
+            ]
+          : []),
+        ...(selectedColumns.includes("RBSL Score")
+          ? [
+              {
+                id: `${month}-rbslScore`,
+                accessorFn: (row: IndividualData) =>
+                  row.monthData.find((md) => md.month === month)?.rbslScore
+                    .level ?? 0,
+                header: ({ column }) => (
+                  <div className="space-y-2 flex items-center justify-center flex-col gap-0">
+                    <div
+                      className={cn(
+                        getMonthColor(month),
+                        "px-2 py-1 rounded-md text-center text-xs font-bold"
+                      )}
+                    >
+                      {month.substring(0, 3)}
                     </div>
-                  ),
-                },
-              ]
-            : []),
-          ...(selectedColumns.includes("RBSL Score")
-            ? [
-                {
-                  id: `${month}-rbslScore`,
-                  accessorFn: (row: IndividualData) =>
-                    row.monthData.find((md) => md.month === month)?.rbslScore
-                      .level ?? 0,
-                  header: ({
-                    column,
-                  }: {
-                    column: Column<IndividualData, unknown>;
-                  }) => (
                     <div className="text-center dark:text-white">
                       <Tooltip>
                         <TooltipTrigger asChild>
@@ -459,16 +521,15 @@ const IndividualsDashboard = () => {
                         <TooltipContent>RBSL Score</TooltipContent>
                       </Tooltip>
                     </div>
-                  ),
-                  cell: ({ getValue }: { getValue: () => number }) => (
-                    <div className="text-center">{getValue() || "-"}</div>
-                  ),
-                },
-              ]
-            : []),
-        ],
-      })
-    );
+                  </div>
+                ),
+                cell: ({ getValue }) => (
+                  <div className="text-center">{getValue() || "-"}</div>
+                ),
+              },
+            ]
+          : []),
+      ]);
 
     return [...baseColumns, ...monthColumns];
   }, [selectedMonths, selectedColumns]);
@@ -563,7 +624,10 @@ const IndividualsDashboard = () => {
       November: "bg-blue-500 text-white border-blue-600",
       December: "bg-indigo-500 text-white border-indigo-600",
     };
-    return colors[month as keyof typeof colors] || "bg-gray-500 text-white border-gray-600";
+    return (
+      colors[month as keyof typeof colors] ||
+      "bg-gray-500 text-white border-gray-600"
+    );
   };
 
   // Apply filters function - now only for month and year
@@ -668,14 +732,16 @@ const IndividualsDashboard = () => {
         </div>
       </header>
       <main className="flex flex-1 flex-col gap-4 p-4">
-      <Card className="border-none">
+        <Card className="border-none">
           <CardContent>
             <div className="space-y-4">
               <div className="flex flex-wrap items-center justify-start gap-2">
                 <Input
                   placeholder="Search by name..."
                   className="max-w-64"
-                  value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+                  value={
+                    (table.getColumn("name")?.getFilterValue() as string) ?? ""
+                  }
                   onChange={(event) =>
                     table.getColumn("name")?.setFilterValue(event.target.value)
                   }
@@ -716,13 +782,16 @@ const IndividualsDashboard = () => {
                   disabled={isRefreshing}
                   className={cn(
                     "transition-all duration-300",
-                    hasFilterChanges && "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                    hasFilterChanges &&
+                      "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
                   )}
                 >
-                  <SendHorizontal className={cn(
-                    "transition-colors",
-                    hasFilterChanges && "text-yellow-400"
-                  )} />
+                  <SendHorizontal
+                    className={cn(
+                      "transition-colors",
+                      hasFilterChanges && "text-yellow-400"
+                    )}
+                  />
                 </Button>
               </div>
 
@@ -752,12 +821,14 @@ const IndividualsDashboard = () => {
                                     colSpan={header.colSpan}
                                     className={cn(
                                       getMonthColor(monthHeader.id),
-                                      "px-4 py-2 text-center font-semibold transition-colors duration-200"
+                                      "px-4 py-2 text-center font-semibold transition-colors duration-200",
+                                      "border-b-2"
                                     )}
                                   >
                                     {monthHeader.id === header.column.id ? (
-                                      <div className="text-lg font-bold mb-2 text-white">
-                                        {monthHeader.id}
+                                      // Show abbreviated month name
+                                      <div className="text-xl font-bold mb-3 text-white tracking-wide">
+                                        {abbreviateMonth(monthHeader.id)}
                                       </div>
                                     ) : (
                                       <div className="text-white">

@@ -166,7 +166,7 @@ function MonthPicker({
                               ? variant?.calendar?.selected ?? "default"
                               : variant?.calendar?.main ?? "ghost",
                           }),
-                          "h-full w-full p-0 font-normal aria-selected:opacity-100"
+                          "h-full w-full p-0 font-normal aria-selected:opacity-100 dark:text-black"
                         )}
                       >
                         {callbacks?.monthLabel
