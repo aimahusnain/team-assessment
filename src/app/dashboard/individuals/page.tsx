@@ -35,6 +35,11 @@ import {
   TableHeader,
   TableRow,
 } from "@/components/ui/table";
+import {
+  Tooltip,
+  TooltipContent,
+  TooltipTrigger,
+} from "@/components/ui/tooltip";
 import { cn } from "@/lib/utils";
 import {
   type Column,
@@ -134,6 +139,22 @@ const IndividualsDashboard = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
+  const [hasFilterChanges, setHasFilterChanges] = useState(false);
+
+  // Modify the filter values state setter to track changes
+  const handleFilterChange = (months: string[], year: number) => {
+    setFilterValues((prev) => {
+      const newValues = { months, year };
+      // Check if values actually changed
+      const changed =
+        prev.year !== year ||
+        prev.months.length !== months.length ||
+        !prev.months.every((m) => months.includes(m));
+
+      setHasFilterChanges(changed);
+      return newValues;
+    });
+  };
 
   console.log(error);
 
@@ -179,7 +200,9 @@ const IndividualsDashboard = () => {
         accessorKey: "name",
         header: ({ column }) => <SortableHeader column={column} title="Name" />,
         cell: ({ row }) => (
-          <div className="font-medium">{row.getValue("name")}</div>
+          <div className="font-medium min-w-[200px]">
+            {row.getValue("name")}
+          </div>
         ),
       },
       {
@@ -220,10 +243,14 @@ const IndividualsDashboard = () => {
                     column: Column<IndividualData, unknown>;
                   }) => (
                     <div className="text-center dark:text-white">
-                      <SortableHeader
-                        column={column}
-                        title={`Total Call Minutes - ${month}`}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="TCM" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Total Call Minutes</TooltipContent>
+                      </Tooltip>
                     </div>
                   ),
                   cell: ({ getValue }: { getValue: () => number }) => (
@@ -245,10 +272,14 @@ const IndividualsDashboard = () => {
                     column: Column<IndividualData, unknown>;
                   }) => (
                     <div className="text-center dark:text-white">
-                      <SortableHeader
-                        column={column}
-                        title={`TCM Score - ${month}`}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>TCM Score</TooltipContent>
+                      </Tooltip>
                     </div>
                   ),
                   cell: ({ getValue }: { getValue: () => number }) => (
@@ -270,10 +301,14 @@ const IndividualsDashboard = () => {
                     column: Column<IndividualData, unknown>;
                   }) => (
                     <div className="text-center dark:text-white">
-                      <SortableHeader
-                        column={column}
-                        title={`Call Efficiency - ${month}`}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="CE" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Call Efficiency</TooltipContent>
+                      </Tooltip>
                     </div>
                   ),
                   cell: ({ getValue }: { getValue: () => number }) => (
@@ -297,10 +332,14 @@ const IndividualsDashboard = () => {
                     column: Column<IndividualData, unknown>;
                   }) => (
                     <div className="text-center dark:text-white">
-                      <SortableHeader
-                        column={column}
-                        title={`CE Score - ${month}`}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>CE Score</TooltipContent>
+                      </Tooltip>
                     </div>
                   ),
                   cell: ({ getValue }: { getValue: () => number }) => (
@@ -322,10 +361,14 @@ const IndividualsDashboard = () => {
                     column: Column<IndividualData, unknown>;
                   }) => (
                     <div className="text-center dark:text-white">
-                      <SortableHeader
-                        column={column}
-                        title={`Total Sales - ${month}`}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="TS" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Total Sales</TooltipContent>
+                      </Tooltip>
                     </div>
                   ),
                   cell: ({ getValue }: { getValue: () => number }) => (
@@ -347,10 +390,14 @@ const IndividualsDashboard = () => {
                     column: Column<IndividualData, unknown>;
                   }) => (
                     <div className="text-center dark:text-white">
-                      <SortableHeader
-                        column={column}
-                        title={`TS Score - ${month}`}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>TS Score</TooltipContent>
+                      </Tooltip>
                     </div>
                   ),
                   cell: ({ getValue }: { getValue: () => number }) => (
@@ -372,10 +419,14 @@ const IndividualsDashboard = () => {
                     column: Column<IndividualData, unknown>;
                   }) => (
                     <div className="text-center dark:text-white">
-                      <SortableHeader
-                        column={column}
-                        title={`LIV Ratio - ${month}`}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="LIV" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>LIV Ratio</TooltipContent>
+                      </Tooltip>
                     </div>
                   ),
                   cell: ({ getValue }: { getValue: () => number }) => (
@@ -399,10 +450,14 @@ const IndividualsDashboard = () => {
                     column: Column<IndividualData, unknown>;
                   }) => (
                     <div className="text-center dark:text-white">
-                      <SortableHeader
-                        column={column}
-                        title={`RBSL Score - ${month}`}
-                      />
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>RBSL Score</TooltipContent>
+                      </Tooltip>
                     </div>
                   ),
                   cell: ({ getValue }: { getValue: () => number }) => (
@@ -517,6 +572,7 @@ const IndividualsDashboard = () => {
   const applyFilters = useCallback(() => {
     setSelectedMonths(filterValues.months);
     setSelectedYear(filterValues.year);
+    setHasFilterChanges(false);
   }, [filterValues]);
 
   // Column selection is now immediate
@@ -532,13 +588,6 @@ const IndividualsDashboard = () => {
   useEffect(() => {
     fetchData();
   }, [fetchData]); // Dependencies for when to fetch data
-
-  // const handleColumnSelectionOld = (column: string) => {
-  //   setFilterValues((prev) => ({
-  //     ...prev,
-  //     columns: prev.columns.includes(column) ? prev.columns.filter((c) => c !== column) : [...prev.columns, column],
-  //   }))
-  // }
 
   if (loading) {
     return (
@@ -579,6 +628,7 @@ const IndividualsDashboard = () => {
         tcmScore: item.tcmScore,
         callEfficiency: Number.parseFloat(item.callEfficiency) / 100,
         ceScore: item.ceScore,
+
         totalSales: Number.parseInt(item.totalSales.replace(/,/g, "")),
         tsScore: item.tsScore,
         livRatio: Number.parseFloat(item.livRatio) / 100,
@@ -658,54 +708,28 @@ const IndividualsDashboard = () => {
                     <MonthPicker
                       selectedMonths={filterValues.months}
                       selectedYear={filterValues.year}
-                      onSelect={(months, year) => {
-                        setFilterValues((prev) => ({
-                          ...prev,
-                          months,
-                          year,
-                        }));
-                      }}
+                      onSelect={handleFilterChange}
                     />
                   </PopoverContent>
                 </Popover>
-
-                {/* <div className="flex items-center gap-2">
-                  <MonthSelector
-                    selectedMonths={filterValues.months}
-                    onChange={(months) =>
-                      setFilterValues((prev) => ({
-                        ...prev,
-                        months,
-                      }))
-                    }
-                    disabled={isRefreshing}
-                  />
-
-                  <select
-                    className="rounded-md border px-3 py-2 text-sm"
-                    value={filterValues.year}
-                    onChange={(e) =>
-                      setFilterValues((prev) => ({
-                        ...prev,
-                        year: Number.parseInt(e.target.value),
-                      }))
-                    }
-                  >
-                    {years.map((year) => (
-                      <option key={year} value={year}>
-                        {year}
-                      </option>
-                    ))}
-                  </select>
-                </div> */}
 
                 <Button
                   size="icon"
                   variant="secondary"
                   onClick={applyFilters}
                   disabled={isRefreshing}
+                  className={cn(
+                    "transition-all duration-300",
+                    hasFilterChanges &&
+                      "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                  )}
                 >
-                  <SendHorizontal />
+                  <SendHorizontal
+                    className={cn(
+                      "transition-colors",
+                      hasFilterChanges && "text-yellow-400"
+                    )}
+                  />
                 </Button>
               </div>
 
