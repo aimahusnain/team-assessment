@@ -1,6 +1,5 @@
 "use client";
 
-import MonthSelector from "@/components/month-selector";
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -20,6 +19,7 @@ import {
   CommandList,
 } from "@/components/ui/command";
 import { Input } from "@/components/ui/input";
+import { MonthPicker } from "@/components/ui/monthpicker";
 import {
   Popover,
   PopoverContent,
@@ -58,10 +58,7 @@ import {
   Loader2,
   SendHorizontal,
 } from "lucide-react";
-import { useCallback, useEffect, useMemo, useState } from "react";
-import { format } from "date-fns";
-import React from "react";
-import { MonthPicker } from "@/components/ui/monthpicker";
+import React, { useCallback, useEffect, useMemo, useState } from "react";
 
 type IndividualData = {
   name: string;
@@ -137,7 +134,6 @@ const IndividualsDashboard = () => {
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
   const [isRefreshing, setIsRefreshing] = useState(false);
-  const [date, setDate] = React.useState<Date>();
 
   console.log(error);
 
@@ -162,11 +158,6 @@ const IndividualsDashboard = () => {
     "LIV Ratio",
     "RBSL Score",
   ]);
-
-  const years = useMemo(
-    () => Array.from({ length: 5 }, (_, i) => new Date().getFullYear() - i),
-    []
-  );
 
   // Initialize with previous month
   useEffect(() => {

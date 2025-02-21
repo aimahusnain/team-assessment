@@ -123,7 +123,7 @@ function MonthPicker({
                 <table className="w-full border-collapse space-y-1">
                     <tbody>
                         {MONTHS.map((monthRow, a) => (
-                            <tr key={"row-" + a} className="flex w-full mt-2">
+                            <tr key={"row-" + a} className="flex w-full mt-2 gap-2">
                                 {monthRow.map((m) => {
                                     const isSelected = selectedMonths.includes(m.full);
                                     const isDisabled = 
