@@ -122,6 +122,8 @@ const CompanyDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasFilterChanges, setHasFilterChanges] = useState(false);
 
+  console.log(error)
+
   // Filter states
   const [filterValues, setFilterValues] = useState({
     months: [] as string[],
@@ -461,15 +463,29 @@ const CompanyDashboard = () => {
         throw new Error(result.error || "Failed to fetch data");
       }
 
-      const transformedData = result.company.map((item: any) => ({
+      interface ApiResponse {
+        company: ApiCompanyData[];
+      }
+
+      interface ApiCompanyData {
+        month: string;
+        avgTotalCallMinutes: string;
+        tcmScore: { level: number; score: number | string };
+        avgCallEfficiency: string;
+        ceScore: { level: number; score: number | string };
+        avgTotalSales: string;
+        tsScore: { level: number; score: number | string };
+        avgRatioBetweenSkadeAndLiv: string;
+        rbslScore: { level: number; score: number | string };
+        avgTotalScore: number;
+      }
+
+      const transformedData: CompanyData[] = (result as ApiResponse).company.map((item) => ({
         ...item,
-        avgTotalCallMinutes: Number.parseInt(
-          item.avgTotalCallMinutes.replace(/,/g, "")
-        ),
+        avgTotalCallMinutes: Number.parseInt(item.avgTotalCallMinutes.replace(/,/g, "")),
         avgCallEfficiency: Number.parseFloat(item.avgCallEfficiency) / 100,
         avgTotalSales: Number.parseInt(item.avgTotalSales.replace(/,/g, "")),
-        avgRatioBetweenSkadeAndLiv:
-          Number.parseFloat(item.avgRatioBetweenSkadeAndLiv) / 100,
+        avgRatioBetweenSkadeAndLiv: Number.parseFloat(item.avgRatioBetweenSkadeAndLiv) / 100,
       }));
 
       setData(transformedData);
