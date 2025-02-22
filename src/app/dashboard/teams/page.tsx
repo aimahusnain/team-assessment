@@ -126,6 +126,8 @@ const TeamsDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [hasFilterChanges, setHasFilterChanges] = useState(false)
 
+  console.log(error)
+
   // Filter states
   const [filterValues, setFilterValues] = useState({
     months: [] as string[],
