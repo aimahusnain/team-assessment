@@ -41,7 +41,7 @@ import {
   TooltipProvider,
   TooltipTrigger,
 } from "@/components/ui/tooltip";
-import { cn } from "@/lib/utils";
+import { cn, formatPercentage, formatValue } from "@/lib/utils";
 import {
   type Column,
   type ColumnDef,
@@ -122,7 +122,7 @@ const CompanyDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false);
   const [hasFilterChanges, setHasFilterChanges] = useState(false);
 
-  console.log(error)
+  console.log(error);
 
   // Filter states
   const [filterValues, setFilterValues] = useState({
@@ -480,12 +480,17 @@ const CompanyDashboard = () => {
         avgTotalScore: number;
       }
 
-      const transformedData: CompanyData[] = (result as ApiResponse).company.map((item) => ({
+      const transformedData: CompanyData[] = (
+        result as ApiResponse
+      ).company.map((item) => ({
         ...item,
-        avgTotalCallMinutes: Number.parseInt(item.avgTotalCallMinutes.replace(/,/g, "")),
+        avgTotalCallMinutes: Number.parseInt(
+          item.avgTotalCallMinutes.replace(/,/g, "")
+        ),
         avgCallEfficiency: Number.parseFloat(item.avgCallEfficiency) / 100,
         avgTotalSales: Number.parseInt(item.avgTotalSales.replace(/,/g, "")),
-        avgRatioBetweenSkadeAndLiv: Number.parseFloat(item.avgRatioBetweenSkadeAndLiv) / 100,
+        avgRatioBetweenSkadeAndLiv:
+          Number.parseFloat(item.avgRatioBetweenSkadeAndLiv) / 100,
       }));
 
       setData(transformedData);
@@ -502,20 +507,6 @@ const CompanyDashboard = () => {
       setLoading(false);
     }
   }, [selectedMonths, selectedYear]);
-
-  const formatValue = (value: number) => {
-    if (value === 0) return "-";
-    return new Intl.NumberFormat("en-US").format(value);
-  };
-
-  const formatPercentage = (value: number) => {
-    if (value === 0) return "-";
-    return new Intl.NumberFormat("en-US", {
-      style: "percent",
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }).format(value);
-  };
 
   const formatDecimal = (value: number) => {
     if (value === 0) return "-";

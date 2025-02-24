@@ -1,8 +1,8 @@
+import SidebarPageTemplate from "@/components/sidebar_page_template";
+import ThemeContextProvider from "@/context/ThemeContext";
 import type { Metadata } from "next";
 import { Geist, Geist_Mono } from "next/font/google";
 import "./globals.css";
-import SidebarPageTemplate from "@/components/sidebar_page_template";
-import ThemeContextProvider from "@/context/ThemeContext";
 
 const geistSans = Geist({
   variable: "--font-geist-sans",

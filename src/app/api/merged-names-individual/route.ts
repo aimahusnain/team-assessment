@@ -2,19 +2,10 @@
 
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { ScoreLevel, ScoreMatrix } from "@/types";
+import { formatDecimal, formatNumber, formatRatio } from "@/lib/utils";
 
 const prisma = new PrismaClient();
-
-interface ScoreLevel {
-  level: number;
-  score: number | string;
-}
-
-interface ScoreMatrix {
-  benchmark: number;
-  interval: number;
-  levels: ScoreLevel[];
-}
 
 interface NameDetails {
   name: string;
@@ -30,25 +21,6 @@ interface NameDetails {
   rbslScore: ScoreLevel;
   month: string;
 }
-
-const formatNumber = (num: number): string => {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
-};
-
-const formatDecimal = (num: number): string => {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-    style: "percent",
-  }).format(num);
-};
-
-const formatRatio = (num: number): string => {
-  return (num * 100).toFixed(1) + "%";
-};
 
 const normalizeAndTrim = (str: string | null | undefined): string => {
   if (!str) return "";

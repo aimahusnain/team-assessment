@@ -18,7 +18,7 @@ import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipTrigger, TooltipProvider } from "@/components/ui/tooltip"
-import { cn } from "@/lib/utils"
+import { abbreviateMonth, cn, formatPercentage, formatValue } from "@/lib/utils";
 import {
   type Column,
   type ColumnDef,
@@ -65,24 +65,6 @@ const months = [
   "November",
   "December",
 ]
-
-const abbreviateMonth = (month: string): string => {
-  const abbreviations: { [key: string]: string } = {
-    January: "Jan",
-    February: "Feb",
-    March: "Mar",
-    April: "Apr",
-    May: "May",
-    June: "Jun",
-    July: "Jul",
-    August: "Aug",
-    September: "Sep",
-    October: "Oct",
-    November: "Nov",
-    December: "Dec",
-  }
-  return abbreviations[month] || month
-}
 
 interface SortableHeaderProps {
   column: Column<DepartmentData, unknown>
@@ -496,20 +478,6 @@ const DepartmentsDashboard = () => {
       setLoading(false)
     }
   }, [selectedMonths, selectedYear])
-
-  const formatValue = (value: number) => {
-    if (value === 0) return "-"
-    return new Intl.NumberFormat("en-US").format(value)
-  }
-
-  const formatPercentage = (value: number) => {
-    if (value === 0) return "-"
-    return new Intl.NumberFormat("en-US", {
-      style: "percent",
-      minimumFractionDigits: 1,
-      maximumFractionDigits: 1,
-    }).format(value)
-  }
 
   const formatDecimal = (value: number) => {
     if (value === 0) return "-"

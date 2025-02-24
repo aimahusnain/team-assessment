@@ -1,9 +1,17 @@
 import { NextResponse } from "next/server";
 import { PrismaClient } from "@prisma/client";
+import { ScoreLevel, ScoreMatrix } from "@/types";
+import { formatDecimal, formatNumber, formatRatio } from "@/lib/utils";
 
 const prisma = new PrismaClient();
 
 const CALL_MINUTES_THRESHOLD = 750;
+
+interface TeamMemberDetails {
+  name: string;
+  totalSales: number;
+  formattedTotalSales: string;
+}
 
 interface TeamDetails {
   team: string;
@@ -16,46 +24,20 @@ interface TeamDetails {
   tsScore: ScoreLevel;
   avgRatioBetweenSkadeAndLiv: string;
   rbslScore: ScoreLevel;
-  // avgTotalScore: number;
   month: string;
+  members: TeamMemberDetails[]; // Added this field for individual members data
+  teamTotalSales: string; // Total sum of all members' sales
 }
 
-interface ScoreLevel {
-  level: number;
-  score: number | string;
-}
-
-interface ScoreMatrix {
-  benchmark: number;
-  interval: number;
-  levels: ScoreLevel[];
-}
-
-const formatNumber = (num: number): string => {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 0,
-    maximumFractionDigits: 0,
-  }).format(num);
-};
-
-const formatDecimal = (num: number): string => {
-  return new Intl.NumberFormat("en-US", {
-    minimumFractionDigits: 1,
-    maximumFractionDigits: 1,
-    style: "percent",
-  }).format(num);
-};
-
-const formatRatio = (num: number): string => {
-  return (num * 100).toFixed(1) + "%";
-};
 
 const normalizeAndTrim = (str: string | null | undefined): string => {
   if (!str) return "";
   return str.trim().replace(/\s+/g, " ");
 };
 
+// Score calculation functions remain the same
 const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
+  // Existing code remains the same
   const inputs = await prisma.inputs.findFirst();
   if (!inputs) return null;
 
@@ -76,6 +58,7 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
 };
 
 const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
+  // Existing code remains the same
   const inputs = await prisma.inputs.findFirst();
   if (!inputs) return null;
 
@@ -98,6 +81,7 @@ const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
 };
 
 const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
+  // Existing code remains the same
   const inputs = await prisma.inputs.findFirst();
   if (!inputs) return null;
 
@@ -118,6 +102,7 @@ const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
 };
 
 const calculateRBSLScore = async (): Promise<ScoreMatrix | null> => {
+  // Existing code remains the same
   const inputs = await prisma.inputs.findFirst();
   if (!inputs) return null;
 
@@ -150,6 +135,7 @@ const getScoreForValue = (
   isDescending = true,
   isRBSL = false
 ): ScoreLevel => {
+  // Existing code remains the same
   if (!scoreMatrix) return { level: 1, score: "-" };
 
   if (isRBSL) {
@@ -231,6 +217,9 @@ export async function GET(request: Request) {
         const teamCallEfficiencyMap = new Map<string, number[]>();
         const teamTotalSalesMap = new Map<string, number[]>();
         const teamLivRatioMap = new Map<string, number[]>();
+        
+        // Track individual sales by team
+        const teamMembersMap = new Map<string, Map<string, number>>();
 
         // Process activity logs
         activityLogs.forEach((log) => {
@@ -239,8 +228,14 @@ export async function GET(request: Request) {
           if (normalizedName && normalizedTeam) {
             if (!teamDetailsMap.has(normalizedTeam)) {
               teamDetailsMap.set(normalizedTeam, { department: log.department || "", members: new Set() });
+              teamMembersMap.set(normalizedTeam, new Map<string, number>());
             }
             teamDetailsMap.get(normalizedTeam)!.members.add(normalizedName);
+            
+            // Track individual sales within teams
+            const memberSalesMap = teamMembersMap.get(normalizedTeam)!;
+            const currentSales = memberSalesMap.get(normalizedName) || 0;
+            memberSalesMap.set(normalizedName, currentSales + log.verdi);
           }
         });
 
@@ -318,7 +313,18 @@ export async function GET(request: Request) {
             const tsScore = getScoreForValue(avgTS, tsScoreMatrix, true);
             const rbslScore = getScoreForValue(avgRBSL, rbslScoreMatrix, true, true);
 
-            // const avgTotalScore = (tcmScore.level + ceScore.level + tsScore.level + rbslScore.level) / 4;
+            // Get individual member sales data
+            const memberSalesMap = teamMembersMap.get(team) || new Map<string, number>();
+            const members: TeamMemberDetails[] = Array.from(memberSalesMap.entries())
+              .map(([name, sales]) => ({
+                name,
+                totalSales: sales,
+                formattedTotalSales: formatNumber(sales)
+              }))
+              .sort((a, b) => b.totalSales - a.totalSales); // Sort by sales descending
+              
+            // Calculate team total sales (sum of all members)
+            const teamTotalSales = members.reduce((sum, member) => sum + member.totalSales, 0);
 
             return {
               team,
@@ -332,6 +338,8 @@ export async function GET(request: Request) {
               avgRatioBetweenSkadeAndLiv: formatRatio(avgRBSL),
               rbslScore,
               month,
+              members,
+              teamTotalSales: formatNumber(teamTotalSales)
             };
           });
 
