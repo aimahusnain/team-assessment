@@ -1,4 +1,4 @@
-"use client";
+"use client"
 
 import {
   Breadcrumb,
@@ -7,45 +7,17 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent } from "@/components/ui/card";
-import {
-  Command,
-  CommandEmpty,
-  CommandGroup,
-  CommandInput,
-  CommandItem,
-  CommandList,
-} from "@/components/ui/command";
-import { Input } from "@/components/ui/input";
-import { MonthPicker } from "@/components/ui/monthpicker";
-import {
-  Popover,
-  PopoverContent,
-  PopoverTrigger,
-} from "@/components/ui/popover";
-import { Separator } from "@/components/ui/separator";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import {
-  Tooltip,
-  TooltipContent,
-  TooltipProvider,
-  TooltipTrigger,
-} from "@/components/ui/tooltip";
-import {
-  abbreviateMonth,
-  cn,
-  formatPercentage,
-  formatValue,
-} from "@/lib/utils";
+} from "@/components/ui/breadcrumb"
+import { Button } from "@/components/ui/button"
+import { Card, CardContent } from "@/components/ui/card"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
+import { Input } from "@/components/ui/input"
+import { MonthPicker } from "@/components/ui/monthpicker"
+import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
+import { Separator } from "@/components/ui/separator"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
+import { abbreviateMonth, cn, formatPercentage, formatValue } from "@/lib/utils"
 import {
   type Column,
   type ColumnDef,
@@ -58,38 +30,40 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
-import { AnimatePresence, motion } from "framer-motion";
+} from "@tanstack/react-table"
+import { AnimatePresence, motion } from "framer-motion"
 import {
   ArrowUpDown,
   CalendarIcon,
   Check,
-  ChevronDown, ChevronRight, ChevronUp,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
   Loader2,
-  SendHorizontal
-} from "lucide-react";
-import React, { useCallback, useEffect, useState } from "react";
+  SendHorizontal,
+} from "lucide-react"
+import React, { useCallback, useEffect, useState } from "react"
 
 type TeamData = {
-  team: string;
+  team: string
   monthData: {
-    month: string;
-    avgTotalCallMinutes: number;
-    tcmScore: { level: number; score: number | string };
-    avgCallEfficiency: number;
-    ceScore: { level: number; score: number | string };
-    avgTotalSales: number;
-    tsScore: { level: number; score: number | string };
-    avgRatioBetweenSkadeAndLiv: number;
-    rbslScore: { level: number; score: number | string };
-  }[];
+    month: string
+    avgTotalCallMinutes: number
+    tcmScore: { level: number; score: number | string }
+    avgCallEfficiency: number
+    ceScore: { level: number; score: number | string }
+    avgTotalSales: number
+    tsScore: { level: number; score: number | string }
+    avgRatioBetweenSkadeAndLiv: number
+    rbslScore: { level: number; score: number | string }
+  }[]
   members?: {
-    name: string;
-    totalSales: number;
-    formattedTotalSales: string;
-    month: string;
-  }[];
-};
+    name: string
+    totalSales: number
+    formattedTotalSales: string
+    month: string
+  }[]
+}
 
 const months = [
   "January",
@@ -104,11 +78,11 @@ const months = [
   "October",
   "November",
   "December",
-];
+]
 
 interface SortableHeaderProps {
-  column: Column<TeamData, unknown>;
-  title: string;
+  column: Column<TeamData, unknown>
+  title: string
 }
 
 const SortableHeader = ({ column, title }: SortableHeaderProps) => {
@@ -116,13 +90,13 @@ const SortableHeader = ({ column, title }: SortableHeaderProps) => {
     <Button
       variant="ghost"
       onClick={() => {
-        const currentSort = column.getIsSorted();
+        const currentSort = column.getIsSorted()
         if (currentSort === false) {
-          column.toggleSorting(false);
+          column.toggleSorting(false)
         } else if (currentSort === "asc") {
-          column.toggleSorting(true);
+          column.toggleSorting(true)
         } else {
-          column.clearSorting();
+          column.clearSorting()
         }
       }}
       className="p-0 hover:bg-transparent hover:text-white"
@@ -136,43 +110,67 @@ const SortableHeader = ({ column, title }: SortableHeaderProps) => {
         <ArrowUpDown className="ml-2 h-4 w-4" />
       )}
     </Button>
-  );
-};
+  )
+}
 
 const TeamsDashboard = () => {
-  const [data, setData] = useState<TeamData[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [isRefreshing, setIsRefreshing] = useState(false);
-  const [hasFilterChanges, setHasFilterChanges] = useState(false);
-  const [expandedTeams, setExpandedTeams] = useState<string[]>([]);
-  const [hoveredTeam, setHoveredTeam] = useState<string | null>(null);
+  const [data, setData] = useState<TeamData[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [isRefreshing, setIsRefreshing] = useState(false)
+  const [hasFilterChanges, setHasFilterChanges] = useState(false)
+  const [expandedTeams, setExpandedTeams] = useState<string[]>([])
+  const [hoveredTeam, setHoveredTeam] = useState<string | null>(null)
+  const [weightages, setWeightages] = useState({
+    tcm: 0,
+    ce: 0,
+    ts: 0,
+    rbsl: 0,
+  })
+
+  useEffect(() => {
+    const fetchWeightages = async () => {
+      try {
+        const response = await fetch("/api/get-inputs")
+        const data = await response.json()
+        if (data.success && data.data[0]) {
+          const weights = {
+            tcm: Number.parseFloat(data.data[0].score_tcm_weightage),
+            ce: Number.parseFloat(data.data[0].score_ce_weightage),
+            ts: Number.parseFloat(data.data[0].score_ts_weightage),
+            rbsl: Number.parseFloat(data.data[0].score_rbsl_weightage),
+          }
+          console.log("Weightages:", weights)
+          setWeightages(weights)
+        }
+      } catch (error) {
+        console.error("Error fetching weightages:", error)
+      }
+    }
+    fetchWeightages()
+  }, [])
 
   // Add this function to toggle team expansion
   const toggleTeamExpansion = (teamName: string) => {
     setExpandedTeams((prev) =>
-      prev.includes(teamName)
-        ? prev.filter((name) => name !== teamName)
-        : [...prev, teamName]
-    );
-  };
+      prev.includes(teamName) ? prev.filter((name) => name !== teamName) : [...prev, teamName],
+    )
+  }
 
-  console.log(error);
+  console.log(error)
 
   // Filter states
   const [filterValues, setFilterValues] = useState({
     months: [] as string[],
     year: new Date().getFullYear(),
-  });
+  })
 
   // Applied filter states
-  const [selectedMonths, setSelectedMonths] = useState<string[]>([]);
-  const [selectedYear, setSelectedYear] = useState<number>(
-    new Date().getFullYear()
-  );
+  const [selectedMonths, setSelectedMonths] = useState<string[]>([])
+  const [selectedYear, setSelectedYear] = useState<number>(new Date().getFullYear())
   const [selectedColumns, setSelectedColumns] = useState<string[]>([
     "Avg Total Call Minutes",
     "TCM Score",
@@ -182,32 +180,30 @@ const TeamsDashboard = () => {
     "TS Score",
     "Avg Ratio Between Skade & Liv",
     "RBSL Score",
-  ]);
+  ])
 
   // Initialize with previous month
   useEffect(() => {
-    const currentDate = new Date();
-    const currentMonth = currentDate.getMonth();
-    const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1;
-    const initialMonth = months[previousMonth];
+    const currentDate = new Date()
+    const currentMonth = currentDate.getMonth()
+    const previousMonth = currentMonth === 0 ? 11 : currentMonth - 1
+    const initialMonth = months[previousMonth]
     setFilterValues((prev) => ({
       ...prev,
       months: [initialMonth],
-    }));
-    setSelectedMonths([initialMonth]);
-  }, []);
+    }))
+    setSelectedMonths([initialMonth])
+  }, [])
 
   const handleFilterChange = (months: string[], year: number) => {
     setFilterValues((prev) => {
-      const newValues = { months, year };
+      const newValues = { months, year }
       const changed =
-        prev.year !== year ||
-        prev.months.length !== months.length ||
-        !prev.months.every((m) => months.includes(m));
-      setHasFilterChanges(changed);
-      return newValues;
-    });
-  };
+        prev.year !== year || prev.months.length !== months.length || !prev.months.every((m) => months.includes(m))
+      setHasFilterChanges(changed)
+      return newValues
+    })
+  }
 
   const getColumns = useCallback((): ColumnDef<TeamData>[] => {
     const baseColumns: ColumnDef<TeamData>[] = [
@@ -215,579 +211,429 @@ const TeamsDashboard = () => {
         id: "team",
         accessorKey: "team",
         header: ({ column }) => <SortableHeader column={column} title="Team" />,
-        cell: ({ row }) => (
-          <div className="font-medium min-w-[200px]">
-            {row.getValue("team")}
+        cell: ({ row }) => <div className="font-medium min-w-[200px]">{row.getValue("team")}</div>,
+      },
+    ]
+
+    const sortedSelectedMonths = selectedMonths.sort((a, b) => months.indexOf(a) - months.indexOf(b))
+
+    const monthColumns: ColumnDef<TeamData>[] = sortedSelectedMonths.flatMap((month) => [
+      ...(selectedColumns.includes("Avg Total Call Minutes")
+        ? [
+            {
+              id: `${month}-avgTotalCallMinutes`,
+              accessorFn: (row: TeamData) => row.monthData.find((md) => md.month === month)?.avgTotalCallMinutes ?? 0,
+              // @ts-expect-error Type definition issue in table column configuration
+              header: ({ column }) => (
+                <div className="mt-2 flex items-center justify-center flex-col gap-0">
+                  <div className={cn(getMonthColor(month), "px-2 py-1 rounded-md text-center text-xs font-bold")}>
+                    {month.substring(0, 3)}
+                  </div>
+                  <div className="text-center dark:text-white">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="TCM" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Avg Total Call Minutes</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+              ),
+              // @ts-expect-error Type definition issue in table column configuration
+              cell: ({ row, getValue }) => (
+                <div className={cn("text-center", row.original.team === "Total (All Teams)" && "font-bold")}>
+                  {formatValue(getValue())}
+                </div>
+              ),
+            },
+          ]
+        : []),
+      ...(selectedColumns.includes("TCM Score")
+        ? [
+            {
+              id: `${month}-tcmScore`,
+              accessorFn: (row: TeamData) => row.monthData.find((md) => md.month === month)?.tcmScore.level ?? 0,
+              // @ts-expect-error Type definition issue in table column configuration
+              header: ({ column }) => (
+                <div className="mt-2 flex items-center justify-center flex-col gap-0">
+                  <div className={cn(getMonthColor(month), "px-2 py-1 rounded-md text-center text-xs font-bold")}>
+                    {month.substring(0, 3)}
+                  </div>
+                  <div className="text-center dark:text-white">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>TCM Score</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+              ),
+              // @ts-expect-error Type definition issue in table column configuration
+              cell: ({ row, getValue }) => (
+                <div className={cn("text-center", row.original.team === "Total (All Teams)" && "font-bold")}>
+                  {getValue() || "-"}
+                </div>
+              ),
+            },
+          ]
+        : []),
+      ...(selectedColumns.includes("Avg Call Efficiency")
+        ? [
+            {
+              id: `${month}-avgCallEfficiency`,
+              accessorFn: (row: TeamData) => row.monthData.find((md) => md.month === month)?.avgCallEfficiency ?? 0,
+              // @ts-expect-error Type definition issue in table column configuration
+              header: ({ column }) => (
+                <div className="mt-2 flex items-center justify-center flex-col gap-0">
+                  <div className={cn(getMonthColor(month), "px-2 py-1 rounded-md text-center text-xs font-bold")}>
+                    {month.substring(0, 3)}
+                  </div>
+                  <div className="text-center dark:text-white">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="CE" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Avg Call Efficiency</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+              ),
+              // @ts-expect-error Type definition issue in table column configuration
+              cell: ({ row, getValue }) => (
+                <div className={cn("text-center", row.original.team === "Total (All Teams)" && "font-bold")}>
+                  {formatPercentage(getValue())}
+                </div>
+              ),
+            },
+          ]
+        : []),
+      ...(selectedColumns.includes("CE Score")
+        ? [
+            {
+              id: `${month}-ceScore`,
+              accessorFn: (row: TeamData) => row.monthData.find((md) => md.month === month)?.ceScore.level ?? 0,
+              // @ts-expect-error Type definition issue in table column configuration
+              header: ({ column }) => (
+                <div className="mt-2 flex items-center justify-center flex-col gap-0">
+                  <div className={cn(getMonthColor(month), "px-2 py-1 rounded-md text-center text-xs font-bold")}>
+                    {month.substring(0, 3)}
+                  </div>
+                  <div className="text-center dark:text-white">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>CE Score</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+              ),
+              // @ts-expect-error Type definition issue in table column configuration
+              cell: ({ row, getValue }) => (
+                <div className={cn("text-center", row.original.team === "Total (All Teams)" && "font-bold")}>
+                  {getValue() || "-"}
+                </div>
+              ),
+            },
+          ]
+        : []),
+      ...(selectedColumns.includes("Avg Total Sales")
+        ? [
+            {
+              id: `${month}-avgTotalSales`,
+              accessorFn: (row: TeamData) => row.monthData.find((md) => md.month === month)?.avgTotalSales ?? 0,
+              // @ts-expect-error Type definition issue in table column configuration
+              header: ({ column }) => (
+                <div className="mt-2 flex items-center justify-center flex-col gap-0">
+                  <div className={cn(getMonthColor(month), "px-2 py-1 rounded-md text-center text-xs font-bold")}>
+                    {month.substring(0, 3)}
+                  </div>
+                  <div className="text-center dark:text-white">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="TS" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Avg Total Sales</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+              ),
+              // @ts-expect-error Type definition issue in table column configuration
+              cell: ({ row, getValue }) => (
+                <div className={cn("text-center", row.original.team === "Total (All Teams)" && "font-bold")}>
+                  {formatValue(getValue())}
+                </div>
+              ),
+            },
+          ]
+        : []),
+      ...(selectedColumns.includes("TS Score")
+        ? [
+            {
+              id: `${month}-tsScore`,
+              accessorFn: (row: TeamData) => row.monthData.find((md) => md.month === month)?.tsScore.level ?? 0,
+              // @ts-expect-error Type definition issue in table column configuration
+              header: ({ column }) => (
+                <div className="mt-2 flex items-center justify-center flex-col gap-0">
+                  <div className={cn(getMonthColor(month), "px-2 py-1 rounded-md text-center text-xs font-bold")}>
+                    {month.substring(0, 3)}
+                  </div>
+                  <div className="text-center dark:text-white">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>TS Score</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+              ),
+              // @ts-expect-error Type definition issue in table column configuration
+              cell: ({ row, getValue }) => (
+                <div className={cn("text-center", row.original.team === "Total (All Teams)" && "font-bold")}>
+                  {getValue() || "-"}
+                </div>
+              ),
+            },
+          ]
+        : []),
+      ...(selectedColumns.includes("Avg Ratio Between Skade & Liv")
+        ? [
+            {
+              id: `${month}-avgRatioBetweenSkadeAndLiv`,
+              accessorFn: (row: TeamData) =>
+                row.monthData.find((md) => md.month === month)?.avgRatioBetweenSkadeAndLiv ?? 0,
+              // @ts-expect-error Type definition issue in table column configuration
+              header: ({ column }) => (
+                <div className="mt-2 flex items-center justify-center flex-col gap-0">
+                  <div className={cn(getMonthColor(month), "px-2 py-1 rounded-md text-center text-xs font-bold")}>
+                    {month.substring(0, 3)}
+                  </div>
+                  <div className="text-center dark:text-white">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="RBSL" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Avg Ratio Between Skade & Liv</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+              ),
+              // @ts-expect-error Type definition issue in table column configuration
+              cell: ({ row, getValue }) => (
+                <div className={cn("text-center", row.original.team === "Total (All Teams)" && "font-bold")}>
+                  {formatPercentage(getValue())}
+                </div>
+              ),
+            },
+          ]
+        : []),
+      ...(selectedColumns.includes("RBSL Score")
+        ? [
+            {
+              id: `${month}-rbslScore`,
+              accessorFn: (row: TeamData) => row.monthData.find((md) => md.month === month)?.rbslScore.level ?? 0,
+              // @ts-expect-error Type definition issue in table column configuration
+              header: ({ column }) => (
+                <div className="mt-2 flex items-center justify-center flex-col gap-0">
+                  <div className={cn(getMonthColor(month), "px-2 py-1 rounded-md text-center text-xs font-bold")}>
+                    {month.substring(0, 3)}
+                  </div>
+                  <div className="text-center dark:text-white">
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>RBSL Score</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
+                  </div>
+                </div>
+              ),
+              // @ts-expect-error Type definition issue in table column configuration
+              cell: ({ row, getValue }) => (
+                <div className={cn("text-center", row.original.team === "Total (All Teams)" && "font-bold")}>
+                  {getValue() || "-"}
+                </div>
+              ),
+            },
+          ]
+        : []),
+      {
+        id: `${month}-avgTotalScore`,
+        accessorFn: (row: TeamData) => {
+          const monthData = row.monthData.find((md) => md.month === month)
+          if (!monthData) return 0
+
+          const tcmScore = monthData.tcmScore.level
+          const ceScore = monthData.ceScore.level
+          const tsScore = monthData.tsScore.level
+          const rbslScore = monthData.rbslScore.level
+
+          console.log("Scores for", row.team, month, {
+            tcmScore,
+            ceScore,
+            tsScore,
+            rbslScore,
+            weightages,
+          })
+
+          return (
+            (tcmScore * (weightages.tcm / 100) + ceScore * (weightages.ce / 100) + tsScore * (weightages.ts / 100) + rbslScore * (weightages.rbsl / 100)).toFixed(2)
+          )
+        },
+        header: ({ column }) => (
+          <div className="mt-2 flex items-center justify-center flex-col gap-0">
+            <div className={cn(getMonthColor(month), "px-2 py-1 rounded-md text-center text-xs font-bold")}>
+              {month.substring(0, 3)}
+            </div>
+            <div className="text-center dark:text-white">
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <SortableHeader column={column} title="Avg Total" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Average Total Score</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
+            </div>
           </div>
         ),
+        cell: ({ getValue }) => <div className="text-center">{String(getValue()) || "-"}</div>,
       },
-    ];
+    ])
 
-    const sortedSelectedMonths = selectedMonths.sort(
-      (a, b) => months.indexOf(a) - months.indexOf(b)
-    );
+    return [...baseColumns, ...monthColumns]
+  }, [selectedMonths, selectedColumns, weightages])
 
-    const monthColumns: ColumnDef<TeamData>[] = sortedSelectedMonths.flatMap(
-      (month) => [
-        ...(selectedColumns.includes("Avg Total Call Minutes")
-          ? [
-              {
-                id: `${month}-avgTotalCallMinutes`,
-                accessorFn: (row: TeamData) =>
-                  row.monthData.find((md) => md.month === month)
-                    ?.avgTotalCallMinutes ?? 0,
-                // @ts-expect-error Type definition issue in table column configuration
-                header: ({ column }) => (
-                  <div className="mt-2 flex items-center justify-center flex-col gap-0">
-                    <div
-                      className={cn(
-                        getMonthColor(month),
-                        "px-2 py-1 rounded-md text-center text-xs font-bold"
-                      )}
-                    >
-                      {month.substring(0, 3)}
-                    </div>
-                    <div className="text-center dark:text-white">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SortableHeader column={column} title="TCM" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            Avg Total Call Minutes
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-                ),
-                // @ts-expect-error Type definition issue in table column configuration
-                cell: ({ row, getValue }) => (
-                  <div
-                    className={cn(
-                      "text-center",
-                      row.original.team === "Total (All Teams)" && "font-bold"
-                    )}
-                  >
-                    {formatValue(getValue())}
-                  </div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("TCM Score")
-          ? [
-              {
-                id: `${month}-tcmScore`,
-                accessorFn: (row: TeamData) =>
-                  row.monthData.find((md) => md.month === month)?.tcmScore
-                    .level ?? 0,
-                // @ts-expect-error Type definition issue in table column configuration
-                header: ({ column }) => (
-                  <div className="mt-2 flex items-center justify-center flex-col gap-0">
-                    <div
-                      className={cn(
-                        getMonthColor(month),
-                        "px-2 py-1 rounded-md text-center text-xs font-bold"
-                      )}
-                    >
-                      {month.substring(0, 3)}
-                    </div>
-                    <div className="text-center dark:text-white">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SortableHeader column={column} title="Score" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>TCM Score</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-                ),
-                // @ts-expect-error Type definition issue in table column configuration
-                cell: ({ row, getValue }) => (
-                  <div
-                    className={cn(
-                      "text-center",
-                      row.original.team === "Total (All Teams)" && "font-bold"
-                    )}
-                  >
-                    {getValue() || "-"}
-                  </div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("Avg Call Efficiency")
-          ? [
-              {
-                id: `${month}-avgCallEfficiency`,
-                accessorFn: (row: TeamData) =>
-                  row.monthData.find((md) => md.month === month)
-                    ?.avgCallEfficiency ?? 0,
-                // @ts-expect-error Type definition issue in table column configuration
-                header: ({ column }) => (
-                  <div className="mt-2 flex items-center justify-center flex-col gap-0">
-                    <div
-                      className={cn(
-                        getMonthColor(month),
-                        "px-2 py-1 rounded-md text-center text-xs font-bold"
-                      )}
-                    >
-                      {month.substring(0, 3)}
-                    </div>
-                    <div className="text-center dark:text-white">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SortableHeader column={column} title="CE" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>Avg Call Efficiency</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-                ),
-                // @ts-expect-error Type definition issue in table column configuration
-                cell: ({ row, getValue }) => (
-                  <div
-                    className={cn(
-                      "text-center",
-                      row.original.team === "Total (All Teams)" && "font-bold"
-                    )}
-                  >
-                    {formatPercentage(getValue())}
-                  </div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("CE Score")
-          ? [
-              {
-                id: `${month}-ceScore`,
-                accessorFn: (row: TeamData) =>
-                  row.monthData.find((md) => md.month === month)?.ceScore
-                    .level ?? 0,
-                // @ts-expect-error Type definition issue in table column configuration
-                header: ({ column }) => (
-                  <div className="mt-2 flex items-center justify-center flex-col gap-0">
-                    <div
-                      className={cn(
-                        getMonthColor(month),
-                        "px-2 py-1 rounded-md text-center text-xs font-bold"
-                      )}
-                    >
-                      {month.substring(0, 3)}
-                    </div>
-                    <div className="text-center dark:text-white">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SortableHeader column={column} title="Score" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>CE Score</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-                ),
-                // @ts-expect-error Type definition issue in table column configuration
-                cell: ({ row, getValue }) => (
-                  <div
-                    className={cn(
-                      "text-center",
-                      row.original.team === "Total (All Teams)" && "font-bold"
-                    )}
-                  >
-                    {getValue() || "-"}
-                  </div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("Avg Total Sales")
-          ? [
-              {
-                id: `${month}-avgTotalSales`,
-                accessorFn: (row: TeamData) =>
-                  row.monthData.find((md) => md.month === month)
-                    ?.avgTotalSales ?? 0,
-                // @ts-expect-error Type definition issue in table column configuration
-                header: ({ column }) => (
-                  <div className="mt-2 flex items-center justify-center flex-col gap-0">
-                    <div
-                      className={cn(
-                        getMonthColor(month),
-                        "px-2 py-1 rounded-md text-center text-xs font-bold"
-                      )}
-                    >
-                      {month.substring(0, 3)}
-                    </div>
-                    <div className="text-center dark:text-white">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SortableHeader column={column} title="TS" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>Avg Total Sales</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-                ),
-                // @ts-expect-error Type definition issue in table column configuration
-                cell: ({ row, getValue }) => (
-                  <div
-                    className={cn(
-                      "text-center",
-                      row.original.team === "Total (All Teams)" && "font-bold"
-                    )}
-                  >
-                    {formatValue(getValue())}
-                  </div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("TS Score")
-          ? [
-              {
-                id: `${month}-tsScore`,
-                accessorFn: (row: TeamData) =>
-                  row.monthData.find((md) => md.month === month)?.tsScore
-                    .level ?? 0,
-                // @ts-expect-error Type definition issue in table column configuration
-                header: ({ column }) => (
-                  <div className="mt-2 flex items-center justify-center flex-col gap-0">
-                    <div
-                      className={cn(
-                        getMonthColor(month),
-                        "px-2 py-1 rounded-md text-center text-xs font-bold"
-                      )}
-                    >
-                      {month.substring(0, 3)}
-                    </div>
-                    <div className="text-center dark:text-white">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SortableHeader column={column} title="Score" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>TS Score</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-                ),
-                // @ts-expect-error Type definition issue in table column configuration
-                cell: ({ row, getValue }) => (
-                  <div
-                    className={cn(
-                      "text-center",
-                      row.original.team === "Total (All Teams)" && "font-bold"
-                    )}
-                  >
-                    {getValue() || "-"}
-                  </div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("Avg Ratio Between Skade & Liv")
-          ? [
-              {
-                id: `${month}-avgRatioBetweenSkadeAndLiv`,
-                accessorFn: (row: TeamData) =>
-                  row.monthData.find((md) => md.month === month)
-                    ?.avgRatioBetweenSkadeAndLiv ?? 0,
-                // @ts-expect-error Type definition issue in table column configuration
-                header: ({ column }) => (
-                  <div className="mt-2 flex items-center justify-center flex-col gap-0">
-                    <div
-                      className={cn(
-                        getMonthColor(month),
-                        "px-2 py-1 rounded-md text-center text-xs font-bold"
-                      )}
-                    >
-                      {month.substring(0, 3)}
-                    </div>
-                    <div className="text-center dark:text-white">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SortableHeader column={column} title="RBSL" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>
-                            Avg Ratio Between Skade & Liv
-                          </TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-                ),
-                // @ts-expect-error Type definition issue in table column configuration
-                cell: ({ row, getValue }) => (
-                  <div
-                    className={cn(
-                      "text-center",
-                      row.original.team === "Total (All Teams)" && "font-bold"
-                    )}
-                  >
-                    {formatPercentage(getValue())}
-                  </div>
-                ),
-              },
-            ]
-          : []),
-        ...(selectedColumns.includes("RBSL Score")
-          ? [
-              {
-                id: `${month}-rbslScore`,
-                accessorFn: (row: TeamData) =>
-                  row.monthData.find((md) => md.month === month)?.rbslScore
-                    .level ?? 0,
-                // @ts-expect-error Type definition issue in table column configuration
-                header: ({ column }) => (
-                  <div className="mt-2 flex items-center justify-center flex-col gap-0">
-                    <div
-                      className={cn(
-                        getMonthColor(month),
-                        "px-2 py-1 rounded-md text-center text-xs font-bold"
-                      )}
-                    >
-                      {month.substring(0, 3)}
-                    </div>
-                    <div className="text-center dark:text-white">
-                      <TooltipProvider>
-                        <Tooltip>
-                          <TooltipTrigger asChild>
-                            <div>
-                              <SortableHeader column={column} title="Score" />
-                            </div>
-                          </TooltipTrigger>
-                          <TooltipContent>RBSL Score</TooltipContent>
-                        </Tooltip>
-                      </TooltipProvider>
-                    </div>
-                  </div>
-                ),
-                // @ts-expect-error Type definition issue in table column configuration
-                cell: ({ row, getValue }) => (
-                  <div
-                    className={cn(
-                      "text-center",
-                      row.original.team === "Total (All Teams)" && "font-bold"
-                    )}
-                  >
-                    {getValue() || "-"}
-                  </div>
-                ),
-              },
-            ]
-          : []),
-      ]
-    );
+  const transformApiResponse = useCallback((apiData: ApiResponseItem[]): TeamData[] => {
+    const dataMap = new Map<string, TeamData>()
 
-    return [...baseColumns, ...monthColumns];
-  }, [selectedMonths, selectedColumns, months]);
+    apiData.forEach((item) => {
+      const existingEntry = dataMap.get(item.team)
 
-  const transformApiResponse = useCallback(
-    (apiData: ApiResponseItem[]): TeamData[] => {
-      const dataMap = new Map<string, TeamData>();
+      const monthData = {
+        month: item.month,
+        avgTotalCallMinutes: Number.parseInt(item.avgTotalCallMinutes.replace(/,/g, "")),
+        tcmScore: item.tcmScore,
+        avgCallEfficiency: Number.parseFloat(item.avgCallEfficiency) / 100,
+        ceScore: item.ceScore,
+        avgTotalSales: Number.parseInt(item.avgTotalSales.replace(/,/g, "")),
+        tsScore: item.tsScore,
+        avgRatioBetweenSkadeAndLiv: Number.parseFloat(item.avgRatioBetweenSkadeAndLiv) / 100,
+        rbslScore: item.rbslScore,
+      }
 
-      apiData.forEach((item) => {
-        const existingEntry = dataMap.get(item.team);
+      if (existingEntry) {
+        existingEntry.monthData.push(monthData)
 
-        const monthData = {
-          month: item.month,
-          avgTotalCallMinutes: Number.parseInt(
-            item.avgTotalCallMinutes.replace(/,/g, "")
-          ),
-          tcmScore: item.tcmScore,
-          avgCallEfficiency: Number.parseFloat(item.avgCallEfficiency) / 100,
-          ceScore: item.ceScore,
-          avgTotalSales: Number.parseInt(item.avgTotalSales.replace(/,/g, "")),
-          tsScore: item.tsScore,
-          avgRatioBetweenSkadeAndLiv:
-            Number.parseFloat(item.avgRatioBetweenSkadeAndLiv) / 100,
-          rbslScore: item.rbslScore,
-        };
+        // Store members with their month data
+        if (item.members) {
+          if (!existingEntry.members) {
+            existingEntry.members = []
+          }
 
-        if (existingEntry) {
-          existingEntry.monthData.push(monthData);
+          // Add month information to each member
+          const membersWithMonth = item.members.map((member) => ({
+            ...member,
+            month: item.month,
+          }))
 
-          // Store members with their month data
-          if (item.members) {
-            if (!existingEntry.members) {
-              existingEntry.members = [];
-            }
-
-            // Add month information to each member
-            const membersWithMonth = item.members.map((member) => ({
+          // Add these members to the existing array
+          existingEntry.members.push(...membersWithMonth)
+        }
+      } else {
+        // For new team entries, initialize with members that include month info
+        const membersWithMonth = item.members
+          ? item.members.map((member) => ({
               ...member,
               month: item.month,
-            }));
+            }))
+          : undefined
 
-            // Add these members to the existing array
-            existingEntry.members.push(...membersWithMonth);
-          }
-        } else {
-          // For new team entries, initialize with members that include month info
-          const membersWithMonth = item.members
-            ? item.members.map((member) => ({
-                ...member,
-                month: item.month,
-              }))
-            : undefined;
+        dataMap.set(item.team, {
+          team: item.team,
+          monthData: [monthData],
+          members: membersWithMonth,
+        })
+      }
+    })
 
-          dataMap.set(item.team, {
-            team: item.team,
-            monthData: [monthData],
-            members: membersWithMonth,
-          });
-        }
-      });
-
-      return Array.from(dataMap.values());
-    },
-    []
-  );
+    return Array.from(dataMap.values())
+  }, [])
 
   // Add a function to calculate totals for all teams
   // Add this function after the transformApiResponse function
-  const calculateTotals = useCallback((data: TeamData[]): TeamData | null => {
-    if (!data.length) return null;
-
-    const totalMonthData = data[0].monthData.map((monthTemplate) => {
-      const month = monthTemplate.month;
-
-      // Initialize with zero values
-      const totalForMonth = {
-        month,
-        avgTotalCallMinutes: 0,
-        tcmScore: { level: 0, score: "-" },
-        avgCallEfficiency: 0,
-        ceScore: { level: 0, score: "-" },
-        avgTotalSales: 0,
-        tsScore: { level: 0, score: "-" },
-        avgRatioBetweenSkadeAndLiv: 0,
-        rbslScore: { level: 0, score: "-" },
-      };
-
-      // Sum up values from all teams for this month
-      data.forEach((team) => {
-        const teamMonthData = team.monthData.find((md) => md.month === month);
-        if (teamMonthData) {
-          totalForMonth.avgTotalCallMinutes +=
-            teamMonthData.avgTotalCallMinutes;
-          totalForMonth.avgCallEfficiency += teamMonthData.avgCallEfficiency;
-          totalForMonth.avgTotalSales += teamMonthData.avgTotalSales;
-          totalForMonth.avgRatioBetweenSkadeAndLiv +=
-            teamMonthData.avgRatioBetweenSkadeAndLiv;
-        }
-      });
-
-      // Calculate averages for percentage values
-      if (data.length > 0) {
-        totalForMonth.avgCallEfficiency /= data.length;
-        totalForMonth.avgRatioBetweenSkadeAndLiv /= data.length;
-      }
-
-      return totalForMonth;
-    });
-
-    // Create a list of all unique members across all teams and months
-    const allMembers: {
-      name: string;
-      month: string;
-      totalSales: number;
-      formattedTotalSales: string;
-    }[] = [];
-
-    data.forEach((team) => {
-      if (team.members) {
-        team.members.forEach((member) => {
-          allMembers.push({
-            name: member.name,
-            month: member.month,
-            totalSales: member.totalSales,
-            formattedTotalSales: member.formattedTotalSales,
-          });
-        });
-      }
-    });
-
-    return {
-      team: "Total (All Teams)",
-      monthData: totalMonthData,
-      members: allMembers,
-    };
-  }, []);
+  // Add this function after the transformApiResponse function
 
   // 2. Modify the fetchData function to add the total row
   // Replace the fetchData function with this updated version
   const fetchData = useCallback(async () => {
     if (selectedMonths.length === 0) {
-      setData([]);
-      setLoading(false);
-      setIsRefreshing(false);
-      return;
+      setData([])
+      setLoading(false)
+      setIsRefreshing(false)
+      return
     }
 
     try {
-      setIsRefreshing(true);
-      const params = new URLSearchParams();
-      selectedMonths.forEach((month) => params.append("months", month));
-      params.append("year", selectedYear.toString());
+      setIsRefreshing(true)
+      const params = new URLSearchParams()
+      selectedMonths.forEach((month) => params.append("months", month))
+      params.append("year", selectedYear.toString())
 
-      const response = await fetch(
-        `/api/merged-names-teams?${params.toString()}`
-      );
-      const result = await response.json();
+      const response = await fetch(`/api/merged-names-teams?${params.toString()}`)
+      const result = await response.json()
 
       if (!response.ok) {
-        throw new Error(result.error || "Failed to fetch data");
+        throw new Error(result.error || "Failed to fetch data")
       }
 
-      const transformedData = transformApiResponse(result.teams);
-
-      // Calculate totals and add as the first row
-      const totalsRow = calculateTotals(transformedData);
-      if (totalsRow) {
-        setData([totalsRow, ...transformedData]);
-      } else {
-        setData(transformedData);
-      }
-
-      setError(null);
+      const transformedData = transformApiResponse(result.teams)
+      setData(transformedData)
+      setError(null)
     } catch (err) {
-      console.error(err);
-      setError(
-        err instanceof Error
-          ? err.message
-          : "An error occurred while fetching data"
-      );
+      console.error(err)
+      setError(err instanceof Error ? err.message : "An error occurred while fetching data")
     } finally {
-      setIsRefreshing(false);
-      setLoading(false);
+      setIsRefreshing(false)
+      setLoading(false)
     }
-  }, [selectedMonths, selectedYear, transformApiResponse, calculateTotals]);
+  }, [selectedMonths, selectedYear, transformApiResponse])
 
   const getMonthColor = (month: string) => {
     const colors = {
@@ -803,47 +649,40 @@ const TeamsDashboard = () => {
       October: "bg-sky-500 text-white border-sky-600",
       November: "bg-blue-500 text-white border-blue-600",
       December: "bg-indigo-500 text-white border-indigo-600",
-    };
-    return (
-      colors[month as keyof typeof colors] ||
-      "bg-gray-500 text-white border-gray-600"
-    );
-  };
+    }
+    return colors[month as keyof typeof colors] || "bg-gray-500 text-white border-gray-600"
+  }
 
   useEffect(() => {
-    fetchData();
-  }, [fetchData]);
+    fetchData()
+  }, [fetchData])
 
   const applyFilters = useCallback(() => {
-    setSelectedMonths(filterValues.months);
-    setSelectedYear(filterValues.year);
-    setHasFilterChanges(false);
-  }, [filterValues]);
+    setSelectedMonths(filterValues.months)
+    setSelectedYear(filterValues.year)
+    setHasFilterChanges(false)
+  }, [filterValues])
 
   const handleColumnSelection = (column: string) => {
-    setSelectedColumns((prev) =>
-      prev.includes(column)
-        ? prev.filter((c) => c !== column)
-        : [...prev, column]
-    );
-  };
+    setSelectedColumns((prev) => (prev.includes(column) ? prev.filter((c) => c !== column) : [...prev, column]))
+  }
 
   interface ApiResponseItem {
-    team: string;
-    month: string;
-    avgTotalCallMinutes: string;
-    tcmScore: { level: number; score: number | string };
-    avgCallEfficiency: string;
-    ceScore: { level: number; score: number | string };
-    avgTotalSales: string;
-    tsScore: { level: number; score: number | string };
-    avgRatioBetweenSkadeAndLiv: string;
-    rbslScore: { level: number; score: number | string };
+    team: string
+    month: string
+    avgTotalCallMinutes: string
+    tcmScore: { level: number; score: number | string }
+    avgCallEfficiency: string
+    ceScore: { level: number; score: number | string }
+    avgTotalSales: string
+    tsScore: { level: number; score: number | string }
+    avgRatioBetweenSkadeAndLiv: string
+    rbslScore: { level: number; score: number | string }
     members?: {
-      name: string;
-      totalSales: number;
-      formattedTotalSales: string;
-    }[];
+      name: string
+      totalSales: number
+      formattedTotalSales: string
+    }[]
   }
 
   const table = useReactTable({
@@ -866,14 +705,14 @@ const TeamsDashboard = () => {
       columnFilters,
       columnVisibility,
     },
-  });
+  })
 
   if (loading) {
     return (
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
-    );
+    )
   }
 
   return (
@@ -900,19 +739,25 @@ const TeamsDashboard = () => {
           <Card className="border-none">
             <CardContent>
               <div className="space-y-4">
+                <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+                  <div>Weightages:</div>
+                  <div className="flex gap-2">
+                    <span className="px-2 py-1 rounded-md bg-primary/10">
+                      TCM: {(weightages.tcm).toFixed(0)}%
+                    </span>
+                    <span className="px-2 py-1 rounded-md bg-primary/10">CE: {(weightages.ce).toFixed(0)}%</span>
+                    <span className="px-2 py-1 rounded-md bg-primary/10">TS: {(weightages.ts).toFixed(0)}%</span>
+                    <span className="px-2 py-1 rounded-md bg-primary/10">
+                      RBSL: {(weightages.rbsl).toFixed(0)}%
+                    </span>
+                  </div>
+                </div>
                 <div className="flex flex-wrap items-center justify-start gap-2">
                   <Input
                     placeholder="Search by team..."
                     className="max-w-64"
-                    value={
-                      (table.getColumn("team")?.getFilterValue() as string) ??
-                      ""
-                    }
-                    onChange={(event) =>
-                      table
-                        .getColumn("team")
-                        ?.setFilterValue(event.target.value)
-                    }
+                    value={(table.getColumn("team")?.getFilterValue() as string) ?? ""}
+                    onChange={(event) => table.getColumn("team")?.setFilterValue(event.target.value)}
                   />
 
                   <Popover>
@@ -921,7 +766,7 @@ const TeamsDashboard = () => {
                         variant="outline"
                         className={cn(
                           "w-[280px] justify-start text-left font-normal",
-                          !filterValues.months.length && "text-muted-foreground"
+                          !filterValues.months.length && "text-muted-foreground",
                         )}
                       >
                         <CalendarIcon className="mr-2 h-4 w-4" />
@@ -950,16 +795,10 @@ const TeamsDashboard = () => {
                     disabled={isRefreshing}
                     className={cn(
                       "transition-all duration-300",
-                      hasFilterChanges &&
-                        "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]"
+                      hasFilterChanges && "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]",
                     )}
                   >
-                    <SendHorizontal
-                      className={cn(
-                        "transition-colors",
-                        hasFilterChanges && "text-yellow-400"
-                      )}
-                    />
+                    <SendHorizontal className={cn("transition-colors", hasFilterChanges && "text-yellow-400")} />
                   </Button>
                 </div>
 
@@ -975,7 +814,7 @@ const TeamsDashboard = () => {
                           {table.getHeaderGroups().map((headerGroup) => (
                             <TableRow key={headerGroup.id}>
                               {headerGroup.headers.map((header) => {
-                                const monthHeader = header.column.parent;
+                                const monthHeader = header.column.parent
                                 if (monthHeader && monthHeader.id !== "team") {
                                   return (
                                     <th
@@ -984,7 +823,7 @@ const TeamsDashboard = () => {
                                       className={cn(
                                         getMonthColor(monthHeader.id),
                                         "px-4 py-2 text-center font-semibold transition-colors duration-200",
-                                        "border-b-2"
+                                        "border-b-2",
                                       )}
                                     >
                                       {monthHeader.id === header.column.id ? (
@@ -993,29 +832,19 @@ const TeamsDashboard = () => {
                                         </div>
                                       ) : (
                                         <div className="text-white">
-                                          {flexRender(
-                                            header.column.columnDef.header,
-                                            header.getContext()
-                                          )}
+                                          {flexRender(header.column.columnDef.header, header.getContext())}
                                         </div>
                                       )}
                                     </th>
-                                  );
+                                  )
                                 }
                                 return (
-                                  <TableHead
-                                    key={header.id}
-                                    colSpan={header.colSpan}
-                                    className="bg-muted/50"
-                                  >
+                                  <TableHead key={header.id} colSpan={header.colSpan} className="bg-muted/50">
                                     {header.isPlaceholder
                                       ? null
-                                      : flexRender(
-                                          header.column.columnDef.header,
-                                          header.getContext()
-                                        )}
+                                      : flexRender(header.column.columnDef.header, header.getContext())}
                                   </TableHead>
-                                );
+                                )
                               })}
                             </TableRow>
                           ))}
@@ -1023,15 +852,10 @@ const TeamsDashboard = () => {
                         <TableBody>
                           {isRefreshing ? (
                             <TableRow>
-                              <TableCell
-                                colSpan={table.getAllColumns().length}
-                                className="h-96 text-center"
-                              >
+                              <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
                                 <div className="flex flex-col items-center justify-center gap-2">
                                   <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                                  <p className="text-lg text-muted-foreground">
-                                    Loading data...
-                                  </p>
+                                  <p className="text-lg text-muted-foreground">Loading data...</p>
                                 </div>
                               </TableCell>
                             </TableRow>
@@ -1043,75 +867,47 @@ const TeamsDashboard = () => {
                                     key={row.id}
                                     className={cn(
                                       "hover:bg-muted/50 transition-colors h-12",
-                                      row.getValue("team") ===
-                                        "Total (All Teams)" &&
-                                        "bg-primary/10 font-bold",
-                                      expandedTeams.includes(
-                                        row.getValue("team")
-                                      ) && "bg-muted/30"
+                                      row.getValue("team") === "Total (All Teams)" && "bg-primary/10 font-bold",
+                                      expandedTeams.includes(row.getValue("team")) && "bg-muted/30",
                                     )}
-                                    onMouseEnter={() =>
-                                      setHoveredTeam(row.getValue("team"))
-                                    }
+                                    onMouseEnter={() => setHoveredTeam(row.getValue("team"))}
                                     onMouseLeave={() => setHoveredTeam(null)}
                                   >
-                                    {row
-                                      .getVisibleCells()
-                                      .map((cell, cellIndex) => (
-                                        <TableCell
-                                          key={cell.id}
-                                          className={
-                                            row.getValue("team") ===
-                                            "Total (All Teams)"
-                                              ? "font-bold"
-                                              : ""
-                                          }
-                                        >
-                                          {cellIndex === 0 ? (
-                                            <div className="flex items-center gap-2">
-                                              <div className="font-medium min-w-[200px] flex items-center">
-                                                {hoveredTeam ===
-                                                  row.getValue("team") &&
-                                                  row.getValue("team") !==
-                                                    "Total (All Teams)" && (
-                                                    <Button
-                                                      variant="ghost"
-                                                      size="icon"
-                                                      className="h-6 w-6 mr-1 rounded-full bg-primary/10 hover:bg-primary/20"
-                                                      onClick={() =>
-                                                        toggleTeamExpansion(
-                                                          row.getValue("team")
-                                                        )
-                                                      }
-                                                    >
-                                                      {expandedTeams.includes(
-                                                        row.getValue("team")
-                                                      ) ? (
-                                                        <ChevronDown className="h-4 w-4" />
-                                                      ) : (
-                                                        <ChevronRight className="h-4 w-4" />
-                                                      )}
-                                                    </Button>
-                                                  )}
-                                                <span>
-                                                  {row.getValue("team")}
-                                                </span>
-                                              </div>
+                                    {row.getVisibleCells().map((cell, cellIndex) => (
+                                      <TableCell
+                                        key={cell.id}
+                                        className={row.getValue("team") === "Total (All Teams)" ? "font-bold" : ""}
+                                      >
+                                        {cellIndex === 0 ? (
+                                          <div className="flex items-center gap-2">
+                                            <div className="font-medium min-w-[200px] flex items-center">
+                                              {hoveredTeam === row.getValue("team") &&
+                                                row.getValue("team") !== "Total (All Teams)" && (
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 mr-1 rounded-full bg-primary/10 hover:bg-primary/20"
+                                                    onClick={() => toggleTeamExpansion(row.getValue("team"))}
+                                                  >
+                                                    {expandedTeams.includes(row.getValue("team")) ? (
+                                                      <ChevronDown className="h-4 w-4" />
+                                                    ) : (
+                                                      <ChevronRight className="h-4 w-4" />
+                                                    )}
+                                                  </Button>
+                                                )}
+                                              <span>{row.getValue("team")}</span>
                                             </div>
-                                          ) : (
-                                            flexRender(
-                                              cell.column.columnDef.cell,
-                                              cell.getContext()
-                                            )
-                                          )}
-                                        </TableCell>
-                                      ))}
+                                          </div>
+                                        ) : (
+                                          flexRender(cell.column.columnDef.cell, cell.getContext())
+                                        )}
+                                      </TableCell>
+                                    ))}
                                   </TableRow>
 
                                   <AnimatePresence>
-                                    {expandedTeams.includes(
-                                      row.getValue("team")
-                                    ) && (
+                                    {expandedTeams.includes(row.getValue("team")) && (
                                       <motion.tr
                                         initial={{ opacity: 0, height: 0 }}
                                         animate={{ opacity: 1, height: "auto" }}
@@ -1119,10 +915,7 @@ const TeamsDashboard = () => {
                                         transition={{ duration: 0.3 }}
                                         className="bg-muted/10"
                                       >
-                                        <td
-                                          colSpan={row.getVisibleCells().length}
-                                          className="p-0"
-                                        >
+                                        <td colSpan={row.getVisibleCells().length} className="p-0">
                                           <motion.div
                                             initial={{ opacity: 0 }}
                                             animate={{ opacity: 1 }}
@@ -1139,134 +932,82 @@ const TeamsDashboard = () => {
                                                     </div>
                                                     <div className="flex flex-1 justify-start">
                                                       {selectedMonths
-                                                        .sort(
-                                                          (a, b) =>
-                                                            months.indexOf(a) -
-                                                            months.indexOf(b)
-                                                        )
+                                                        .sort((a, b) => months.indexOf(a) - months.indexOf(b))
                                                         .map((month) => (
-                                                          <div
-                                                            key={month}
-                                                            className="min-w-20 text-center"
-                                                          >
+                                                          <div key={month} className="min-w-20 text-center">
                                                             <span
                                                               className={cn(
-                                                                getMonthColor(
-                                                                  month
-                                                                ),
-                                                                "px-4 py-1 rounded-md text-xs font-bold"
+                                                                getMonthColor(month),
+                                                                "px-4 py-1 rounded-md text-xs font-bold",
                                                               )}
                                                             >
-                                                              {month.substring(
-                                                                0,
-                                                                3
-                                                              )}
+                                                              {month.substring(0, 3)}
                                                             </span>
                                                           </div>
                                                         ))}
                                                     </div>
                                                   </div>
 
-                                                  {Array.from(
-                                                    new Set(
-                                                      row.original.members?.map(
-                                                        (m) => m.name
-                                                      )
-                                                    )
-                                                  ).map((memberName) => {
-                                                    const membersByMonth =
-                                                      row.original.members?.filter(
-                                                        (m) =>
-                                                          m.name === memberName
-                                                      ) || [];
+                                                  {Array.from(new Set(row.original.members?.map((m) => m.name))).map(
+                                                    (memberName) => {
+                                                      const membersByMonth =
+                                                        row.original.members?.filter((m) => m.name === memberName) || []
 
-                                                    return (
-                                                      <div
-                                                        key={memberName}
-                                                        className="hover:bg-background/80 transition-colors rounded-lg"
-                                                      >
-                                                        <div className="flex items-center py-3">
-                                                          <div className="w-[14.2rem] font-medium flex items-center gap-2">
-                                                            <span>
-                                                              {memberName}
-                                                            </span>
-                                                          </div>
+                                                      return (
+                                                        <div
+                                                          key={memberName}
+                                                          className="hover:bg-background/80 transition-colors rounded-lg"
+                                                        >
+                                                          <div className="flex items-center py-3">
+                                                            <div className="w-[14.2rem] font-medium flex items-center gap-2">
+                                                              <span>{memberName}</span>
+                                                            </div>
 
-                                                          <div className="flex flex-1 justify-start">
-                                                            {selectedMonths
-                                                              .sort(
-                                                                (a, b) =>
-                                                                  months.indexOf(
-                                                                    a
-                                                                  ) -
-                                                                  months.indexOf(
-                                                                    b
+                                                            <div className="flex flex-1 justify-start">
+                                                              {selectedMonths
+                                                                .sort((a, b) => months.indexOf(a) - months.indexOf(b))
+                                                                .map((month) => {
+                                                                  const memberData = membersByMonth.find(
+                                                                    (m) => m.month === month,
                                                                   )
-                                                              )
-                                                              .map((month) => {
-                                                                const memberData =
-                                                                  membersByMonth.find(
-                                                                    (m) =>
-                                                                      m.month ===
-                                                                      month
-                                                                  );
-                                                                const monthColor =
-                                                                  getMonthColor(
-                                                                    month
-                                                                  ).split(
-                                                                    " "
-                                                                  )[0];
-                                                                return (
-                                                                  <div
-                                                                    key={month}
-                                                                    className="min-w-20 text-center"
-                                                                  >
-                                                                    <Tooltip>
-                                                                      <TooltipTrigger
-                                                                        asChild
-                                                                      >
-                                                                        <div
-                                                                          className={cn(
-                                                                            "text-sm font-medium px-3 py-1.5 rounded-md transition-all",
-                                                                            memberData &&
-                                                                              memberData.formattedTotalSales !==
-                                                                                "-"
-                                                                              ? `${monthColor}/10 hover:${monthColor}/20`
-                                                                              : ""
-                                                                          )}
-                                                                        >
-                                                                          {memberData
-                                                                            ? memberData.formattedTotalSales
-                                                                            : "-"}
-                                                                        </div>
-                                                                      </TooltipTrigger>
-                                                                      <TooltipContent side="top">
-                                                                        <p>
-                                                                          {
-                                                                            month
-                                                                          }{" "}
-                                                                          Total
-                                                                          Sales
-                                                                        </p>
-                                                                      </TooltipContent>
-                                                                    </Tooltip>
-                                                                  </div>
-                                                                );
-                                                              })}
+                                                                  const monthColor = getMonthColor(month).split(" ")[0]
+                                                                  return (
+                                                                    <div key={month} className="min-w-20 text-center">
+                                                                      <Tooltip>
+                                                                        <TooltipTrigger asChild>
+                                                                          <div
+                                                                            className={cn(
+                                                                              "text-sm font-medium px-3 py-1.5 rounded-md transition-all",
+                                                                              memberData &&
+                                                                                memberData.formattedTotalSales !== "-"
+                                                                                ? `${monthColor}/10 hover:${monthColor}/20`
+                                                                                : "",
+                                                                            )}
+                                                                          >
+                                                                            {memberData
+                                                                              ? memberData.formattedTotalSales
+                                                                              : "-"}
+                                                                          </div>
+                                                                        </TooltipTrigger>
+                                                                        <TooltipContent side="top">
+                                                                          <p>{month} Total Sales</p>
+                                                                        </TooltipContent>
+                                                                      </Tooltip>
+                                                                    </div>
+                                                                  )
+                                                                })}
+                                                            </div>
                                                           </div>
                                                         </div>
-                                                      </div>
-                                                    );
-                                                  })}
+                                                      )
+                                                    },
+                                                  )}
                                                 </div>
                                               </div>
                                             ) : (
                                               <div className="flex items-center justify-center py-8 text-muted-foreground">
                                                 <div className="text-center">
-                                                  <p>
-                                                    No member data available for
-                                                    this team
-                                                  </p>
+                                                  <p>No member data available for this team</p>
                                                 </div>
                                               </div>
                                             )}
@@ -1280,10 +1021,7 @@ const TeamsDashboard = () => {
                             </>
                           ) : (
                             <TableRow>
-                              <TableCell
-                                colSpan={table.getAllColumns().length}
-                                className="h-96 text-center"
-                              >
+                              <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
                                 No results found
                               </TableCell>
                             </TableRow>
@@ -1322,16 +1060,11 @@ const TeamsDashboard = () => {
                                 "Avg Ratio Between Skade & Liv",
                                 "RBSL Score",
                               ].map((column) => (
-                                <CommandItem
-                                  key={column}
-                                  onSelect={() => handleColumnSelection(column)}
-                                >
+                                <CommandItem key={column} onSelect={() => handleColumnSelection(column)}>
                                   <Check
                                     className={cn(
                                       "mr-2 h-4 w-4",
-                                      selectedColumns.includes(column)
-                                        ? "opacity-100"
-                                        : "opacity-0"
+                                      selectedColumns.includes(column) ? "opacity-100" : "opacity-0",
                                     )}
                                   />
                                   {column}
@@ -1369,7 +1102,8 @@ const TeamsDashboard = () => {
         </main>
       </div>
     </TooltipProvider>
-  );
-};
+  )
+}
 
-export default TeamsDashboard;
+export default TeamsDashboard
+
