@@ -472,7 +472,7 @@ const IndividualsDashboard = () => {
                     <SortableHeader column={column} title="Avg. score" />
                   </div>
                 </TooltipTrigger>
-                <TooltipContent>Avg. Total Score</TooltipContent>
+                <TooltipContent>Avg. Total Sales</TooltipContent>
               </Tooltip>
             </div>
           </div>

@@ -1,9 +1,10 @@
-"use client"
+"use client";
 
 import {
   Activity,
   AudioWaveform,
   BadgeCheck,
+  Bolt,
   Handshake,
   HelpCircle,
   Home,
@@ -14,11 +15,11 @@ import {
   PieChart,
   Settings,
   Users,
-  VideoIcon
-} from "lucide-react"
-import Link from "next/link"
-import { usePathname } from "next/navigation"
-import * as React from "react"
+  VideoIcon,
+} from "lucide-react";
+import Link from "next/link";
+import { usePathname } from "next/navigation";
+import * as React from "react";
 
 import {
   Sidebar,
@@ -32,26 +33,45 @@ import {
   SidebarMenuButton,
   SidebarMenuItem,
   SidebarProvider,
-} from "@/components/ui/sidebar"
+} from "@/components/ui/sidebar";
 
 interface SidebarPageTemplateProps {
-  children: React.ReactNode
+  children: React.ReactNode;
 }
 
-export default function SidebarPageTemplate({ children }: SidebarPageTemplateProps) {
-  const pathname = usePathname()
+export default function SidebarPageTemplate({
+  children,
+}: SidebarPageTemplateProps) {
+  const pathname = usePathname();
 
   const navigation = {
     dashboards: [
-      { name: "Individuals", href: "/dashboard/individuals", icon: LayoutDashboard },
+      {
+        name: "Individuals",
+        href: "/dashboard/individuals",
+        icon: LayoutDashboard,
+      },
       { name: "Teams", href: "/dashboard/teams", icon: Handshake },
       { name: "Departments", href: "/dashboard/departments", icon: Users },
       { name: "Company", href: "/dashboard/company", icon: Home },
     ],
     dataentry: [
-      { name: "Activity Log", href: "/data-entry/activity-log", icon: Activity },
-      { name: "Incoming Calls", href: "/data-entry/incoming-calls", icon: PhoneIncoming },
-      { name: "Outgoing Calls", href: "/data-entry/outgoing-calls", icon: PhoneOutgoing },
+      {
+        name: "Activity Log",
+        href: "/data-entry/activity-log",
+        icon: Activity,
+      },
+      {
+        name: "Incoming Calls",
+        href: "/data-entry/incoming-calls",
+        icon: PhoneIncoming,
+      },
+      {
+        name: "Outgoing Calls",
+        href: "/data-entry/outgoing-calls",
+        icon: PhoneOutgoing,
+      },
+      { name: "Configuration", href: "/data-entry/inputs", icon: Bolt },
     ],
     visualization: [
       { name: "Members", href: "/members", icon: PieChart },
@@ -59,7 +79,7 @@ export default function SidebarPageTemplate({ children }: SidebarPageTemplatePro
       { name: "Chat", href: "/chat", icon: MessageCircle },
       { name: "Meetings", href: "/meetings", icon: VideoIcon },
     ],
-  }
+  };
 
   return (
     <SidebarProvider>
@@ -72,11 +92,17 @@ export default function SidebarPageTemplate({ children }: SidebarPageTemplatePro
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel className="uppercase font-bold">DASHBOARDS</SidebarGroupLabel>
+            <SidebarGroupLabel className="uppercase font-bold">
+              DASHBOARDS
+            </SidebarGroupLabel>
             <SidebarMenu>
               {navigation.dashboards.map((item) => (
                 <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton className="py-5" asChild isActive={pathname === item.href}>
+                  <SidebarMenuButton
+                    className="py-5"
+                    asChild
+                    isActive={pathname === item.href}
+                  >
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.name}</span>
@@ -88,11 +114,17 @@ export default function SidebarPageTemplate({ children }: SidebarPageTemplatePro
           </SidebarGroup>
 
           <SidebarGroup>
-            <SidebarGroupLabel className="uppercase font-bold">DATA ENTRY</SidebarGroupLabel>
+            <SidebarGroupLabel className="uppercase font-bold">
+              DATA ENTRY
+            </SidebarGroupLabel>
             <SidebarMenu>
               {navigation.dataentry.map((item) => (
                 <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton className="py-5" asChild isActive={pathname === item.href}>
+                  <SidebarMenuButton
+                    className="py-5"
+                    asChild
+                    isActive={pathname === item.href}
+                  >
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.name}</span>
@@ -104,11 +136,17 @@ export default function SidebarPageTemplate({ children }: SidebarPageTemplatePro
           </SidebarGroup>
 
           <SidebarGroup>
-            <SidebarGroupLabel className="uppercase font-bold">Visualization</SidebarGroupLabel>
+            <SidebarGroupLabel className="uppercase font-bold">
+              Visualization
+            </SidebarGroupLabel>
             <SidebarMenu>
               {navigation.visualization.map((item) => (
                 <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton className="py-5" asChild isActive={pathname === item.href}>
+                  <SidebarMenuButton
+                    className="py-5"
+                    asChild
+                    isActive={pathname === item.href}
+                  >
                     <Link href={item.href}>
                       <item.icon className="h-4 w-4" />
                       <span>{item.name}</span>
@@ -189,6 +227,5 @@ export default function SidebarPageTemplate({ children }: SidebarPageTemplatePro
       </Sidebar>
       <SidebarInset>{children}</SidebarInset>
     </SidebarProvider>
-  )
+  );
 }
-
