@@ -239,31 +239,56 @@ const ActivityLog = () => {
           setUploadProgress(0);
           const totalEntries = results.data.length;
           let successfulUploads = 0;
-
-          for (let i = 0; i < totalEntries; i++) {
-            const entry = results.data[i];
+          const batchSize = 20;
+  
+          // Process in batches of 20
+          for (let i = 0; i < totalEntries; i += batchSize) {
+            const batch = results.data.slice(i, i + batchSize);
             try {
-              const response = await fetch("/api/add-activityLog", {
-                method: "POST",
+              // First attempt: Try bulk upload for this batch
+              const bulkResponse = await fetch('/api/upload-activity-logs', {
+                method: 'POST',
                 headers: {
-                  "Content-Type": "application/json",
+                  'Content-Type': 'application/json',
                 },
-                body: JSON.stringify(entry),
+                body: JSON.stringify({ logs: batch }),
               });
-
-              if (response.ok) {
-                successfulUploads++;
+  
+              const bulkResult = await bulkResponse.json();
+  
+              if (bulkResult.success) {
+                successfulUploads += bulkResult.count;
+              } else {
+                // If bulk upload fails, try individual uploads for this batch
+                for (const entry of batch) {
+                  try {
+                    const response = await fetch('/api/add-activityLog', {
+                      method: 'POST',
+                      headers: {
+                        'Content-Type': 'application/json',
+                      },
+                      body: JSON.stringify(entry),
+                    });
+  
+                    if (response.ok) {
+                      successfulUploads++;
+                    }
+                  } catch (error) {
+                    console.error('Error uploading entry:', error);
+                  }
+                }
               }
+  
+              // Update progress after each batch
+              setUploadProgress(Math.min(((i + batchSize) / totalEntries) * 100, 100));
             } catch (error) {
-              console.error("Error uploading entry:", error);
+              console.error('Error processing batch:', error);
             }
-
-            setUploadProgress(((i + 1) / totalEntries) * 100);
           }
-
+  
           setIsUploading(false);
           toast({
-            title: "Upload Complete",
+            title: 'Upload Complete',
             description: `Successfully uploaded ${successfulUploads} out of ${totalEntries} entries.`,
           });
           fetchData();
@@ -1173,7 +1198,7 @@ const ActivityLog = () => {
                                   className="w-full"
                                 />
                                 <p className="text-sm text-muted-foreground">
-                                  Uploading: {Math.round(uploadProgress)}%
+                                  Uploading: {Math.round(uploadProgress).toFixed(2)}%
                                 </p>
                               </div>
                             )}
@@ -1227,7 +1252,7 @@ const ActivityLog = () => {
                               className="w-full"
                             />
                             <p className="text-sm text-muted-foreground">
-                              Uploading: {Math.round(uploadProgress)}%
+                            Uploading: {uploadProgress.toFixed(2)}%
                             </p>
                           </div>
                         )}{" "}

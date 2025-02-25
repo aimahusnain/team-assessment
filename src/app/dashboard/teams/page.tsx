@@ -927,8 +927,8 @@ const TeamsDashboard = () => {
                                                 <div className="divide-y">
                                                   {/* Month headers row */}
                                                   <div className="flex items-center pb-3">
-                                                    <div className="w-[14.2rem]">
-                                                      {/* Empty space for name column */}
+                                                    <div className="w-[14.2rem] font-bold">
+                                                      Avg. Total Score
                                                     </div>
                                                     <div className="flex flex-1 justify-start">
                                                       {selectedMonths

@@ -1,42 +1,25 @@
-"use client";
+"use client"
 
 import {
+  Activity,
   AudioWaveform,
   BadgeCheck,
-  Bell,
-  Bot,
-  ChevronRight,
-  ChevronsUpDown,
-  CreditCard,
-  Folder,
-  Forward,
-  LogOut,
-  Moon,
-  MoreHorizontal,
+  Handshake,
+  HelpCircle,
+  Home,
+  LayoutDashboard,
+  MessageCircle,
+  PhoneIncoming,
+  PhoneOutgoing,
   PieChart,
-  Plus,
-  SquareTerminal,
-  Sun,
-  Trash2,
-} from "lucide-react";
-import React, { useCallback, useEffect, type ReactNode } from "react";
+  Settings,
+  Users,
+  VideoIcon
+} from "lucide-react"
+import Link from "next/link"
+import { usePathname } from "next/navigation"
+import * as React from "react"
 
-import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar";
-import {
-  Collapsible,
-  CollapsibleContent,
-  CollapsibleTrigger,
-} from "@/components/ui/collapsible";
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuGroup,
-  DropdownMenuItem,
-  DropdownMenuLabel,
-  DropdownMenuSeparator,
-  DropdownMenuShortcut,
-  DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
 import {
   Sidebar,
   SidebarContent,
@@ -46,401 +29,166 @@ import {
   SidebarHeader,
   SidebarInset,
   SidebarMenu,
-  SidebarMenuAction,
   SidebarMenuButton,
   SidebarMenuItem,
-  SidebarMenuSub,
-  SidebarMenuSubButton,
-  SidebarMenuSubItem,
   SidebarProvider,
-  SidebarRail,
-} from "@/components/ui/sidebar";
-import { useTheme } from "next-themes";
-import Link from "next/link";
-import { usePathname } from "next/navigation";
+} from "@/components/ui/sidebar"
 
 interface SidebarPageTemplateProps {
-  children: ReactNode;
+  children: React.ReactNode
 }
 
-export default function SidebarPageTemplate({
-  children,
-}: SidebarPageTemplateProps) {
-  const pathname = usePathname();
+export default function SidebarPageTemplate({ children }: SidebarPageTemplateProps) {
+  const pathname = usePathname()
 
-  interface NavItem {
-    url: string;
-  }
-
-  const isPathInItems = (items: NavItem[]) => {
-    return items?.some((item) => item.url === pathname);
-  };
-
-  const data = {
-    teams: [
-      {
-        name: "Main Model",
-        logo: AudioWaveform,
-        plan: "by Devkins",
-      },
+  const navigation = {
+    dashboards: [
+      { name: "Individuals", href: "/dashboard/individuals", icon: LayoutDashboard },
+      { name: "Teams", href: "/dashboard/teams", icon: Handshake },
+      { name: "Departments", href: "/dashboard/departments", icon: Users },
+      { name: "Company", href: "/dashboard/company", icon: Home },
     ],
-    navMain: [
-      {
-        title: "Dashboard",
-        url: "#",
-        icon: Bot,
-        isActive: isPathInItems([
-          { url: "/dashboard/individuals" },
-          { url: "/dashboard/teams" },
-          { url: "/dashboard/departments" },
-          { url: "/dashboard/company" },
-        ]),
-        items: [
-          {
-            title: "Individuals",
-            url: "/dashboard/individuals",
-            isActive: pathname === "/dashboard/individuals",
-          },
-          {
-            title: "Teams",
-            url: "/dashboard/teams",
-            isActive: pathname === "/dashboard/teams",
-          },
-          {
-            title: "Departments",
-            url: "/dashboard/departments",
-            isActive: pathname === "/dashboard/departments",
-          },
-          {
-            title: "Company",
-            url: "/dashboard/company",
-            isActive: pathname === "/dashboard/company",
-          },
-        ],
-      },
-      {
-        title: "Data Entry",
-        url: "#",
-        icon: SquareTerminal,
-        isActive: isPathInItems([
-          { url: "/data-entry/activity-log" },
-          { url: "/data-entry/incoming-calls" },
-          { url: "/data-entry/outgoing-calls" },
-          { url: "/data-entry/inputs" },
-        ]),
-        items: [
-          {
-            title: "Activity Log (Table1)",
-            url: "/data-entry/activity-log",
-            isActive: pathname === "/data-entry/activity-log",
-          },
-          {
-            title: "Incoming Calls",
-            url: "/data-entry/incoming-calls",
-            isActive: pathname === "/data-entry/incoming-calls",
-          },
-          {
-            title: "Outgoing Calls",
-            url: "/data-entry/outgoing-calls",
-            isActive: pathname === "/data-entry/outgoing-calls",
-          },
-          {
-            title: "System Configuration",
-            url: "/data-entry/inputs",
-            isActive: pathname === "/data-entry/inputs",
-          },
-        ],
-      },
+    dataentry: [
+      { name: "Activity Log", href: "/data-entry/activity-log", icon: Activity },
+      { name: "Incoming Calls", href: "/data-entry/incoming-calls", icon: PhoneIncoming },
+      { name: "Outgoing Calls", href: "/data-entry/outgoing-calls", icon: PhoneOutgoing },
     ],
     visualization: [
-      {
-        name: "Top 10",
-        url: "/top-10",
-        icon: PieChart,
-        isActive: pathname === "/top-10",
-      },
+      { name: "Members", href: "/members", icon: PieChart },
+      { name: "Permissions", href: "/permissions", icon: BadgeCheck },
+      { name: "Chat", href: "/chat", icon: MessageCircle },
+      { name: "Meetings", href: "/meetings", icon: VideoIcon },
     ],
-  };
-
-  const [activeTeam, setActiveTeam] = React.useState(data.teams[0]);
-  const { theme, setTheme } = useTheme();
-  const [user, setUser] = React.useState({
-    id: 1,
-    username: "Perdyrkorn",
-    email: "perdyrkorn@gmail.com",
-    picture: "https://github.com/shadcn.png",
-    createdAt: new Date(),
-    updatedAt: new Date(),
-  });
-
-  const toggleTheme = () => {
-    setTheme(theme === "light" ? "dark" : "light");
-  };
-
-  //   const logoutWithGoogle = async () => {
-  //     try {
-  //       await signOut();
-  //     } catch (err) {
-  //       console.error("There was an error logging out:", err);
-  //     }
-  //   };
-  
-  useEffect(() => {
-    fetchUser();
-    const intervalId = setInterval(fetchUser, 10000); // Fetch every 10 seconds
-
-    return () => clearInterval(intervalId); // Cleanup on unmount
-  }, []);
-
-  const fetchUser = useCallback(async () => {
-    const response = await fetch("/api/get-user");
-    const data = await response.json();
-    if (data.success) {
-      setUser(data.data[0]);
-      return data.data[0];
-    } else {
-      throw new Error("Failed to fetch user data");
-    }
-  }, [setUser]);
+  }
 
   return (
     <SidebarProvider>
-      <Sidebar collapsible="icon">
-        <SidebarHeader>
-          <SidebarMenu>
-            <SidebarMenuItem>
-              <DropdownMenu>
-                <DropdownMenuTrigger asChild>
-                  <SidebarMenuButton
-                    size="lg"
-                    className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
-                  >
-                    <div className="flex aspect-square size-8 items-center justify-center rounded-lg bg-sidebar-primary text-sidebar-primary-foreground">
-                      <activeTeam.logo className="size-4" />
-                    </div>
-                    <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">
-                        {activeTeam.name}
-                      </span>
-                      <span className="truncate text-xs">
-                        {activeTeam.plan}
-                      </span>
-                    </div>
-                    <ChevronsUpDown className="ml-auto" />
-                  </SidebarMenuButton>
-                </DropdownMenuTrigger>
-                <DropdownMenuContent
-                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                  align="start"
-                  side="bottom"
-                  sideOffset={4}
-                >
-                  <DropdownMenuLabel className="text-xs text-muted-foreground">
-                    Teams
-                  </DropdownMenuLabel>
-                  {data.teams.map((team, index) => (
-                    <DropdownMenuItem
-                      key={team.name}
-                      onClick={() => setActiveTeam(team)}
-                      className="gap-2 p-2"
-                    >
-                      <div className="flex size-6 items-center justify-center rounded-sm border">
-                        <team.logo className="size-4 shrink-0" />
-                      </div>
-                      {team.name}
-                      <DropdownMenuShortcut>⌘{index + 1}</DropdownMenuShortcut>
-                    </DropdownMenuItem>
-                  ))}
-                  <DropdownMenuSeparator />
-                  <DropdownMenuItem className="gap-2 p-2">
-                    <div className="flex size-6 items-center justify-center rounded-md border bg-background">
-                      <Plus className="size-4" />
-                    </div>
-                    <div className="font-medium text-muted-foreground">
-                      Add team
-                    </div>
-                  </DropdownMenuItem>
-                </DropdownMenuContent>
-              </DropdownMenu>
-            </SidebarMenuItem>
-          </SidebarMenu>
+      <Sidebar className="border-r-0">
+        <SidebarHeader className="p-4 mt-2">
+          <Link href="/" className="flex items-center gap-2 font-semibold">
+            <AudioWaveform className="h-6 w-6 text-lime-400" />
+            <span>Team Assessment</span>
+          </Link>
         </SidebarHeader>
         <SidebarContent>
           <SidebarGroup>
-            <SidebarGroupLabel>Platform</SidebarGroupLabel>
+            <SidebarGroupLabel className="uppercase font-bold">DASHBOARDS</SidebarGroupLabel>
             <SidebarMenu>
-              {data.navMain.map((item) => (
-                <Collapsible
-                  key={item.title}
-                  asChild
-                  defaultOpen={item.isActive}
-                  className="group/collapsible"
-                >
-                  <SidebarMenuItem>
-                    <CollapsibleTrigger asChild>
-                      <SidebarMenuButton tooltip={item.title}>
-                        {item.icon && <item.icon />}
-                        <span>{item.title}</span>
-                        <ChevronRight className="ml-auto transition-transform duration-200 group-data-[state=open]/collapsible:rotate-90" />
-                      </SidebarMenuButton>
-                    </CollapsibleTrigger>
-                    <CollapsibleContent>
-                      <SidebarMenuSub>
-                        {item.items?.map((subItem) => (
-                          <SidebarMenuSubItem key={subItem.title}>
-                            <SidebarMenuSubButton
-                              asChild
-                              className={
-                                subItem.isActive ? "bg-sidebar-accent" : ""
-                              }
-                            >
-                              <Link href={subItem.url}>
-                                <span>{subItem.title}</span>
-                              </Link>
-                            </SidebarMenuSubButton>
-                          </SidebarMenuSubItem>
-                        ))}
-                      </SidebarMenuSub>
-                    </CollapsibleContent>
-                  </SidebarMenuItem>
-                </Collapsible>
-              ))}
-            </SidebarMenu>
-          </SidebarGroup>
-          <SidebarGroup className="group-data-[collapsible=icon]:hidden">
-            <SidebarGroupLabel>Visualization</SidebarGroupLabel>
-            <SidebarMenu>
-              {data.visualization.map((item) => (
+              {navigation.dashboards.map((item) => (
                 <SidebarMenuItem key={item.name}>
-                  <SidebarMenuButton asChild>
-                    <Link href={item.url}>
-                      <item.icon />
+                  <SidebarMenuButton className="py-5" asChild isActive={pathname === item.href}>
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
                       <span>{item.name}</span>
                     </Link>
                   </SidebarMenuButton>
-                  <DropdownMenu>
-                    <DropdownMenuTrigger asChild>
-                      <SidebarMenuAction showOnHover>
-                        <MoreHorizontal />
-                        <span className="sr-only">More</span>
-                      </SidebarMenuAction>
-                    </DropdownMenuTrigger>
-                    <DropdownMenuContent
-                      className="w-48 rounded-lg"
-                      side="bottom"
-                      align="end"
-                    >
-                      <DropdownMenuItem>
-                        <Folder className="text-muted-foreground" />
-                        <span>View Project</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuItem>
-                        <Forward className="text-muted-foreground" />
-                        <span>Share Project</span>
-                      </DropdownMenuItem>
-                      <DropdownMenuSeparator />
-                      <DropdownMenuItem>
-                        <Trash2 className="text-muted-foreground" />
-                        <span>Delete Project</span>
-                      </DropdownMenuItem>
-                    </DropdownMenuContent>
-                  </DropdownMenu>
                 </SidebarMenuItem>
               ))}
-              <SidebarMenuItem>
-                <SidebarMenuButton className="text-sidebar-foreground/70">
-                  <MoreHorizontal className="text-sidebar-foreground/70" />
-                  <span>More</span>
-                </SidebarMenuButton>
-              </SidebarMenuItem>
+            </SidebarMenu>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel className="uppercase font-bold">DATA ENTRY</SidebarGroupLabel>
+            <SidebarMenu>
+              {navigation.dataentry.map((item) => (
+                <SidebarMenuItem key={item.name}>
+                  <SidebarMenuButton className="py-5" asChild isActive={pathname === item.href}>
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
+            </SidebarMenu>
+          </SidebarGroup>
+
+          <SidebarGroup>
+            <SidebarGroupLabel className="uppercase font-bold">Visualization</SidebarGroupLabel>
+            <SidebarMenu>
+              {navigation.visualization.map((item) => (
+                <SidebarMenuItem key={item.name}>
+                  <SidebarMenuButton className="py-5" asChild isActive={pathname === item.href}>
+                    <Link href={item.href}>
+                      <item.icon className="h-4 w-4" />
+                      <span>{item.name}</span>
+                    </Link>
+                  </SidebarMenuButton>
+                </SidebarMenuItem>
+              ))}
             </SidebarMenu>
           </SidebarGroup>
         </SidebarContent>
-        <SidebarFooter>
+
+        <SidebarFooter className="mt-auto mb-2">
           <SidebarMenu>
             <SidebarMenuItem>
+              <SidebarMenuButton className="py-5" asChild>
+                <Link href="/settings">
+                  <Settings className="h-10 w-4" />
+                  <span>Settings</span>
+                </Link>
+              </SidebarMenuButton>
+              <SidebarMenuButton className="py-5" asChild>
+                <Link href="/settings">
+                  <HelpCircle className="h-10 w-4" />
+                  <span>Help</span>
+                </Link>
+              </SidebarMenuButton>
+            </SidebarMenuItem>
+            {/* <SidebarMenuItem>
               <DropdownMenu>
                 <DropdownMenuTrigger asChild>
                   <SidebarMenuButton
                     size="lg"
                     className="data-[state=open]:bg-sidebar-accent data-[state=open]:text-sidebar-accent-foreground"
                   >
-                    <Avatar className="h-8 w-8 rounded-lg">
+                    <Avatar className="h-8 w-8">
                       <AvatarImage src={user.picture} alt={user.username} />
-                      <AvatarFallback className="rounded-lg">
-                        {user.username.substring(0, 2).toUpperCase()}
-                      </AvatarFallback>
+                      <AvatarFallback>{user.username.substring(0, 2).toUpperCase()}</AvatarFallback>
                     </Avatar>
                     <div className="grid flex-1 text-left text-sm leading-tight">
-                      <span className="truncate font-semibold">
-                        {user.username}
-                      </span>
+                      <span className="truncate font-semibold">{user.username}</span>
                       <span className="truncate text-xs">{user.email}</span>
                     </div>
-                    <ChevronsUpDown className="ml-auto size-4" />
+                    <ChevronDown className="ml-auto h-4 w-4" />
                   </SidebarMenuButton>
                 </DropdownMenuTrigger>
                 <DropdownMenuContent
-                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56 rounded-lg"
-                  side="bottom"
-                  align="end"
-                  sideOffset={4}
+                  className="w-[--radix-dropdown-menu-trigger-width] min-w-56"
+                  align="start"
+                  side="right"
+                  sideOffset={8}
                 >
-                  <DropdownMenuLabel className="p-0 font-normal">
-                    <div className="flex items-center gap-2 px-1 py-1.5 text-left text-sm">
-                      <Avatar className="h-8 w-8 rounded-lg">
-                        <AvatarImage src={user.picture} alt={user.username} />
-                        <AvatarFallback className="rounded-lg">
-                          {user.username.substring(0, 2).toUpperCase()}
-                        </AvatarFallback>
-                      </Avatar>
-                      <div className="grid flex-1 text-left text-sm leading-tight">
-                        <span className="truncate font-semibold">
-                          {user.username}
-                        </span>
-                        <span className="truncate text-xs">{user.email}</span>
-                      </div>
-                    </div>
-                  </DropdownMenuLabel>
+                  <DropdownMenuLabel>My Account</DropdownMenuLabel>
                   <DropdownMenuSeparator />
                   <DropdownMenuGroup>
-                    <Link href="/account">
-                      <DropdownMenuItem>
-                        <BadgeCheck className="h-4 w-4" />
-                        <span>Account</span>
-                      </DropdownMenuItem>
-                    </Link>
                     <DropdownMenuItem>
-                      <CreditCard />
-                      Billing
+                      <BadgeCheck className="mr-2 h-4 w-4" />
+                      Profile
                     </DropdownMenuItem>
                     <DropdownMenuItem>
-                      <Bell />
+                      <Bell className="mr-2 h-4 w-4" />
                       Notifications
                     </DropdownMenuItem>
-                    <DropdownMenuItem
-                      onClick={toggleTheme}
-                      aria-label="Toggle theme"
-                    >
-                      <Sun className="h-5 w-5 rotate-0 scale-100 transition-all dark:-rotate-90 dark:scale-0" />
-                      <Moon className="absolute h-5 w-5 rotate-90 scale-0 transition-all dark:rotate-0 dark:scale-100" />
-                      <span>Toggle Theme</span>
+                    <DropdownMenuItem onClick={toggleTheme}>
+                      {theme === "light" ? <Moon className="mr-2 h-4 w-4" /> : <Sun className="mr-2 h-4 w-4" />}
+                      Toggle Theme
                     </DropdownMenuItem>
                   </DropdownMenuGroup>
                   <DropdownMenuSeparator />
                   <DropdownMenuItem>
-                    <LogOut />
+                    <LogOut className="mr-2 h-4 w-4" />
                     Log out
                   </DropdownMenuItem>
                 </DropdownMenuContent>
               </DropdownMenu>
-            </SidebarMenuItem>
+            </SidebarMenuItem> */}
           </SidebarMenu>
         </SidebarFooter>
-        <SidebarRail />
       </Sidebar>
       <SidebarInset>{children}</SidebarInset>
-      {/* <Toaster /> */}
     </SidebarProvider>
-  );
+  )
 }
+
