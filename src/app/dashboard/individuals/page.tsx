@@ -32,7 +32,7 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, CalendarIcon, Check, ChevronDown, ChevronUp, Loader2, SendHorizontal } from "lucide-react"
+import { ArrowUpDown, CalendarIcon, Check, ChevronDown, ChevronUp, Loader2, SendHorizontal } from 'lucide-react'
 import { useCallback, useEffect, useState } from "react"
 
 type IndividualData = {
@@ -452,6 +452,11 @@ const IndividualsDashboard = () => {
           const ceScore = monthData.ceScore.level
           const tsScore = monthData.tsScore.level
           const rbslScore = monthData.rbslScore.level
+
+          // Return 0 if any of the required scores are missing
+          if (!tcmScore || !ceScore || !tsScore || !rbslScore) {
+            return 0
+          }
 
           return (
             tcmScore * (weightages.tcm / 100) +

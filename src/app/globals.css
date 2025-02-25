@@ -106,3 +106,14 @@ body {
   background-color: #CBFBF1 !important;
   color: #007A55 !important;
 }
+
+
+
+@layer base {
+  * {
+    @apply border-border outline-ring/50;
+  }
+  body {
+    @apply bg-background text-foreground;
+  }
+}
