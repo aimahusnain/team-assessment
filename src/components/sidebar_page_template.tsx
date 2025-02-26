@@ -73,8 +73,7 @@ export default function SidebarPageTemplate({ children }: SidebarPageTemplatePro
       { name: "Configuration", href: "/data-entry/inputs", icon: Bolt },
     ],
     visualization: [
-      { name: "Members", href: "/members", icon: PieChart },
-      { name: "Permissions", href: "/permissions", icon: BadgeCheck },
+      { name: "Anayytics Dashboard", href: "/visualization", icon: PieChart },
     ],
   }
 
