@@ -1,33 +1,32 @@
 "use client";
 
 import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from "@/components/ui/dialog";
+import {
   Activity,
   AudioWaveform,
-  BadgeCheck,
   Bolt,
   ExternalLink,
   Handshake,
   HelpCircle,
   Home,
   LayoutDashboard,
+  Mail,
   PhoneCall,
   PhoneIncoming,
   PhoneOutgoing,
   PieChart,
   Settings,
-  Users,
+  Users
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
 import type * as React from "react";
 import { useState } from "react";
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-} from "@/components/ui/dialog";
-import { Mail } from "lucide-react";
 
 import {
   Sidebar,
