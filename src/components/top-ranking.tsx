@@ -182,7 +182,15 @@ export default function TopRankings() {
       // Process the data to calculate average total score for each team
       const teamsWithScores: TeamScore[] = []
 
-      result.teams.forEach((team: any) => {
+      result.teams.forEach((team: {
+        team: string;
+        tcmScore: { level: number };
+        ceScore: { level: number };
+        tsScore: { level: number };
+        rbslScore: { level: number };
+        month: string;
+        department: string | null;
+      }) => {
         if (team.team === "Total (All Teams)") return
 
         const tcmScore = team.tcmScore.level
@@ -241,7 +249,16 @@ export default function TopRankings() {
       // Process the data to calculate average total score for each individual
       const individualsWithScores: IndividualScore[] = []
 
-      result.names.forEach((individual: any) => {
+      result.names.forEach((individual: {
+        name: string;
+        team: string | null;
+        department: string | null;
+        tcmScore: { level: number };
+        ceScore: { level: number };
+        tsScore: { level: number };
+        rbslScore: { level: number };
+        month: string;
+      }) => {
         const tcmScore = individual.tcmScore.level
         const ceScore = individual.ceScore.level
         const tsScore = individual.tsScore.level
@@ -298,14 +315,21 @@ export default function TopRankings() {
       }
 
       // Process the data to get departments with scores
-      const departmentsWithScores: DepartmentScore[] = result.departments.map((dept: any) => ({
+      const departmentsWithScores: DepartmentScore[] = result.departments.map((dept: {
+        department: string;
+        tcmScore: { level: number };
+        ceScore: { level: number };
+        tsScore: { level: number };
+        rbslScore: { level: number };
+        month: string;
+      }): DepartmentScore => ({
         department: dept.department,
         avgTotalScore: Number(
           (
-            dept.tcmScore.level * (weightages.tcm / 100) +
-            dept.ceScore.level * (weightages.ce / 100) +
-            dept.tsScore.level * (weightages.ts / 100) +
-            dept.rbslScore.level * (weightages.rbsl / 100)
+        dept.tcmScore.level * (weightages.tcm / 100) +
+        dept.ceScore.level * (weightages.ce / 100) +
+        dept.tsScore.level * (weightages.ts / 100) +
+        dept.rbslScore.level * (weightages.rbsl / 100)
           ).toFixed(2),
         ),
         month: dept.month,

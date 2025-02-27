@@ -20,6 +20,7 @@ export async function GET() {
     ])
     return Response.json({ incomingCalls, outgoingCalls })
   } catch (error) {
+    console.log("err", error)
     return Response.json({ error: "Failed to fetch calls data" }, { status: 500 })
   }
 }

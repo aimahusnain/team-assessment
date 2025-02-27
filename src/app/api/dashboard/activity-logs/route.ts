@@ -12,6 +12,7 @@ export async function GET() {
     })
     return Response.json(logs)
   } catch (error) {
+    console.log("err", error)
     return Response.json({ error: "Failed to fetch activity logs" }, { status: 500 })
   }
 }
