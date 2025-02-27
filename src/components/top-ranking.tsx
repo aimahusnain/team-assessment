@@ -2,30 +2,28 @@
 
 import type React from "react"
 
-import { useEffect, useState, useCallback } from "react"
-import Link from "next/link"
+import { motion } from "framer-motion"
 import {
+  Building,
   CalendarIcon,
   Crown,
-  Loader2,
-  Medal,
-  SendHorizontal,
-  Trophy,
-  Users,
-  User,
-  Building,
   LayoutGrid,
   List,
+  Loader2,
+  Medal,
+  RefreshCw,
+  SendHorizontal,
+  Trophy,
+  User,
+  Users,
 } from "lucide-react"
-import { motion } from "framer-motion"
-
+import { useCallback, useEffect, useState } from "react"
 import { Button } from "@/components/ui/button"
-import { Card, CardContent, CardDescription, CardHeader, CardTitle, CardFooter } from "@/components/ui/card"
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card"
 import { MonthPicker } from "@/components/ui/monthpicker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
-import { Separator } from "@/components/ui/separator"
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
-import { cn, abbreviateMonth } from "@/lib/utils"
+import { abbreviateMonth, cn } from "@/lib/utils"
 
 interface TeamScore {
   team: string
@@ -167,7 +165,6 @@ export default function TopRankings() {
     }
 
     try {
-      setIsRefreshing(true)
       const params = new URLSearchParams()
       selectedMonths.forEach((month) => params.append("months", month))
       params.append("year", selectedYear.toString())
@@ -219,13 +216,8 @@ export default function TopRankings() {
       setTopTeams(sortedTeams)
     } catch (err) {
       console.error(err)
-    } finally {
-      if (activeTab === "teams") {
-        setIsRefreshing(false)
-        setLoading(false)
-      }
     }
-  }, [selectedMonths, selectedYear, weightages, activeTab])
+  }, [selectedMonths, selectedYear, weightages])
 
   const fetchIndividualsData = useCallback(async () => {
     if (selectedMonths.length === 0) {
@@ -234,7 +226,6 @@ export default function TopRankings() {
     }
 
     try {
-      setIsRefreshing(true)
       const params = new URLSearchParams()
       selectedMonths.forEach((month) => params.append("months", month))
       params.append("year", selectedYear.toString())
@@ -286,13 +277,8 @@ export default function TopRankings() {
       setTopIndividuals(sortedIndividuals)
     } catch (err) {
       console.error(err)
-    } finally {
-      if (activeTab === "individuals") {
-        setIsRefreshing(false)
-        setLoading(false)
-      }
     }
-  }, [selectedMonths, selectedYear, weightages, activeTab])
+  }, [selectedMonths, selectedYear, weightages])
 
   // Add fetchDepartmentsData function
   const fetchDepartmentsData = useCallback(async () => {
@@ -302,7 +288,6 @@ export default function TopRankings() {
     }
 
     try {
-      setIsRefreshing(true)
       const params = new URLSearchParams()
       selectedMonths.forEach((month) => params.append("months", month))
       params.append("year", selectedYear.toString())
@@ -326,10 +311,10 @@ export default function TopRankings() {
         department: dept.department,
         avgTotalScore: Number(
           (
-        dept.tcmScore.level * (weightages.tcm / 100) +
-        dept.ceScore.level * (weightages.ce / 100) +
-        dept.tsScore.level * (weightages.ts / 100) +
-        dept.rbslScore.level * (weightages.rbsl / 100)
+            dept.tcmScore.level * (weightages.tcm / 100) +
+            dept.ceScore.level * (weightages.ce / 100) +
+            dept.tsScore.level * (weightages.ts / 100) +
+            dept.rbslScore.level * (weightages.rbsl / 100)
           ).toFixed(2),
         ),
         month: dept.month,
@@ -341,50 +326,69 @@ export default function TopRankings() {
       setTopDepartments(sortedDepartments)
     } catch (err) {
       console.error(err)
-    } finally {
-      if (activeTab === "departments") {
-        setIsRefreshing(false)
-        setLoading(false)
-      }
     }
-  }, [selectedMonths, selectedYear, weightages, activeTab])
+  }, [selectedMonths, selectedYear, weightages])
 
-  // Modify the useEffect to include departments
-  useEffect(() => {
-    if (activeTab === "teams") {
-      fetchTeamsData()
-    } else if (activeTab === "individuals") {
-      fetchIndividualsData()
-    } else {
-      fetchDepartmentsData()
+  // Refresh data function to refetch all necessary data
+  const refreshData = async () => {
+    setIsRefreshing(true)
+    
+    // Create an array of promises for parallel data fetching
+    const fetchPromises = []
+    
+    // Add each fetch to our promises array based on current view mode
+    if (activeTab === "teams" || viewMode === "list") {
+      fetchPromises.push(fetchTeamsData())
     }
-  }, [activeTab, fetchTeamsData, fetchIndividualsData, fetchDepartmentsData])
-
-  useEffect(() => {
-    // Fetch both data sets when filters change
-    const fetchData = async () => {
-      setLoading(true)
-      setIsRefreshing(true)
-
-      if (activeTab === "teams") {
-        await fetchTeamsData()
-      } else if (activeTab === "individuals") {
-        await fetchIndividualsData()
-      } else {
-        await fetchDepartmentsData()
-      }
-
-      setIsRefreshing(false)
-      setLoading(false)
+    
+    if (activeTab === "individuals" || viewMode === "list") {
+      fetchPromises.push(fetchIndividualsData())
     }
-
-    fetchData()
-  }, [activeTab, fetchTeamsData, fetchIndividualsData, fetchDepartmentsData])
+    
+    if (activeTab === "departments" || viewMode === "list") {
+      fetchPromises.push(fetchDepartmentsData())
+    }
+    
+    // Wait for all relevant data to be fetched concurrently
+    await Promise.all(fetchPromises)
+    
+    setIsRefreshing(false)
+  }
 
   const handleTabChange = (value: string) => {
     setActiveTab(value)
     setLoading(true)
   }
+
+  // Optimized useEffect that runs when filters change
+  useEffect(() => {
+    const fetchData = async () => {
+      setLoading(true)
+      setIsRefreshing(true)
+
+      const fetchPromises = []
+      
+      // Only fetch what we need based on current view mode
+      if (activeTab === "teams" || viewMode === "list") {
+        fetchPromises.push(fetchTeamsData())
+      }
+      
+      if (activeTab === "individuals" || viewMode === "list") {
+        fetchPromises.push(fetchIndividualsData())
+      }
+      
+      if (activeTab === "departments" || viewMode === "list") {
+        fetchPromises.push(fetchDepartmentsData())
+      }
+
+      await Promise.all(fetchPromises)
+      
+      setIsRefreshing(false)
+      setLoading(false)
+    }
+
+    fetchData()
+  }, [selectedMonths, selectedYear, activeTab, viewMode, fetchTeamsData, fetchIndividualsData, fetchDepartmentsData])
 
   // Add new function to render list view cards
   const renderListViewCard = (
@@ -450,7 +454,7 @@ export default function TopRankings() {
                       <div className={cn(getMonthColor(item.month), "px-2 py-1 rounded-md text-xs font-bold")}>
                         {abbreviateMonth(item.month)}
                       </div>
-                      <div className="font-bold tabular-nums">{item.avgTotalScore}</div>
+                      <div className="font-bold tabular-nums">{item.avgTotalScore.toFixed(2)}</div>
                     </div>
                   </div>
                 )
@@ -458,11 +462,6 @@ export default function TopRankings() {
             </div>
           )}
         </CardContent>
-        <CardFooter className="px-6">
-          <Button variant="ghost" size="sm" className="ml-auto" asChild>
-            <Link href={`/${type}`}>View All</Link>
-          </Button>
-        </CardFooter>
       </Card>
     )
   }
@@ -494,6 +493,16 @@ export default function TopRankings() {
             className="h-8 w-8"
           >
             <List className="h-4 w-4" />
+          </Button>
+          <Button
+            variant="outline"
+            size="icon"
+            onClick={refreshData}
+            disabled={isRefreshing}
+            className="h-8 w-8 ml-2"
+            title="Refresh data"
+          >
+            <RefreshCw className={`h-4 w-4 ${isRefreshing ? 'animate-spin' : ''}`} />
           </Button>
         </div>
 
@@ -658,9 +667,8 @@ export default function TopRankings() {
                                     {abbreviateMonth(team.month)}
                                   </div>
                                 </div>
-                                <div className="text-2xl font-bold">{team.avgTotalScore}</div>
+                                <div className="text-2xl font-bold">{team.avgTotalScore.toFixed(2)}</div>
                               </div>
-                       
                             </CardContent>
                           </Card>
                         </motion.div>
@@ -754,15 +762,14 @@ export default function TopRankings() {
                                     {abbreviateMonth(individual.month)}
                                   </div>
                                 </div>
-                                <div className="text-2xl font-bold">{individual.avgTotalScore}</div>
+                                <div className="text-2xl font-bold">{individual.avgTotalScore.toFixed(2)}</div>
                               </div>
-                       
-                      
                             </CardContent>
                           </Card>
                         </motion.div>
                       )
-                    })}
+                    }
+                  )}
                   </div>
                 )}
               </TabsContent>
@@ -847,13 +854,7 @@ export default function TopRankings() {
                                     {abbreviateMonth(department.month)}
                                   </div>
                                 </div>
-                                <div className="text-2xl font-bold">{department.avgTotalScore}</div>
-                              </div>
-                              <Separator className="my-4" />
-                              <div className="flex justify-end">
-                                <Button variant="ghost" size="sm" asChild>
-                                  <Link href="/departments">View Details</Link>
-                                </Button>
+                                <div className="text-2xl font-bold">{department.avgTotalScore.toFixed(2)}</div>
                               </div>
                             </CardContent>
                           </Card>
