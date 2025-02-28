@@ -109,7 +109,7 @@ const DepartmentsDashboard = () => {
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [hasFilterChanges, setHasFilterChanges] = useState(false)
 
-  console.log("ERROR: ", error)
+  // console.log("ERROR: ", error)
 
   // Filter states
   const [filterValues, setFilterValues] = useState({
