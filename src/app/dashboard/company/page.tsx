@@ -726,7 +726,7 @@ const CompanyDashboard = () => {
                   </div>
                 </div>
 
-                <div className="fixed bottom-8 left-0 right-0 flex justify-center z-10 transition-all duration-150">
+                <div className="fixed bottom-8 left-0 right-0 flex justify-center z-0 transition-all duration-150">
                   <div className="flex items-center justify-between py-2 rounded-full shadow-lg bg-background border-t gap-20 px-5 w-fit">
                     <div className="flex-1 text-sm text-muted-foreground">
                       {table.getFilteredRowModel().rows.length} records found

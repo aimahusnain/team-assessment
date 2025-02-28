@@ -166,7 +166,7 @@ const getScoreForValue = (
   value: number,
   scoreMatrix: ScoreMatrix | null,
   isDescending = true,
-  isRBSL = false,
+  // isRBSL = false,
 ): ScoreLevel => {
   if (!scoreMatrix) return { level: 1, score: "-" }
 
@@ -217,7 +217,7 @@ const getScoreForValue = (
  * Data Processing Functions
  */
 const processActivityLogs = (
-  activityLogs: any[],
+  activityLogs: { name: string; verdi: number; activity: string; team: string; department: string | null }[],
   teamDetailsMap: Map<string, TeamMetrics>,
   teamMembersMap: Map<string, Map<string, number>>,
   individualDataMap: Map<string, IndividualData>,
@@ -263,7 +263,12 @@ const processActivityLogs = (
   })
 }
 
-const processIncomingCalls = (incomingCalls: any[], individualDataMap: Map<string, IndividualData>) => {
+interface IncomingCall {
+  navn: string;
+  min: number;
+}
+
+const processIncomingCalls = (incomingCalls: IncomingCall[], individualDataMap: Map<string, IndividualData>) => {
   incomingCalls.forEach((call) => {
     const normalizedName = normalizeAndTrim(call.navn)
     if (normalizedName) {
@@ -280,7 +285,13 @@ const processIncomingCalls = (incomingCalls: any[], individualDataMap: Map<strin
   })
 }
 
-const processOutgoingCalls = (outgoingCalls: any[], individualDataMap: Map<string, IndividualData>) => {
+interface OutgoingCall {
+  navn: string;
+  outgoing: string;
+  regular_call_time_min: string;
+}
+
+const processOutgoingCalls = (outgoingCalls: OutgoingCall[], individualDataMap: Map<string, IndividualData>) => {
   outgoingCalls.forEach((call) => {
     const normalizedName = normalizeAndTrim(call.navn)
     if (normalizedName) {
@@ -382,7 +393,9 @@ const calculateTeamDetails = (
     const tcmScore = getScoreForValue(avgTCM, tcmScoreMatrix, true)
     const ceScore = getScoreForValue(avgCE, ceScoreMatrix, false)
     const tsScore = getScoreForValue(avgTS, tsScoreMatrix, true)
-    const rbslScore = getScoreForValue(avgRBSL, rbslScoreMatrix, true, true)
+    const rbslScore = getScoreForValue(avgRBSL, rbslScoreMatrix, true)
+
+    console.log("\ntsScore:", tsScore)
 
     // Get individual member sales data
     const memberSalesMap = teamMembersMap.get(team) || new Map<string, number>()

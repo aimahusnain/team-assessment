@@ -20,7 +20,6 @@ import {
   PhoneIncoming,
   PhoneOutgoing,
   PieChart,
-  Settings,
   Users
 } from "lucide-react";
 import Link from "next/link";
@@ -81,11 +80,9 @@ export default function SidebarPageTemplate({
         href: "/data-entry/outgoing-calls",
         icon: PhoneOutgoing,
       },
-      { name: "Configuration", href: "/data-entry/inputs", icon: Bolt },
+      // { name: "Configuration", href: "/data-entry/inputs", icon: Bolt },
     ],
-    visualization: [
-      { name: "Top 10", href: "/top-10", icon: PieChart },
-    ],
+    visualization: [{ name: "Top 10", href: "/top-10", icon: PieChart }],
   };
   const [isOpen, setIsOpen] = useState(false);
 
@@ -188,8 +185,8 @@ export default function SidebarPageTemplate({
             <SidebarMenuItem>
               <div className="flex flex-col gap-2">
                 <SidebarMenuButton className="py-5" asChild tooltip="Settings">
-                  <Link href="/settings">
-                    <Settings className="h-4 w-4" />
+                  <Link href="/data-entry/inputs">
+                    <Bolt className="h-4 w-4" />
                     <span className="group-data-[collapsible=icon]:hidden">
                       Settings
                     </span>
@@ -216,65 +213,67 @@ export default function SidebarPageTemplate({
                         <DialogTitle className="text-2xl font-bold text-primary">
                           How Can We Help You?
                         </DialogTitle>
-                     {/* Help Center Section */}
-                     <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
-
-              <div className="bg-transparent p-4 rounded-lg border  transition-colors">
-                <div className="flex items-start space-x-3">
-                  <ExternalLink className="h-5 w-5 text-primary mt-1" />
-                  <div>
-                    <h3 className="font-semibold text-lg mb-2">Help Center</h3>
-                    <p className="text-sm text-muted-foreground mb-3">
-                      Browse through our comprehensive guides, tutorials, and FAQs.
-                    </p>
-                    <a 
-                      href="https://devkins.dev/contact" 
-                      target="_blank" 
-                      rel="noopener noreferrer"
-                      className="inline-flex items-center text-sm text-primary hover:underline font-medium"
-                    >
-                      Visit Help Center
-                      <ExternalLink className="h-4 w-4 ml-1" />
-                    </a>
-                  </div>
-                </div>
-              </div>
-                        {/* Email Support Section */}
-                        <div className="bg-transparent p-4 rounded-lg border  transition-colors">
-                          <div className="flex items-start space-x-3">
-                            <Mail className="h-5 w-5 text-primary mt-1" />
-                            <div>
-                              <h3 className="font-semibold text-lg mb-2">
-                                Email Support
-                              </h3>
-                              <p className="text-sm text-muted-foreground mb-3">
-                                Get personalized help from our support team.
-                              </p>
-                              <a
-                                href="mailto:devkins.dev@gmail.com"
-                                className="inline-flex items-center text-sm text-primary hover:underline font-medium"
-                              >
-                                devkins.dev@gmail.com
-                                <ExternalLink className="h-4 w-4 ml-1" />
-                              </a>
+                        {/* Help Center Section */}
+                        <div className="grid grid-cols-1 md:grid-cols-2 gap-6 pt-2">
+                          <div className="bg-transparent p-4 rounded-lg border  transition-colors">
+                            <div className="flex items-start space-x-3">
+                              <ExternalLink className="h-5 w-5 text-primary mt-1" />
+                              <div>
+                                <h3 className="font-semibold text-lg mb-2">
+                                  Help Center
+                                </h3>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  Browse through our comprehensive guides,
+                                  tutorials, and FAQs.
+                                </p>
+                                <a
+                                  href="https://devkins.dev/contact"
+                                  target="_blank"
+                                  rel="noopener noreferrer"
+                                  className="inline-flex items-center text-sm text-primary hover:underline font-medium"
+                                >
+                                  Visit Help Center
+                                  <ExternalLink className="h-4 w-4 ml-1" />
+                                </a>
+                              </div>
                             </div>
                           </div>
-                        </div>
-
-                        {/* Contact Hours Section */}
-                        <div className="md:col-span-2 p-4 bg-transparent rounded-lg border border-primary/20">
-                          <div className="flex items-center space-x-3">
-                            <PhoneCall className="h-5 w-5 text-primary" />
-                            <div>
-                              <h3 className="font-semibold text-lg">
-                                Support Hours
-                              </h3>
-                              <p className="text-sm text-muted-foreground">
-                                Monday to Friday: 9:00 AM - 12:00 PM EST
-                              </p>
+                          {/* Email Support Section */}
+                          <div className="bg-transparent p-4 rounded-lg border  transition-colors">
+                            <div className="flex items-start space-x-3">
+                              <Mail className="h-5 w-5 text-primary mt-1" />
+                              <div>
+                                <h3 className="font-semibold text-lg mb-2">
+                                  Email Support
+                                </h3>
+                                <p className="text-sm text-muted-foreground mb-3">
+                                  Get personalized help from our support team.
+                                </p>
+                                <a
+                                  href="mailto:devkins.dev@gmail.com"
+                                  className="inline-flex items-center text-sm text-primary hover:underline font-medium"
+                                >
+                                  devkins.dev@gmail.com
+                                  <ExternalLink className="h-4 w-4 ml-1" />
+                                </a>
+                              </div>
                             </div>
                           </div>
-                        </div>
+
+                          {/* Contact Hours Section */}
+                          <div className="md:col-span-2 p-4 bg-transparent rounded-lg border border-primary/20">
+                            <div className="flex items-center space-x-3">
+                              <PhoneCall className="h-5 w-5 text-primary" />
+                              <div>
+                                <h3 className="font-semibold text-lg">
+                                  Support Hours
+                                </h3>
+                                <p className="text-sm text-muted-foreground">
+                                  Monday to Friday: 9:00 AM - 12:00 PM EST
+                                </p>
+                              </div>
+                            </div>
+                          </div>
                         </div>
                       </DialogHeader>
                     </DialogContent>
