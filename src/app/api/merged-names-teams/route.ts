@@ -327,6 +327,8 @@ export async function GET(request: Request) {
           const tsScore = getScoreForValue(avgTS, tsScoreMatrix, true)
           const rbslScore = getScoreForValue(avgRBSL, rbslScoreMatrix, true, true)
 
+          console.log("tsScore", tsScore)
+
           // Get individual member sales data
           const memberSalesMap = teamMembersMap.get(team) || new Map<string, number>()
           const members: TeamMemberDetails[] = Array.from(memberSalesMap.entries())
