@@ -1,11 +1,29 @@
-import { NextResponse } from "next/server";
-import { PrismaClient } from "@prisma/client";
-import { ScoreLevel, ScoreMatrix } from "@/types";
-import { formatDecimal, formatNumber, formatRatio } from "@/lib/utils";
+import { NextResponse } from "next/server"
+import { PrismaClient } from "@prisma/client"
+import type { ScoreLevel, ScoreMatrix } from "@/types"
+import { formatDecimal, formatNumber, formatRatio } from "@/lib/utils"
 
-const prisma = new PrismaClient();
+const prisma = new PrismaClient()
 
-const CALL_MINUTES_THRESHOLD = 750;
+const CALL_MINUTES_THRESHOLD = 750
+
+interface CompanyDetails {
+  avgTotalCallMinutes: string
+  tcmScore: ScoreLevel
+  avgCallEfficiency: string
+  ceScore: ScoreLevel
+  avgTotalSales: string
+  tsScore: ScoreLevel
+  avgRatioBetweenSkadeAndLiv: string
+  rbslScore: ScoreLevel
+  avgTotalScore: number
+  month: string
+}
+
+const normalizeAndTrim = (str: string | null | undefined): string => {
+  if (!str) return ""
+  return str.trim().replace(/\s+/g, " ")
+}
 
 const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
   const inputs = await prisma.inputs.findFirst()
@@ -13,6 +31,10 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
 
   const benchmark = inputs.team_score_tcm_benchmark || 0
   const interval = inputs.team_score_tcm_interval || 0
+
+  console.log("Company TCM Score Calculation:")
+  console.log("Benchmark:", benchmark)
+  console.log("Interval:", interval)
 
   return {
     benchmark,
@@ -22,6 +44,7 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
       if (level === 1) return { level, score: "-" }
       const steps = level - 5
       const score = benchmark + steps * interval
+      console.log(`Level ${level}: ${score} (Benchmark ${benchmark} + ${steps} intervals)`)
       return { level, score }
     }),
   }
@@ -31,20 +54,37 @@ const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
   const inputs = await prisma.inputs.findFirst()
   if (!inputs) return null
 
-  const benchmark = Number.parseFloat(inputs.team_score_ce_benchmark || "0")
-  const interval = Number.parseFloat(inputs.team_score_ce_interval || "0")
+  const benchmark = Number.parseFloat(inputs.team_score_ce_benchmark || "0") // 35%
+  const interval = Number.parseFloat(inputs.team_score_ce_interval || "0") // 3%
+
+  console.log("Company CE Score Calculation:")
+  console.log("Benchmark:", benchmark + "%")
+  console.log("Interval:", interval + "%")
 
   return {
     benchmark,
     interval,
     levels: Array.from({ length: 10 }, (_, i) => {
       const level = 10 - i
-      if (level === 10) return { level, score: 0 }
-      if (level > 5) {
-        return { level, score: benchmark - (level - 5) * interval }
+      let score: number
+
+      if (level === 10) {
+        score = 0 // Level 10 is always 0%
+        console.log(`Level ${level}: ${score}% (Fixed at 0%)`)
+      } else if (level > 5) {
+        // For levels 6-9: Subtract interval for each level above 5
+        score = benchmark - (level - 5) * interval
+        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% - ${level - 5} intervals)`)
+      } else if (level === 5) {
+        score = benchmark // Level 5 is benchmark
+        console.log(`Level ${level}: ${score}% (Benchmark)`)
+      } else {
+        // For levels 1-4: Add interval for each level below 5
+        score = benchmark + (5 - level) * interval
+        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% + ${5 - level} intervals)`)
       }
-      if (level === 5) return { level, score: benchmark }
-      return { level, score: benchmark + (5 - level) * interval }
+
+      return { level, score }
     }),
   }
 }
@@ -56,6 +96,10 @@ const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
   const benchmark = inputs.team_score_ts_benchmark || 0
   const interval = inputs.team_score_ts_interval || 0
 
+  console.log("Company TS Score Calculation:")
+  console.log("Benchmark:", benchmark)
+  console.log("Interval:", interval)
+
   return {
     benchmark,
     interval,
@@ -64,6 +108,7 @@ const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
       if (level === 1) return { level, score: "-" }
       const steps = level - 5
       const score = benchmark + steps * interval
+      console.log(`Level ${level}: ${score} (Benchmark ${benchmark} + ${steps} intervals)`)
       return { level, score }
     }),
   }
@@ -76,22 +121,35 @@ const calculateRBSLScore = async (): Promise<ScoreMatrix | null> => {
   const benchmark = Number.parseFloat(inputs.team_score_rbsl_benchmark || "0")
   const interval = Number.parseFloat(inputs.team_score_rbsl_interval || "0")
 
+  console.log("Company RBSL Score Calculation:")
+  console.log("Benchmark:", benchmark + "%")
+  console.log("Interval:", interval + "%")
+
   return {
     benchmark,
     interval,
     levels: Array.from({ length: 10 }, (_, i) => {
       const level = 10 - i
+      let score: number
+
       if (level === 10) {
-        return { level, score: benchmark + 5 * interval }
+        score = benchmark + 5 * interval
+        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% + 5 intervals)`)
       } else if (level > 5) {
-        return { level, score: benchmark + (level - 5) * interval }
+        score = benchmark + (level - 5) * interval
+        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% + ${level - 5} intervals)`)
       } else if (level === 5) {
-        return { level, score: benchmark }
+        score = benchmark
+        console.log(`Level ${level}: ${score}% (Benchmark)`)
       } else if (level === 1) {
-        return { level, score: 0 }
+        score = 0
+        console.log(`Level ${level}: ${score}% (Fixed at 0%)`)
       } else {
-        return { level, score: benchmark - (5 - level) * interval }
+        score = benchmark - (5 - level) * interval
+        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% - ${5 - level} intervals)`)
       }
+
+      return { level, score }
     }),
   }
 }
@@ -104,7 +162,64 @@ const getScoreForValue = (
 ): ScoreLevel => {
   if (!scoreMatrix) return { level: 1, score: "-" }
 
+  // For CE scores (when isDescending is false)
+  if (!isDescending) {
+    console.log("\nCompany CE Score Determination:")
+    console.log("Input value:", isNaN(value) ? "NaN" : (value * 100).toFixed(2) + "%")
+
+    // Special case: if value is NaN, 0, or very close to 0, return level 10
+    if (isNaN(value) || value === 0 || value < 0.001) {
+      console.log("Value is NaN/0/very small - returning Level 10")
+      return { level: 10, score: "0" }
+    }
+
+    const valueAsPercent = value * 100
+
+    // For CE scores, we need to check against the thresholds in ascending order
+    // If the value is higher than 47%, it's level 1
+    if (valueAsPercent > 47) {
+      console.log("Value > 47% - returning Level 1")
+      return { level: 1, score: "47" }
+    }
+
+    // Check each threshold in ascending order
+    const thresholds = [
+      { level: 9, threshold: 23 },
+      { level: 8, threshold: 26 },
+      { level: 7, threshold: 29 },
+      { level: 6, threshold: 32 },
+      { level: 5, threshold: 35 },
+      { level: 4, threshold: 38 },
+      { level: 3, threshold: 41 },
+      { level: 2, threshold: 44 },
+      { level: 1, threshold: 47 },
+    ]
+
+    console.log("Checking CE thresholds:")
+    for (const { level, threshold } of thresholds) {
+      console.log(`Level ${level}: ${threshold}%`)
+      if (valueAsPercent <= threshold) {
+        console.log(`Value ${valueAsPercent}% <= ${threshold}% - returning Level ${level}`)
+        return { level, score: threshold.toString() }
+      }
+    }
+
+    // If we get here, the value is > 47%, so return level 1
+    console.log("Value > 47% - returning Level 1")
+    return { level: 1, score: "47" }
+  }
+
+  // For RBSL scores
   if (isRBSL) {
+    console.log("\nCompany RBSL Score Determination:")
+    console.log("Input value:", isNaN(value) ? "NaN" : (value * 100).toFixed(2) + "%")
+
+    // Handle NaN for RBSL
+    if (isNaN(value)) {
+      console.log("Value is NaN - returning Level 1")
+      return { level: 1, score: "0" }
+    }
+
     const valueAsPercent = value * 100
     const sortedLevels = scoreMatrix.levels
       .filter(({ score }) => score !== "-")
@@ -114,8 +229,22 @@ const getScoreForValue = (
         return bScore - aScore
       })
 
+    console.log("Checking against sorted levels:")
+    sortedLevels.forEach(({ level, score }) => {
+      console.log(`Level ${level}: ${score}%`)
+    })
+
     const matchedLevel = sortedLevels.find(({ score }) => valueAsPercent >= Number(score))
+    console.log("Matched level:", matchedLevel?.level || 1)
+
     return matchedLevel || { level: 1, score: "0" }
+  }
+
+  // For TCM and TS scores
+  // Handle NaN for other scores
+  if (isNaN(value)) {
+    console.log("Value is NaN - returning Level 1")
+    return { level: 1, score: "-" }
   }
 
   const sortedLevels = scoreMatrix.levels
@@ -135,19 +264,16 @@ const getScoreForValue = (
 
 export async function GET(request: Request) {
   try {
-    const url = new URL(request.url);
-    const months = url.searchParams.getAll("months");
-    const year = Number.parseInt(
-      url.searchParams.get("year") || new Date().getFullYear().toString()
-    );
+    const url = new URL(request.url)
+    const months = url.searchParams.getAll("months")
+    const year = Number.parseInt(url.searchParams.get("year") || new Date().getFullYear().toString())
 
-    const [tcmScoreMatrix, ceScoreMatrix, tsScoreMatrix, rbslScoreMatrix] =
-      await Promise.all([
-        calculateTCMScore(),
-        calculateCEScore(),
-        calculateTSScore(),
-        calculateRBSLScore(),
-      ]);
+    const [tcmScoreMatrix, ceScoreMatrix, tsScoreMatrix, rbslScoreMatrix] = await Promise.all([
+      calculateTCMScore(),
+      calculateCEScore(),
+      calculateTSScore(),
+      calculateRBSLScore(),
+    ])
 
     const monthlyData = await Promise.all(
       months.map(async (month) => {
@@ -175,115 +301,124 @@ export async function GET(request: Request) {
               regular_call_time_min: true,
             },
           }),
-        ]);
+        ])
 
+        // Calculate company-level metrics
         const individualDataMap = new Map<
           string,
           {
-            totalCallMinutes: number;
-            totalOutgoingCalls: number;
-            totalSales: number;
-            livSales: number;
-            skadeSales: number;
+            totalCallMinutes: number
+            totalOutgoingCalls: number
+            totalSales: number
+            livSales: number
           }
-        >();
+        >()
 
-        // Process incoming and outgoing calls
-        [...incomingCalls, ...outgoingCalls].forEach((call) => {
-          const normalizedName = call.navn.trim().replace(/\s+/g, " ");
-          const data = individualDataMap.get(normalizedName) || {
-            totalCallMinutes: 0,
-            totalOutgoingCalls: 0,
-            totalSales: 0,
-            livSales: 0,
-            skadeSales: 0,
-          };
-
-          if ("min" in call) {
-            data.totalCallMinutes += call.min || 0;
-          } else {
-            data.totalCallMinutes +=
-              Number.parseInt(call.regular_call_time_min) || 0;
-            data.totalOutgoingCalls += Number.parseInt(call.outgoing) || 0;
+        // Process incoming calls
+        incomingCalls.forEach((call) => {
+          const normalizedName = normalizeAndTrim(call.navn)
+          if (normalizedName) {
+            const data = individualDataMap.get(normalizedName) || {
+              totalCallMinutes: 0,
+              totalOutgoingCalls: 0,
+              totalSales: 0,
+              livSales: 0,
+            }
+            data.totalCallMinutes += call.min || 0
+            individualDataMap.set(normalizedName, data)
           }
+        })
 
-          individualDataMap.set(normalizedName, data);
-        });
+        // Process outgoing calls
+        outgoingCalls.forEach((call) => {
+          const normalizedName = normalizeAndTrim(call.navn)
+          if (normalizedName) {
+            const data = individualDataMap.get(normalizedName) || {
+              totalCallMinutes: 0,
+              totalOutgoingCalls: 0,
+              totalSales: 0,
+              livSales: 0,
+            }
+            data.totalCallMinutes += Number.parseInt(call.regular_call_time_min) || 0
+            data.totalOutgoingCalls += Number.parseInt(call.outgoing) || 0
+            individualDataMap.set(normalizedName, data)
+          }
+        })
 
         // Process activity logs
         activityLogs.forEach((log) => {
-          const normalizedName = log.name.trim().replace(/\s+/g, " ");
-          const data = individualDataMap.get(normalizedName) || {
-            totalCallMinutes: 0,
-            totalOutgoingCalls: 0,
-            totalSales: 0,
-            livSales: 0,
-            skadeSales: 0,
-          };
-
-          const value = log.verdi || 0;
-          data.totalSales += value;
-          
-          if (log.activity === "2. liv") {
-            data.livSales += value;
-          } else if (log.activity === "1. skade") {
-            data.skadeSales += value;
+          const normalizedName = normalizeAndTrim(log.name)
+          if (normalizedName) {
+            const data = individualDataMap.get(normalizedName) || {
+              totalCallMinutes: 0,
+              totalOutgoingCalls: 0,
+              totalSales: 0,
+              livSales: 0,
+            }
+            data.totalSales += log.verdi
+            if (log.activity === "2. liv") {
+              data.livSales += log.verdi
+            }
+            individualDataMap.set(normalizedName, data)
           }
+        })
 
-          individualDataMap.set(normalizedName, data);
-        });
+        // Calculate company averages
+        const qualifiedMembers = Array.from(individualDataMap.values()).filter(
+          (data) => data.totalCallMinutes > CALL_MINUTES_THRESHOLD,
+        )
 
-        // Calculate company-level metrics for qualified individuals (> 750 minutes)
-        const qualifiedData = Array.from(individualDataMap.values()).filter(
-          (data) => data.totalCallMinutes > CALL_MINUTES_THRESHOLD
-        );
+        const avgTCM =
+          qualifiedMembers.length > 0
+            ? qualifiedMembers.reduce((sum, data) => sum + data.totalCallMinutes, 0) / qualifiedMembers.length
+            : 0
 
-        const avgTotalCallMinutes =
-          qualifiedData.reduce((sum, data) => sum + data.totalCallMinutes, 0) /
-          qualifiedData.length;
+        const avgCE =
+          qualifiedMembers.length > 0
+            ? qualifiedMembers.reduce((sum, data) => sum + data.totalOutgoingCalls / data.totalCallMinutes, 0) /
+              qualifiedMembers.length
+            : 0
 
-        const avgCallEfficiency =
-          qualifiedData.reduce(
-            (sum, data) => sum + data.totalOutgoingCalls / data.totalCallMinutes,
-            0
-          ) / qualifiedData.length;
+        const avgTS =
+          qualifiedMembers.length > 0
+            ? qualifiedMembers.reduce((sum, data) => sum + data.totalSales, 0) / qualifiedMembers.length
+            : 0
 
-        const avgTotalSales =
-          qualifiedData.reduce((sum, data) => sum + data.totalSales, 0) /
-          qualifiedData.length;
+        const avgRBSL =
+          qualifiedMembers.length > 0
+            ? qualifiedMembers.reduce(
+                (sum, data) => sum + (data.totalSales > 0 ? data.livSales / data.totalSales : 0),
+                0,
+              ) / qualifiedMembers.length
+            : 0
 
-        // Calculate ratio between Skade and Liv
-        const totalLivSales = qualifiedData.reduce((sum, data) => sum + data.livSales, 0);
-        const totalSkadeSales = qualifiedData.reduce((sum, data) => sum + data.skadeSales, 0);
-        const avgRatioBetweenSkadeAndLiv = totalSkadeSales > 0 ? totalLivSales / totalSkadeSales : 0;
+        console.log(`\nProcessing Company Data for ${month}:`)
+        console.log("Avg Total Call Minutes:", avgTCM)
+        console.log("Avg Call Efficiency:", (avgCE * 100).toFixed(2) + "%")
+        console.log("Avg Total Sales:", avgTS)
+        console.log("Avg RBSL:", (avgRBSL * 100).toFixed(2) + "%")
 
-        const tcmScore = getScoreForValue(avgTotalCallMinutes, tcmScoreMatrix, true);
-        const ceScore = getScoreForValue(avgCallEfficiency, ceScoreMatrix, false);
-        const tsScore = getScoreForValue(avgTotalSales, tsScoreMatrix, true);
-        const rbslScore = getScoreForValue(
-          avgRatioBetweenSkadeAndLiv,
-          rbslScoreMatrix,
-          true,
-          true
-        );
+        const tcmScore = getScoreForValue(avgTCM, tcmScoreMatrix, true)
+        const ceScore = getScoreForValue(avgCE, ceScoreMatrix, false)
+        const tsScore = getScoreForValue(avgTS, tsScoreMatrix, true)
+        const rbslScore = getScoreForValue(avgRBSL, rbslScoreMatrix, true, true)
 
-        const avgTotalScore =
-          (tcmScore.level + ceScore.level + tsScore.level + rbslScore.level) / 4;
+        const avgTotalScore = (tcmScore.level + ceScore.level + tsScore.level + rbslScore.level) / 4
 
         return {
-          avgTotalCallMinutes: formatNumber(avgTotalCallMinutes),
+          avgTotalCallMinutes: formatNumber(avgTCM),
           tcmScore,
-          avgCallEfficiency: formatDecimal(avgCallEfficiency),
+          avgCallEfficiency: formatDecimal(avgCE),
           ceScore,
-          avgTotalSales: formatNumber(avgTotalSales),
+          avgTotalSales: formatNumber(avgTS),
           tsScore,
-          avgRatioBetweenSkadeAndLiv: formatRatio(avgRatioBetweenSkadeAndLiv),
+          avgRatioBetweenSkadeAndLiv: formatRatio(avgRBSL),
           rbslScore,
           avgTotalScore,
           month,
-        };
-      })
-    );
+        }
+      }),
+    )
 
     return NextResponse.json(
       {
@@ -301,21 +436,18 @@ export async function GET(request: Request) {
           "Cache-Control": "public, max-age=300",
           "Content-Type": "application/json",
         },
-      }
-    );
+      },
+    )
   } catch (error) {
-    console.error("Error fetching and processing company data:", error);
+    console.error("Error fetching and processing company data:", error)
     return NextResponse.json(
       {
         error: "Internal Server Error",
-        details:
-          process.env.NODE_ENV === "development"
-            ? (error as Error).message
-            : undefined,
+        details: process.env.NODE_ENV === "development" ? (error as Error).message : undefined,
       },
-      { status: 500 }
-    );
+      { status: 500 },
+    )
   } finally {
-    await prisma.$disconnect();
+    await prisma.$disconnect()
   }
 }
