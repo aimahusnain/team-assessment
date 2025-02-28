@@ -277,14 +277,11 @@ export default function SidebarPageTemplate({
                         </div>
                         </div>
                       </DialogHeader>
-
-                      {/* Add Your Help Sections Here */}
-                    
                     </DialogContent>
                   </Dialog>
 
                   <div className="flex items-center gap-2 group-data-[collapsible=icon]:flex-col">
-                    <SidebarTrigger className="h-8 w-8" />
+                    <SidebarTrigger className="h-8 w-8 !z-50" />
                     <ThemeToggle />
                   </div>
                 </div>

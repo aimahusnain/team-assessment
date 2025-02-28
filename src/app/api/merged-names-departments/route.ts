@@ -1,11 +1,33 @@
 import { NextResponse } from "next/server"
 import { PrismaClient } from "@prisma/client"
-import { ScoreLevel, ScoreMatrix } from "@/types"
+import type { ScoreLevel, ScoreMatrix } from "@/types"
 import { formatDecimal, formatNumber, formatRatio } from "@/lib/utils"
 
 const prisma = new PrismaClient()
 
 const CALL_MINUTES_THRESHOLD = 750
+
+interface TeamMemberDetails {
+  name: string
+  totalSales: number
+  formattedTotalSales: string
+}
+
+interface TeamDetails {
+  team: string
+  department: string | null
+  avgTotalCallMinutes: string
+  tcmScore: ScoreLevel
+  avgCallEfficiency: string
+  ceScore: ScoreLevel
+  avgTotalSales: string
+  tsScore: ScoreLevel
+  avgRatioBetweenSkadeAndLiv: string
+  rbslScore: ScoreLevel
+  month: string
+  members: TeamMemberDetails[] // Added this field for individual members data
+  teamTotalSales: string // Total sum of all members' sales
+}
 
 interface DepartmentDetails {
   department: string
@@ -26,7 +48,9 @@ const normalizeAndTrim = (str: string | null | undefined): string => {
   return str.trim().replace(/\s+/g, " ")
 }
 
+// Score calculation functions remain the same
 const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
+  // Existing code remains the same
   const inputs = await prisma.inputs.findFirst()
   if (!inputs) return null
 
@@ -47,6 +71,7 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
 }
 
 const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
+  // Existing code remains the same
   const inputs = await prisma.inputs.findFirst()
   if (!inputs) return null
 
@@ -69,6 +94,7 @@ const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
 }
 
 const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
+  // Existing code remains the same
   const inputs = await prisma.inputs.findFirst()
   if (!inputs) return null
 
@@ -89,6 +115,7 @@ const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
 }
 
 const calculateRBSLScore = async (): Promise<ScoreMatrix | null> => {
+  // Existing code remains the same
   const inputs = await prisma.inputs.findFirst()
   if (!inputs) return null
 
@@ -121,6 +148,7 @@ const getScoreForValue = (
   isDescending = true,
   isRBSL = false,
 ): ScoreLevel => {
+  // Existing code remains the same
   if (!scoreMatrix) return { level: 1, score: "-" }
 
   if (isRBSL) {
@@ -174,6 +202,7 @@ export async function GET(request: Request) {
               name: true,
               verdi: true,
               activity: true,
+              team: true,
               department: true,
             },
           }),
@@ -194,11 +223,23 @@ export async function GET(request: Request) {
           }),
         ])
 
+        const teamDetailsMap = new Map<string, { department: string; members: Set<string> }>()
+        const teamTotalCallMinutesMap = new Map<string, number[]>()
+        const teamCallEfficiencyMap = new Map<string, number[]>()
+        const teamTotalSalesMap = new Map<string, number[]>()
+        const teamLivRatioMap = new Map<string, number[]>()
+
+        // Track individual sales by team
+        const teamMembersMap = new Map<string, Map<string, number>>()
+
         const departmentDetailsMap = new Map<string, Set<string>>()
         const departmentTotalCallMinutesMap = new Map<string, number[]>()
         const departmentCallEfficiencyMap = new Map<string, number[]>()
         const departmentTotalSalesMap = new Map<string, number[]>()
         const departmentLivRatioMap = new Map<string, number[]>()
+
+        // Add new map to track department member sales
+        const departmentMembersMap = new Map<string, Map<string, number>>()
 
         // Process activity logs
         activityLogs.forEach((log) => {
@@ -207,21 +248,39 @@ export async function GET(request: Request) {
           if (normalizedName && normalizedDepartment) {
             if (!departmentDetailsMap.has(normalizedDepartment)) {
               departmentDetailsMap.set(normalizedDepartment, new Set())
+              departmentMembersMap.set(normalizedDepartment, new Map<string, number>())
             }
             departmentDetailsMap.get(normalizedDepartment)!.add(normalizedName)
+
+            // Track individual sales within departments
+            const memberSalesMap = departmentMembersMap.get(normalizedDepartment)!
+            const currentSales = memberSalesMap.get(normalizedName) || 0
+            memberSalesMap.set(normalizedName, currentSales + log.verdi)
+          }
+        })
+
+        // Process activity logs
+        activityLogs.forEach((log) => {
+          const normalizedName = normalizeAndTrim(log.name)
+          const normalizedTeam = normalizeAndTrim(log.team)
+          if (normalizedName && normalizedTeam) {
+            if (!teamDetailsMap.has(normalizedTeam)) {
+              teamDetailsMap.set(normalizedTeam, { department: log.department || "", members: new Set() })
+              teamMembersMap.set(normalizedTeam, new Map<string, number>())
+            }
+            teamDetailsMap.get(normalizedTeam)!.members.add(normalizedName)
+
+            // Track individual sales within teams
+            const memberSalesMap = teamMembersMap.get(normalizedTeam)!
+            const currentSales = memberSalesMap.get(normalizedName) || 0
+            memberSalesMap.set(normalizedName, currentSales + log.verdi)
           }
         })
 
         // Calculate total call minutes and call efficiency for each individual
         const individualDataMap = new Map<
           string,
-          {
-            totalCallMinutes: number
-            totalOutgoingCalls: number
-            totalSales: number
-            livSales: number
-            department: string
-          }
+          { totalCallMinutes: number; totalOutgoingCalls: number; totalSales: number; livSales: number }
         >()
 
         incomingCalls.forEach((call) => {
@@ -232,7 +291,6 @@ export async function GET(request: Request) {
               totalOutgoingCalls: 0,
               totalSales: 0,
               livSales: 0,
-              department: "",
             }
             data.totalCallMinutes += call.min || 0
             individualDataMap.set(normalizedName, data)
@@ -247,7 +305,6 @@ export async function GET(request: Request) {
               totalOutgoingCalls: 0,
               totalSales: 0,
               livSales: 0,
-              department: "",
             }
             data.totalCallMinutes += Number.parseInt(call.regular_call_time_min) || 0
             data.totalOutgoingCalls += Number.parseInt(call.outgoing) || 0
@@ -263,50 +320,52 @@ export async function GET(request: Request) {
               totalOutgoingCalls: 0,
               totalSales: 0,
               livSales: 0,
-              department: "",
             }
             data.totalSales += log.verdi
             if (log.activity === "2. liv") {
               data.livSales += log.verdi
             }
-            data.department = normalizeAndTrim(log.department)
             individualDataMap.set(normalizedName, data)
           }
         })
 
-        // Calculate department-level metrics
-        departmentDetailsMap.forEach((members, department) => {
-          const departmentData: number[] = []
-          const departmentCallEfficiency: number[] = []
-          const departmentTotalSales: number[] = []
-          const departmentLivRatio: number[] = []
+        // Calculate team-level metrics
+        teamDetailsMap.forEach((details, team) => {
+          const teamData: number[] = []
+          const teamCallEfficiency: number[] = []
+          const teamTotalSales: number[] = []
+          const teamLivRatio: number[] = []
 
-          members.forEach((member) => {
+          details.members.forEach((member) => {
             const data = individualDataMap.get(member)
             if (data && data.totalCallMinutes > CALL_MINUTES_THRESHOLD) {
-              departmentData.push(data.totalCallMinutes)
-              departmentCallEfficiency.push(data.totalOutgoingCalls / data.totalCallMinutes)
-              departmentTotalSales.push(data.totalSales)
-              departmentLivRatio.push(data.livSales / data.totalSales)
+              teamData.push(data.totalCallMinutes)
+              teamCallEfficiency.push(data.totalOutgoingCalls / data.totalCallMinutes)
+              teamTotalSales.push(data.totalSales)
+              teamLivRatio.push(data.livSales / data.totalSales)
             }
           })
 
-          departmentTotalCallMinutesMap.set(department, departmentData)
-          departmentCallEfficiencyMap.set(department, departmentCallEfficiency)
-          departmentTotalSalesMap.set(department, departmentTotalSales)
-          departmentLivRatioMap.set(department, departmentLivRatio)
+          teamTotalCallMinutesMap.set(team, teamData)
+          teamCallEfficiencyMap.set(team, teamCallEfficiency)
+          teamTotalSalesMap.set(team, teamTotalSales)
+          teamLivRatioMap.set(team, teamLivRatio)
         })
 
         const departmentDetails: DepartmentDetails[] = Array.from(departmentDetailsMap.keys()).map((department) => {
           const avgTotalCallMinutes = departmentTotalCallMinutesMap.get(department) || []
           const avgCallEfficiency = departmentCallEfficiencyMap.get(department) || []
-          const avgTotalSales = departmentTotalSalesMap.get(department) || []
           const avgRatioBetweenSkadeAndLiv = departmentLivRatioMap.get(department) || []
 
           const avgTCM = avgTotalCallMinutes.reduce((a, b) => a + b, 0) / avgTotalCallMinutes.length || 0
           const avgCE = avgCallEfficiency.reduce((a, b) => a + b, 0) / avgCallEfficiency.length || 0
-          const avgTS = avgTotalSales.reduce((a, b) => a + b, 0) / avgTotalSales.length || 0
           const avgRBSL = avgRatioBetweenSkadeAndLiv.reduce((a, b) => a + b, 0) / avgRatioBetweenSkadeAndLiv.length || 0
+
+          // Calculate TS as the average of all department members' sales
+          const memberSalesMap = departmentMembersMap.get(department) || new Map<string, number>()
+          const totalSales = Array.from(memberSalesMap.values()).reduce((sum, sales) => sum + sales, 0)
+          const memberCount = memberSalesMap.size
+          const avgTS = memberCount > 0 ? totalSales / memberCount : 0
 
           const tcmScore = getScoreForValue(avgTCM, tcmScoreMatrix, true)
           const ceScore = getScoreForValue(avgCE, ceScoreMatrix, false)
@@ -321,7 +380,7 @@ export async function GET(request: Request) {
             tcmScore,
             avgCallEfficiency: formatDecimal(avgCE),
             ceScore,
-            avgTotalSales: formatNumber(avgTS),
+            avgTotalSales: formatNumber(avgTS), // Using the new calculation
             tsScore,
             avgRatioBetweenSkadeAndLiv: formatRatio(avgRBSL),
             rbslScore,
@@ -330,7 +389,58 @@ export async function GET(request: Request) {
           }
         })
 
-        return departmentDetails
+        const teamDetails: TeamDetails[] = Array.from(teamDetailsMap.entries()).map(([team, details]) => {
+          const avgTotalCallMinutes = teamTotalCallMinutesMap.get(team) || []
+          const avgCallEfficiency = teamCallEfficiencyMap.get(team) || []
+          const avgTotalSales = teamTotalSalesMap.get(team) || []
+          const avgRatioBetweenSkadeAndLiv = teamLivRatioMap.get(team) || []
+
+          const avgTCM = avgTotalCallMinutes.reduce((a, b) => a + b, 0) / avgTotalCallMinutes.length || 0
+          const avgCE = avgCallEfficiency.reduce((a, b) => a + b, 0) / avgCallEfficiency.length || 0
+          const avgTS = avgTotalSales.reduce((a, b) => a + b, 0) / avgTotalSales.length || 0
+          const avgRBSL = avgRatioBetweenSkadeAndLiv.reduce((a, b) => a + b, 0) / avgRatioBetweenSkadeAndLiv.length || 0
+
+          const tcmScore = getScoreForValue(avgTCM, tcmScoreMatrix, true)
+          const ceScore = getScoreForValue(avgCE, ceScoreMatrix, false)
+          const tsScore = getScoreForValue(avgTS, tsScoreMatrix, true)
+          const rbslScore = getScoreForValue(avgRBSL, rbslScoreMatrix, true, true)
+
+          // Get individual member sales data
+          const memberSalesMap = teamMembersMap.get(team) || new Map<string, number>()
+          const members: TeamMemberDetails[] = Array.from(memberSalesMap.entries())
+            .map(([name, sales]) => ({
+              name,
+              totalSales: sales,
+              formattedTotalSales: formatNumber(sales),
+            }))
+            .sort((a, b) => b.totalSales - a.totalSales) // Sort by sales descending
+
+          // Calculate team total sales (sum of all members)
+          const teamTotalSales = members.reduce((sum, member) => sum + member.totalSales, 0)
+
+          // Calculate TS as the average of all members' sales
+          const ts = members.length > 0 ? teamTotalSales / members.length : 0
+          // Update the avgTotalSales to use this new calculation
+          const formattedAvgTotalSales = formatNumber(ts)
+
+          return {
+            team,
+            department: details.department,
+            avgTotalCallMinutes: formatNumber(avgTCM),
+            tcmScore,
+            avgCallEfficiency: formatDecimal(avgCE),
+            ceScore,
+            avgTotalSales: formattedAvgTotalSales, // Use the new calculation
+            tsScore: getScoreForValue(ts, tsScoreMatrix, true), // Update the score calculation too
+            avgRatioBetweenSkadeAndLiv: formatRatio(avgRBSL),
+            rbslScore,
+            month,
+            members,
+            teamTotalSales: formatNumber(teamTotalSales),
+          }
+        })
+
+        return teamDetails
       }),
     )
 
@@ -338,7 +448,7 @@ export async function GET(request: Request) {
 
     return NextResponse.json(
       {
-        departments: combinedData,
+        teams: combinedData,
         metadata: {
           formatVersion: "1.0",
           timestamp: new Date().toISOString(),
@@ -355,7 +465,7 @@ export async function GET(request: Request) {
       },
     )
   } catch (error) {
-    console.error("Error fetching and processing department data:", error)
+    console.error("Error fetching and processing team data:", error)
     return NextResponse.json(
       {
         error: "Internal Server Error",
@@ -367,4 +477,3 @@ export async function GET(request: Request) {
     await prisma.$disconnect()
   }
 }
-
