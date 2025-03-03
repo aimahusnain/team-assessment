@@ -1,6 +1,6 @@
-"use client";
+"use client"
 
-import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert";
+import { Alert, AlertDescription, AlertTitle } from "@/components/ui/alert"
 import {
   Breadcrumb,
   BreadcrumbItem,
@@ -8,9 +8,9 @@ import {
   BreadcrumbList,
   BreadcrumbPage,
   BreadcrumbSeparator,
-} from "@/components/ui/breadcrumb";
-import { Button } from "@/components/ui/button";
-import { Checkbox } from "@/components/ui/checkbox";
+} from "@/components/ui/breadcrumb"
+import { Button } from "@/components/ui/button"
+import { Checkbox } from "@/components/ui/checkbox"
 import {
   Dialog,
   DialogContent,
@@ -18,55 +18,28 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-} from "@/components/ui/dialog";
+} from "@/components/ui/dialog"
 import {
   DropdownMenu,
   DropdownMenuCheckboxItem,
   DropdownMenuContent,
   DropdownMenuTrigger,
-} from "@/components/ui/dropdown-menu";
-import { FileUpload } from "@/components/ui/file-upload";
-import {
-  Form,
-  FormControl,
-  FormField,
-  FormItem,
-  FormLabel,
-  FormMessage,
-} from "@/components/ui/form";
-import { Input } from "@/components/ui/input";
-import { Label } from "@/components/ui/label";
-import { Progress } from "@/components/ui/progress";
-import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group";
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from "@/components/ui/select";
-import { Separator } from "@/components/ui/separator";
-import {
-  Sheet,
-  SheetContent,
-  SheetDescription,
-  SheetHeader,
-  SheetTitle,
-  SheetTrigger,
-} from "@/components/ui/sheet";
-import { SidebarTrigger } from "@/components/ui/sidebar";
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from "@/components/ui/table";
-import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs";
-import { useToast } from "@/hooks/use-toast";
-import { zodResolver } from "@hookform/resolvers/zod";
-import { ExclamationTriangleIcon } from "@radix-ui/react-icons";
+} from "@/components/ui/dropdown-menu"
+import { FileUpload } from "@/components/ui/file-upload"
+import { Form, FormControl, FormField, FormItem, FormLabel, FormMessage } from "@/components/ui/form"
+import { Input } from "@/components/ui/input"
+import { Label } from "@/components/ui/label"
+import { Progress } from "@/components/ui/progress"
+import { RadioGroup, RadioGroupItem } from "@/components/ui/radio-group"
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select"
+import { Separator } from "@/components/ui/separator"
+import { Sheet, SheetContent, SheetDescription, SheetHeader, SheetTitle, SheetTrigger } from "@/components/ui/sheet"
+import { SidebarTrigger } from "@/components/ui/sidebar"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
+import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
+import { useToast } from "@/hooks/use-toast"
+import { zodResolver } from "@hookform/resolvers/zod"
+import { ExclamationTriangleIcon } from "@radix-ui/react-icons"
 import {
   type ColumnDef,
   type ColumnFiltersState,
@@ -78,8 +51,8 @@ import {
   getPaginationRowModel,
   getSortedRowModel,
   useReactTable,
-} from "@tanstack/react-table";
-import { format } from "date-fns";
+} from "@tanstack/react-table"
+import { format } from "date-fns"
 import {
   AlertCircle,
   ArrowUpDown,
@@ -90,24 +63,56 @@ import {
   RefreshCcw,
   SlidersHorizontal,
   Trash2,
-} from "lucide-react";
-import Papa from "papaparse";
-import { useCallback, useEffect, useState } from "react";
-import { useForm } from "react-hook-form";
-import * as z from "zod";
+} from "lucide-react"
+import Papa from "papaparse"
+import { useCallback, useEffect, useState } from "react"
+import { useForm } from "react-hook-form"
+import * as z from "zod"
+
+const downloadTemplate = () => {
+  // Create template data with headers and one example row
+  const templateData = [
+    {
+      id: "id here",
+      name: "name here",
+      team: "team here",
+      activity: "activity column here",
+      verdi: "verdi here",
+      department: "department here",
+      year: "year here",
+      monthName: "month name here",
+    },
+  ]
+
+  // Convert to CSV using Papa Parse
+  const csv = Papa.unparse(templateData)
+
+  // Create blob and download link
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+  const link = document.createElement("a")
+  const url = URL.createObjectURL(blob)
+
+  link.setAttribute("href", url)
+  link.setAttribute("download", "activity-log-template.csv")
+  link.style.visibility = "hidden"
+
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
 
 type ActivityLogEntry = {
-  id: number;
-  name: string;
-  team: string;
-  activity: string;
-  verdi: number;
-  department: string;
-  year: number;
-  monthName: string;
-  createdAt: string;
-  updatedAt: string;
-};
+  id: number
+  name: string
+  team: string
+  activity: string
+  verdi: number
+  department: string
+  year: number
+  monthName: string
+  createdAt: string
+  updatedAt: string
+}
 
 // Form schema
 const formSchema = z.object({
@@ -118,33 +123,33 @@ const formSchema = z.object({
   department: z.string().min(1, "Department is required"),
   year: z.string().min(1, "Year is required"),
   monthName: z.string().min(1, "Month is required"),
-});
+})
 
 const ActivityLog = () => {
   // State
-  const [data, setData] = useState<ActivityLogEntry[]>([]);
-  const [loading, setLoading] = useState(true);
-  const [error, setError] = useState<string | null>(null);
-  const [isDeleting, setIsDeleting] = useState(false);
-  const [deletingCount, setDeletingCount] = useState(0);
-  const [uniqueActivities, setUniqueActivities] = useState<string[]>([]);
-  const [uniqueTeams, setUniqueTeams] = useState<string[]>([]);
-  const [selectedYear, setSelectedYear] = useState<string>("all");
-  const [selectedMonth, setSelectedMonth] = useState<string>("all");
-  const [isFilterOpen, setIsFilterOpen] = useState(false);
-  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
-  const { toast } = useToast();
-  const [sorting, setSorting] = useState<SortingState>([]);
-  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([]);
-  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({});
-  const [rowSelection, setRowSelection] = useState({});
-  const [fileData, setFileData] = useState<ActivityLogEntry[]>([]);
-  const [isUploading, setIsUploading] = useState(false);
-  const [uploadProgress, setUploadProgress] = useState(0);
-  const [teamInputType, setTeamInputType] = useState("existing");
-  const [activityInputType, setActivityInputType] = useState("existing");
-  const [isBackgroundUploading, setIsBackgroundUploading] = useState(false);
-  const [isRefreshing, setIsRefreshing] = useState(false);
+  const [data, setData] = useState<ActivityLogEntry[]>([])
+  const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
+  const [isDeleting, setIsDeleting] = useState(false)
+  const [deletingCount, setDeletingCount] = useState(0)
+  const [uniqueActivities, setUniqueActivities] = useState<string[]>([])
+  const [uniqueTeams, setUniqueTeams] = useState<string[]>([])
+  const [selectedYear, setSelectedYear] = useState<string>("all")
+  const [selectedMonth, setSelectedMonth] = useState<string>("all")
+  const [isFilterOpen, setIsFilterOpen] = useState(false)
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false)
+  const { toast } = useToast()
+  const [sorting, setSorting] = useState<SortingState>([])
+  const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
+  const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
+  const [rowSelection, setRowSelection] = useState({})
+  const [fileData, setFileData] = useState<ActivityLogEntry[]>([])
+  const [isUploading, setIsUploading] = useState(false)
+  const [uploadProgress, setUploadProgress] = useState(0)
+  const [teamInputType, setTeamInputType] = useState("existing")
+  const [activityInputType, setActivityInputType] = useState("existing")
+  const [isBackgroundUploading, setIsBackgroundUploading] = useState(false)
+  const [isRefreshing, setIsRefreshing] = useState(false)
 
   console.log(isBackgroundUploading) // No need now.
 
@@ -160,20 +165,20 @@ const ActivityLog = () => {
       year: new Date().getFullYear().toString(),
       monthName: format(new Date(), "MMMM"),
     },
-  });
+  })
 
   // Modify the onSubmit handler to handle new team
   const onSubmit = async (values: z.infer<typeof formSchema>) => {
     try {
-      setIsUploading(true);
+      setIsUploading(true)
       if (fileData.length > 0) {
         // If dialog is closed during upload, show toast
         if (!isAddDialogOpen) {
-          setIsBackgroundUploading(true);
+          setIsBackgroundUploading(true)
           toast({
             title: "Upload In Progress",
             description: "File upload is running in the background",
-          });
+          })
         }
 
         // Handle file upload
@@ -183,15 +188,15 @@ const ActivityLog = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ logs: fileData }),
-        });
-        const result = await response.json();
+        })
+        const result = await response.json()
         if (result.success) {
           toast({
             title: "Success",
             description: `${result.count} activity logs added successfully`,
-          });
+          })
         } else {
-          throw new Error(result.message);
+          throw new Error(result.message)
         }
       } else {
         const response = await fetch("/api/add-activityLog", {
@@ -200,102 +205,102 @@ const ActivityLog = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify(values),
-        });
-        const result = await response.json();
+        })
+        const result = await response.json()
         if (result.success) {
           toast({
             title: "Success",
             description: "Activity log added successfully",
-          });
+          })
         } else {
-          throw new Error(result.message);
+          throw new Error(result.message)
         }
       }
-      setIsAddDialogOpen(false);
-      form.reset();
-      setActivityInputType("existing");
-      setFileData([]);
-      fetchData();
+      setIsAddDialogOpen(false)
+      form.reset()
+      setActivityInputType("existing")
+      setFileData([])
+      fetchData()
     } catch (error) {
-      console.log(error);
+      console.log(error)
       toast({
         title: "Error",
         description: "Failed to add activity log(s)",
         variant: "destructive",
-      });
+      })
     } finally {
-      setIsUploading(false);
-      setIsBackgroundUploading(false);
+      setIsUploading(false)
+      setIsBackgroundUploading(false)
     }
-  };
+  }
 
   const handleFileUpload = (files: File[]) => {
-    const file = files[0];
+    const file = files[0]
     if (file) {
       Papa.parse(file, {
         header: true,
         complete: async (results) => {
-          setIsUploading(true);
-          setUploadProgress(0);
-          const totalEntries = results.data.length;
-          let successfulUploads = 0;
-          const batchSize = 20;
-  
+          setIsUploading(true)
+          setUploadProgress(0)
+          const totalEntries = results.data.length
+          let successfulUploads = 0
+          const batchSize = 20
+
           // Process in batches of 20
           for (let i = 0; i < totalEntries; i += batchSize) {
-            const batch = results.data.slice(i, i + batchSize);
+            const batch = results.data.slice(i, i + batchSize)
             try {
               // First attempt: Try bulk upload for this batch
-              const bulkResponse = await fetch('/api/upload-activity-logs', {
-                method: 'POST',
+              const bulkResponse = await fetch("/api/upload-activity-logs", {
+                method: "POST",
                 headers: {
-                  'Content-Type': 'application/json',
+                  "Content-Type": "application/json",
                 },
                 body: JSON.stringify({ logs: batch }),
-              });
-  
-              const bulkResult = await bulkResponse.json();
-  
+              })
+
+              const bulkResult = await bulkResponse.json()
+
               if (bulkResult.success) {
-                successfulUploads += bulkResult.count;
+                successfulUploads += bulkResult.count
               } else {
                 // If bulk upload fails, try individual uploads for this batch
                 for (const entry of batch) {
                   try {
-                    const response = await fetch('/api/add-activityLog', {
-                      method: 'POST',
+                    const response = await fetch("/api/add-activityLog", {
+                      method: "POST",
                       headers: {
-                        'Content-Type': 'application/json',
+                        "Content-Type": "application/json",
                       },
                       body: JSON.stringify(entry),
-                    });
-  
+                    })
+
                     if (response.ok) {
-                      successfulUploads++;
+                      successfulUploads++
                     }
                   } catch (error) {
-                    console.error('Error uploading entry:', error);
+                    console.error("Error uploading entry:", error)
                   }
                 }
               }
-  
+
               // Update progress after each batch
-              setUploadProgress(Math.min(((i + batchSize) / totalEntries) * 100, 100));
+              setUploadProgress(Math.min(((i + batchSize) / totalEntries) * 100, 100))
             } catch (error) {
-              console.error('Error processing batch:', error);
+              console.error("Error processing batch:", error)
             }
           }
-  
-          setIsUploading(false);
+
+          setIsUploading(false)
           toast({
-            title: 'Upload Complete',
+            title: "Upload Complete",
             description: `Successfully uploaded ${successfulUploads} out of ${totalEntries} entries.`,
-          });
-          fetchData();
+          })
+          fetchData()
         },
-      });
+      })
     }
-  };
+  }
 
   // Column definition
   const columns: ColumnDef<ActivityLogEntry>[] = [
@@ -303,10 +308,7 @@ const ActivityLog = () => {
       id: "select",
       header: ({ table }) => (
         <Checkbox
-          checked={
-            table.getIsAllPageRowsSelected() ||
-            (table.getIsSomePageRowsSelected() && "indeterminate")
-          }
+          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
           onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
           aria-label="Select all"
         />
@@ -327,13 +329,13 @@ const ActivityLog = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent"
@@ -355,13 +357,13 @@ const ActivityLog = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent"
@@ -384,13 +386,13 @@ const ActivityLog = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent"
@@ -413,13 +415,13 @@ const ActivityLog = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent text-right w-full"
@@ -434,9 +436,7 @@ const ActivityLog = () => {
           )}
         </Button>
       ),
-      cell: ({ row }) => (
-        <div className="text-right font-medium">{row.getValue("verdi")}</div>
-      ),
+      cell: ({ row }) => <div className="text-right font-medium">{row.getValue("verdi")}</div>,
     },
     {
       accessorKey: "department",
@@ -444,13 +444,13 @@ const ActivityLog = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent"
@@ -473,13 +473,13 @@ const ActivityLog = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent"
@@ -502,13 +502,13 @@ const ActivityLog = () => {
         <Button
           variant="ghost"
           onClick={() => {
-            const currentSort = column.getIsSorted();
+            const currentSort = column.getIsSorted()
             if (currentSort === false) {
-              column.toggleSorting(false); // Set to asc
+              column.toggleSorting(false) // Set to asc
             } else if (currentSort === "asc") {
-              column.toggleSorting(true); // Set to desc
+              column.toggleSorting(true) // Set to desc
             } else {
-              column.clearSorting(); // Reset sorting
+              column.clearSorting() // Reset sorting
             }
           }}
           className="p-0 hover:bg-transparent"
@@ -525,45 +525,39 @@ const ActivityLog = () => {
       ),
       cell: ({ row }) => <div>{row.getValue("monthName")}</div>,
     },
-  ];
+  ]
 
   const fetchData = useCallback(async () => {
     try {
-      setIsRefreshing(true);
-      const response = await fetch("/api/get-activityLogs");
-      const result = await response.json();
+      setIsRefreshing(true)
+      const response = await fetch("/api/get-activityLogs")
+      const result = await response.json()
       if (result.success) {
-        setData(result.data);
-        setUniqueActivities([
-          ...new Set(
-            result.data.map((item: ActivityLogEntry) => item.activity)
-          ),
-        ] as string[]);
-        setUniqueTeams([
-          ...new Set(result.data.map((item: ActivityLogEntry) => item.team)),
-        ] as string[]);
-        setError(null);
+        setData(result.data)
+        setUniqueActivities([...new Set(result.data.map((item: ActivityLogEntry) => item.activity))] as string[])
+        setUniqueTeams([...new Set(result.data.map((item: ActivityLogEntry) => item.team))] as string[])
+        setError(null)
       } else {
         // Set empty data when success is false
-        setData([]);
-        setUniqueActivities([]);
-        setUniqueTeams([]);
-        setError(null);
+        setData([])
+        setUniqueActivities([])
+        setUniqueTeams([])
+        setError(null)
       }
     } catch (err) {
-      console.error(err);
-      setError("An error occurred while fetching data");
+      console.error(err)
+      setError("An error occurred while fetching data")
     } finally {
-      setIsRefreshing(false);
-      setLoading(false);
+      setIsRefreshing(false)
+      setLoading(false)
     }
-  }, []);
+  }, [])
 
   useEffect(() => {
-    fetchData();
-    const interval = setInterval(fetchData, 10000);
-    return () => clearInterval(interval);
-  }, [fetchData]);
+    fetchData()
+    const interval = setInterval(fetchData, 10000)
+    return () => clearInterval(interval)
+  }, [fetchData])
 
   // Table initialization
   const table = useReactTable({
@@ -588,14 +582,14 @@ const ActivityLog = () => {
       columnVisibility,
       rowSelection,
     },
-  });
+  })
 
   // Handlers
   const handleDelete = async () => {
-    setIsDeleting(true);
-    const selectedRows = table.getFilteredSelectedRowModel().rows;
-    const selectedIds = selectedRows.map((row) => row.original.id);
-    setDeletingCount(selectedIds.length);
+    setIsDeleting(true)
+    const selectedRows = table.getFilteredSelectedRowModel().rows
+    const selectedIds = selectedRows.map((row) => row.original.id)
+    setDeletingCount(selectedIds.length)
 
     for (const id of selectedIds) {
       try {
@@ -605,70 +599,60 @@ const ActivityLog = () => {
             "Content-Type": "application/json",
           },
           body: JSON.stringify({ activityLogId: id }),
-        });
+        })
 
-        const result = await response.json();
+        const result = await response.json()
 
         if (!result.success) {
-          console.error(
-            `Failed to delete activity log with ID ${id}:`,
-            result.message
-          );
+          console.error(`Failed to delete activity log with ID ${id}:`, result.message)
         } else {
-          setDeletingCount((prev) => prev - 1);
+          setDeletingCount((prev) => prev - 1)
         }
       } catch (error) {
-        console.error(`Error deleting activity log with ID ${id}:`, error);
+        console.error(`Error deleting activity log with ID ${id}:`, error)
       }
     }
 
-    await fetchData();
-    setRowSelection({});
-    setIsDeleting(false);
-    setDeletingCount(0);
-  };
+    await fetchData()
+    setRowSelection({})
+    setIsDeleting(false)
+    setDeletingCount(0)
+  }
 
   const handleActivityChange = (value: string) => {
-    table
-      .getColumn("activity")
-      ?.setFilterValue(value === "all" ? undefined : value);
-  };
+    table.getColumn("activity")?.setFilterValue(value === "all" ? undefined : value)
+  }
 
   const handleTeamChange = (value: string) => {
-    table
-      .getColumn("team")
-      ?.setFilterValue(value === "all" ? undefined : value);
-  };
+    table.getColumn("team")?.setFilterValue(value === "all" ? undefined : value)
+  }
 
   const handleDateChange = (year: string, month: string) => {
-    setSelectedYear(year);
-    setSelectedMonth(month);
+    setSelectedYear(year)
+    setSelectedMonth(month)
 
     if (year && year !== "all") {
-      table.getColumn("year")?.setFilterValue(Number.parseInt(year));
+      table.getColumn("year")?.setFilterValue(Number.parseInt(year))
     } else {
-      table.getColumn("year")?.setFilterValue(undefined);
+      table.getColumn("year")?.setFilterValue(undefined)
     }
 
     if (month && month !== "all") {
-      const monthName = format(new Date(2000, Number.parseInt(month)), "MMMM");
-      table.getColumn("monthName")?.setFilterValue(monthName);
+      const monthName = format(new Date(2000, Number.parseInt(month)), "MMMM")
+      table.getColumn("monthName")?.setFilterValue(monthName)
     } else {
-      table.getColumn("monthName")?.setFilterValue(undefined);
+      table.getColumn("monthName")?.setFilterValue(undefined)
     }
-  };
+  }
 
   const clearFilters = () => {
-    table.resetColumnFilters();
-    setSelectedYear("all");
-    setSelectedMonth("all");
-    setIsFilterOpen(false);
-  };
+    table.resetColumnFilters()
+    setSelectedYear("all")
+    setSelectedMonth("all")
+    setIsFilterOpen(false)
+  }
 
-  const activeFiltersCount =
-    columnFilters.length +
-    (selectedYear !== "all" ? 1 : 0) +
-    (selectedMonth !== "all" ? 1 : 0);
+  const activeFiltersCount = columnFilters.length + (selectedYear !== "all" ? 1 : 0) + (selectedMonth !== "all" ? 1 : 0)
 
   // Loading and error states
   if (loading) {
@@ -676,7 +660,7 @@ const ActivityLog = () => {
       <div className="flex items-center justify-center h-screen">
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
-    );
+    )
   }
 
   if (error) {
@@ -691,7 +675,7 @@ const ActivityLog = () => {
           </Button>
         </div>
       </div>
-    );
+    )
   }
 
   return (
@@ -731,15 +715,10 @@ const ActivityLog = () => {
                       )}
                     </Button>
                   </SheetTrigger>
-                  <SheetContent
-                    side="left"
-                    className="w-[300px] sm:w-[400px] overflow-y-auto dark:text-white"
-                  >
+                  <SheetContent side="left" className="w-[300px] sm:w-[400px] overflow-y-auto dark:text-white">
                     <SheetHeader className="space-y-4">
                       <SheetTitle>Filters</SheetTitle>
-                      <SheetDescription>
-                        Apply filters to the activity log data
-                      </SheetDescription>
+                      <SheetDescription>Apply filters to the activity log data</SheetDescription>
                       <Separator />
                     </SheetHeader>
                     <div className="mt-8 space-y-6">
@@ -749,16 +728,8 @@ const ActivityLog = () => {
                         <Input
                           id="name-filter"
                           placeholder="Filter by name..."
-                          value={
-                            (table
-                              .getColumn("name")
-                              ?.getFilterValue() as string) ?? ""
-                          }
-                          onChange={(event) =>
-                            table
-                              .getColumn("name")
-                              ?.setFilterValue(event.target.value)
-                          }
+                          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
+                          onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
                         />
                       </div>
 
@@ -766,11 +737,7 @@ const ActivityLog = () => {
                       <div className="space-y-2">
                         <Label htmlFor="activity-filter">Activity</Label>
                         <Select
-                          value={
-                            (table
-                              .getColumn("activity")
-                              ?.getFilterValue() as string) ?? "all"
-                          }
+                          value={(table.getColumn("activity")?.getFilterValue() as string) ?? "all"}
                           onValueChange={handleActivityChange}
                         >
                           <SelectTrigger id="activity-filter">
@@ -791,11 +758,7 @@ const ActivityLog = () => {
                       <div className="space-y-2">
                         <Label htmlFor="team-filter">Team</Label>
                         <Select
-                          value={
-                            (table
-                              .getColumn("team")
-                              ?.getFilterValue() as string) ?? "all"
-                          }
+                          value={(table.getColumn("team")?.getFilterValue() as string) ?? "all"}
                           onValueChange={handleTeamChange}
                         >
                           <SelectTrigger id="team-filter">
@@ -816,21 +779,13 @@ const ActivityLog = () => {
                       <div className="space-y-4">
                         <div className="space-y-2">
                           <Label htmlFor="year-filter">Year</Label>
-                          <Select
-                            value={selectedYear}
-                            onValueChange={(year) =>
-                              handleDateChange(year, selectedMonth)
-                            }
-                          >
+                          <Select value={selectedYear} onValueChange={(year) => handleDateChange(year, selectedMonth)}>
                             <SelectTrigger id="year-filter">
                               <SelectValue placeholder="Select year" />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="all">All Years</SelectItem>
-                              {Array.from(
-                                { length: 21 }, // 10 years back + current year + 10 years forward
-                                (_, i) => new Date().getFullYear() - 10 + i // Start from 10 years back
-                              ).map((year) => (
+                              {Array.from({ length: 21 }, (_, i) => new Date().getFullYear() - 10 + i).map((year) => (
                                 <SelectItem key={year} value={year.toString()}>
                                   {year}
                                 </SelectItem>
@@ -843,9 +798,7 @@ const ActivityLog = () => {
                           <Label htmlFor="month-filter">Month</Label>
                           <Select
                             value={selectedMonth}
-                            onValueChange={(month) =>
-                              handleDateChange(selectedYear, month)
-                            }
+                            onValueChange={(month) => handleDateChange(selectedYear, month)}
                           >
                             <SelectTrigger id="month-filter">
                               <SelectValue placeholder="Select month" />
@@ -866,11 +819,7 @@ const ActivityLog = () => {
                       </div>
 
                       {activeFiltersCount > 0 && (
-                        <Button
-                          variant="outline"
-                          onClick={clearFilters}
-                          className="w-full mt-6"
-                        >
+                        <Button variant="outline" onClick={clearFilters} className="w-full mt-6">
                           Clear all filters
                         </Button>
                       )}
@@ -883,12 +832,7 @@ const ActivityLog = () => {
               </div>
               <div className="flex items-center space-x-2">
                 {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                  <Button
-                    variant="destructive"
-                    size="sm"
-                    onClick={handleDelete}
-                    disabled={isDeleting}
-                  >
+                  <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
                     {isDeleting ? (
                       <>
                         <Loader2 className="mr-2 h-4 w-4 animate-spin" />
@@ -897,34 +841,32 @@ const ActivityLog = () => {
                     ) : (
                       <>
                         <Trash2 className="mr-2 h-4 w-4" />
-                        Delete (
-                        {table.getFilteredSelectedRowModel().rows.length})
+                        Delete ({table.getFilteredSelectedRowModel().rows.length})
                       </>
                     )}
                   </Button>
                 )}
+                <Button size="sm" variant="outline" onClick={downloadTemplate} className="dark:text-white">
+                  Download Template
+                </Button>
                 {/* Add Activity Log Dialog */}
                 <Dialog
                   open={isAddDialogOpen}
                   onOpenChange={(open) => {
                     if (!open && isUploading) {
                       // If trying to close while uploading
-                      setIsBackgroundUploading(true);
+                      setIsBackgroundUploading(true)
                       toast({
                         title: "Upload Continuing",
                         description:
                           "Upload is running in the background. You can reopen this dialog to view progress.",
-                      });
+                      })
                     }
-                    setIsAddDialogOpen(open);
+                    setIsAddDialogOpen(open)
                   }}
                 >
                   <DialogTrigger asChild>
-                    <Button
-                      size="sm"
-                      className="dark:text-white"
-                      variant="secondary"
-                    >
+                    <Button size="sm" className="dark:text-white" variant="secondary">
                       <Plus className="mr-2 h-4 w-4" />
                       Add Activity Log
                     </Button>
@@ -932,23 +874,16 @@ const ActivityLog = () => {
                   <DialogContent className="sm:max-w-[425px] dark:text-white">
                     <DialogHeader>
                       <DialogTitle>Add Activity Log</DialogTitle>
-                      <DialogDescription>
-                        Create a new activity log entry or upload a CSV file
-                      </DialogDescription>
+                      <DialogDescription>Create a new activity log entry or upload a CSV file</DialogDescription>
                     </DialogHeader>
                     <Tabs defaultValue="choose-existing" className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
-                        <TabsTrigger value="add-new-entry">
-                          Add New Entry
-                        </TabsTrigger>
+                        <TabsTrigger value="add-new-entry">Add New Entry</TabsTrigger>
                         <TabsTrigger value="upload-csv">Upload CSV</TabsTrigger>
                       </TabsList>
                       <TabsContent value="add-new-entry">
                         <Form {...form}>
-                          <form
-                            onSubmit={form.handleSubmit(onSubmit)}
-                            className="space-y-4"
-                          >
+                          <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
                             <FormField
                               control={form.control}
                               name="name"
@@ -956,10 +891,7 @@ const ActivityLog = () => {
                                 <FormItem>
                                   <FormLabel>Name</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      placeholder="Enter name"
-                                      {...field}
-                                    />
+                                    <Input placeholder="Enter name" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -977,28 +909,18 @@ const ActivityLog = () => {
                                     className="flex gap-6"
                                   >
                                     <div className="flex items-center space-x-2">
-                                      <RadioGroupItem
-                                        value="existing"
-                                        id="existing-team"
-                                      />
-                                      <Label htmlFor="existing-team">
-                                        Choose Existing
-                                      </Label>
+                                      <RadioGroupItem value="existing" id="existing-team" />
+                                      <RadioGroupItem value="existing" id="existing-team" />
+                                      <Label htmlFor="existing-team">Choose Existing</Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                      <RadioGroupItem
-                                        value="new"
-                                        id="new-team"
-                                      />
+                                      <RadioGroupItem value="new" id="new-team" />
                                       <Label htmlFor="new-team">Add New</Label>
                                     </div>
                                   </RadioGroup>
 
                                   {teamInputType === "existing" ? (
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      value={field.value}
-                                    >
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                       <FormControl>
                                         <SelectTrigger>
                                           <SelectValue placeholder="Select existing team" />
@@ -1013,10 +935,7 @@ const ActivityLog = () => {
                                       </SelectContent>
                                     </Select>
                                   ) : (
-                                    <Input
-                                      placeholder="Enter new team name"
-                                      {...field}
-                                    />
+                                    <Input placeholder="Enter new team name" {...field} />
                                   )}
                                   <FormMessage />
                                 </FormItem>
@@ -1035,30 +954,17 @@ const ActivityLog = () => {
                                     className="flex gap-6"
                                   >
                                     <div className="flex items-center space-x-2">
-                                      <RadioGroupItem
-                                        value="existing"
-                                        id="existing-activity"
-                                      />
-                                      <Label htmlFor="existing-activity">
-                                        Choose Existing
-                                      </Label>
+                                      <RadioGroupItem value="existing" id="existing-activity" />
+                                      <Label htmlFor="existing-activity">Choose Existing</Label>
                                     </div>
                                     <div className="flex items-center space-x-2">
-                                      <RadioGroupItem
-                                        value="new"
-                                        id="new-activity"
-                                      />
-                                      <Label htmlFor="new-activity">
-                                        Add New
-                                      </Label>
+                                      <RadioGroupItem value="new" id="new-activity" />
+                                      <Label htmlFor="new-activity">Add New</Label>
                                     </div>
                                   </RadioGroup>
 
                                   {activityInputType === "existing" ? (
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      value={field.value}
-                                    >
+                                    <Select onValueChange={field.onChange} value={field.value}>
                                       <FormControl>
                                         <SelectTrigger>
                                           <SelectValue placeholder="Select existing activity" />
@@ -1066,20 +972,14 @@ const ActivityLog = () => {
                                       </FormControl>
                                       <SelectContent>
                                         {uniqueActivities.map((activity) => (
-                                          <SelectItem
-                                            key={activity}
-                                            value={activity}
-                                          >
+                                          <SelectItem key={activity} value={activity}>
                                             {activity}
                                           </SelectItem>
                                         ))}
                                       </SelectContent>
                                     </Select>
                                   ) : (
-                                    <Input
-                                      placeholder="Enter new activity name"
-                                      {...field}
-                                    />
+                                    <Input placeholder="Enter new activity name" {...field} />
                                   )}
                                   <FormMessage />
                                 </FormItem>
@@ -1092,11 +992,7 @@ const ActivityLog = () => {
                                 <FormItem>
                                   <FormLabel>Verdi</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      type="number"
-                                      placeholder="Enter verdi"
-                                      {...field}
-                                    />
+                                    <Input type="number" placeholder="Enter verdi" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1109,10 +1005,7 @@ const ActivityLog = () => {
                                 <FormItem>
                                   <FormLabel>Department</FormLabel>
                                   <FormControl>
-                                    <Input
-                                      placeholder="Enter department"
-                                      {...field}
-                                    />
+                                    <Input placeholder="Enter department" {...field} />
                                   </FormControl>
                                   <FormMessage />
                                 </FormItem>
@@ -1125,28 +1018,20 @@ const ActivityLog = () => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>Year</FormLabel>
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      defaultValue={field.value}
-                                    >
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                       <FormControl>
                                         <SelectTrigger>
                                           <SelectValue placeholder="Select year" />
                                         </SelectTrigger>
                                       </FormControl>
                                       <SelectContent>
-                                        {Array.from(
-                                          { length: 21 }, // 10 years back + current year + 10 years forward
-                                          (_, i) =>
-                                            new Date().getFullYear() - 10 + i // Starts from 10 years back
-                                        ).map((year) => (
-                                          <SelectItem
-                                            key={year}
-                                            value={year.toString()}
-                                          >
-                                            {year}
-                                          </SelectItem>
-                                        ))}
+                                        {Array.from({ length: 21 }, (_, i) => new Date().getFullYear() - 10 + i).map(
+                                          (year) => (
+                                            <SelectItem key={year} value={year.toString()}>
+                                              {year}
+                                            </SelectItem>
+                                          ),
+                                        )}
                                       </SelectContent>
                                     </Select>
                                     <FormMessage />
@@ -1159,10 +1044,7 @@ const ActivityLog = () => {
                                 render={({ field }) => (
                                   <FormItem>
                                     <FormLabel>Month</FormLabel>
-                                    <Select
-                                      onValueChange={field.onChange}
-                                      defaultValue={field.value}
-                                    >
+                                    <Select onValueChange={field.onChange} defaultValue={field.value}>
                                       <FormControl>
                                         <SelectTrigger>
                                           <SelectValue placeholder="Select month" />
@@ -1170,14 +1052,8 @@ const ActivityLog = () => {
                                       </FormControl>
                                       <SelectContent>
                                         {Array.from({ length: 12 }, (_, i) => ({
-                                          value: format(
-                                            new Date(2000, i),
-                                            "MMMM"
-                                          ),
-                                          label: format(
-                                            new Date(2000, i),
-                                            "MMMM"
-                                          ),
+                                          value: format(new Date(2000, i), "MMMM"),
+                                          label: format(new Date(2000, i), "MMMM"),
                                         })).map(({ value, label }) => (
                                           <SelectItem key={value} value={value}>
                                             {label}
@@ -1193,10 +1069,7 @@ const ActivityLog = () => {
 
                             {isUploading && (
                               <div className="space-y-2">
-                                <Progress
-                                  value={uploadProgress}
-                                  className="w-full"
-                                />
+                                <Progress value={uploadProgress} className="w-full" />
                                 <p className="text-sm text-muted-foreground">
                                   Uploading: {Math.round(uploadProgress).toFixed(2)}%
                                 </p>
@@ -1208,9 +1081,8 @@ const ActivityLog = () => {
                                 <AlertCircle className="h-4 w-4" />
                                 <AlertTitle>Warning</AlertTitle>
                                 <AlertDescription>
-                                  You are attempting to upload {fileData.length}{" "}
-                                  entries. This may take some time and could
-                                  impact performance.
+                                  You are attempting to upload {fileData.length} entries. This may take some time and
+                                  could impact performance.
                                 </AlertDescription>
                               </Alert>
                             )}
@@ -1220,42 +1092,30 @@ const ActivityLog = () => {
                                 type="button"
                                 variant="outline"
                                 onClick={() => {
-                                  setIsAddDialogOpen(false);
-                                  form.reset();
+                                  setIsAddDialogOpen(false)
+                                  form.reset()
                                 }}
                                 disabled={isUploading}
                               >
                                 Cancel
                               </Button>
-                              <Button
-                                type="submit"
-                                className="dark:text-black"
-                                disabled={isUploading}
-                              >
+                              <Button type="submit" className="dark:text-black" disabled={isUploading}>
                                 Add Activity Log
                               </Button>
                             </div>
                           </form>
-                        </Form>{" "}
+                        </Form>
                       </TabsContent>
                       <TabsContent value="upload-csv">
                         <div className="space-y-2">
-                          <FileUpload
-                            onChange={handleFileUpload}
-                            accept=".csv"
-                          />
+                          <FileUpload onChange={handleFileUpload} accept=".csv" />
                         </div>
                         {isUploading && (
                           <div className="space-y-2">
-                            <Progress
-                              value={uploadProgress}
-                              className="w-full"
-                            />
-                            <p className="text-sm text-muted-foreground">
-                            Uploading: {uploadProgress.toFixed(2)}%
-                            </p>
+                            <Progress value={uploadProgress} className="w-full" />
+                            <p className="text-sm text-muted-foreground">Uploading: {uploadProgress.toFixed(2)}%</p>
                           </div>
-                        )}{" "}
+                        )}
                       </TabsContent>
                     </Tabs>
                   </DialogContent>
@@ -1276,13 +1136,11 @@ const ActivityLog = () => {
                             key={column.id}
                             className="capitalize"
                             checked={column.getIsVisible()}
-                            onCheckedChange={(value) =>
-                              column.toggleVisibility(!!value)
-                            }
+                            onCheckedChange={(value) => column.toggleVisibility(!!value)}
                           >
                             {column.id}
                           </DropdownMenuCheckboxItem>
-                        );
+                        )
                       })}
                   </DropdownMenuContent>
                 </DropdownMenu>
@@ -1292,17 +1150,11 @@ const ActivityLog = () => {
             {/* Table */}
             {data.length === 0 ? (
               <div className="flex flex-col items-center justify-center py-32 border rounded-md">
-                <h3 className="text-lg font-semibold">
-                  No Activity Logs Found
-                </h3>
+                <h3 className="text-lg font-semibold">No Activity Logs Found</h3>
                 <p className="text-sm text-muted-foreground mt-2">
-                  Start by adding your first activity log using the &quot;Add
-                  Activity Log&quot; button above.
+                  Start by adding your first activity log using the &quot;Add Activity Log&quot; button above.
                 </p>
-                <Dialog
-                  open={isAddDialogOpen}
-                  onOpenChange={setIsAddDialogOpen}
-                >
+                <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
                   <DialogTrigger asChild>
                     <Button className="mt-4 dark:text-black">
                       <Plus className="mr-2 h-4 w-4" />
@@ -1321,10 +1173,7 @@ const ActivityLog = () => {
                           <TableHead key={header.id}>
                             {header.isPlaceholder
                               ? null
-                              : flexRender(
-                                  header.column.columnDef.header,
-                                  header.getContext()
-                                )}
+                              : flexRender(header.column.columnDef.header, header.getContext())}
                           </TableHead>
                         ))}
                       </TableRow>
@@ -1333,36 +1182,22 @@ const ActivityLog = () => {
                   <TableBody>
                     {table.getRowModel().rows?.length ? (
                       table.getRowModel().rows.map((row) => (
-                        <TableRow
-                          key={row.id}
-                          data-state={row.getIsSelected() && "selected"}
-                        >
+                        <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                           {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id}>
-                              {flexRender(
-                                cell.column.columnDef.cell,
-                                cell.getContext()
-                              )}
+                              {flexRender(cell.column.columnDef.cell, cell.getContext())}
                             </TableCell>
                           ))}
                         </TableRow>
                       ))
                     ) : (
                       <TableRow>
-                        <TableCell
-                          colSpan={columns.length}
-                          className="h-24 text-center"
-                        >
+                        <TableCell colSpan={columns.length} className="h-24 text-center">
                           <div className="flex flex-col items-center gap-2">
                             <p className="text-sm text-muted-foreground">
-                              The filters applied have returned no results from
-                              this table
+                              The filters applied have returned no results from this table
                             </p>
-                            <Button
-                              variant="outline"
-                              onClick={clearFilters}
-                              className="mt-2"
-                            >
+                            <Button variant="outline" onClick={clearFilters} className="mt-2">
                               Remove all filters
                             </Button>
                           </div>
@@ -1376,21 +1211,13 @@ const ActivityLog = () => {
 
             {/* Pagination */}
             <div className="sticky bottom-0 left-0 right-0 flex items-center justify-between py-4 bg-background border-t">
-              <Button
-                variant="outline"
-                size="sm"
-                className="mr-4"
-                onClick={() => fetchData()}
-                disabled={isRefreshing}
-              >
-                <RefreshCcw
-                  className={`h-2 w-2 ${isRefreshing ? "animate-spin" : ""}`}
-                />
+              <Button variant="outline" size="sm" className="mr-4" onClick={() => fetchData()} disabled={isRefreshing}>
+                <RefreshCcw className={`h-2 w-2 ${isRefreshing ? "animate-spin" : ""}`} />
                 Refresh
               </Button>
               <div className="flex-1 text-sm text-muted-foreground">
-                {table.getFilteredSelectedRowModel().rows.length} of{" "}
-                {table.getFilteredRowModel().rows.length} row(s) selected
+                {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
+                selected
               </div>
               <div className="space-x-2">
                 <Button
@@ -1401,12 +1228,7 @@ const ActivityLog = () => {
                 >
                   Previous
                 </Button>
-                <Button
-                  variant="outline"
-                  size="sm"
-                  onClick={() => table.nextPage()}
-                  disabled={!table.getCanNextPage()}
-                >
+                <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
                   Next
                 </Button>
               </div>
@@ -1415,7 +1237,7 @@ const ActivityLog = () => {
         </div>
       </div>
     </>
-  );
-};
+  )
+}
 
-export default ActivityLog;
+export default ActivityLog

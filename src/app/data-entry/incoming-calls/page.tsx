@@ -72,6 +72,34 @@ type FailedRecord = {
   error: string
 }
 
+const downloadTemplate = () => {
+  // Create template data with headers and one example row
+  const templateData = [
+    {
+      navn: "Adrian Olsen",
+      min: "410",
+      year: "2025",
+      monthName: "February",
+    },
+  ]
+
+  // Convert to CSV using Papa Parse
+  const csv = Papa.unparse(templateData)
+
+  // Create blob and download link
+  const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+  const link = document.createElement("a")
+  const url = URL.createObjectURL(blob)
+
+  link.setAttribute("href", url)
+  link.setAttribute("download", "incoming-calls-template.csv")
+  link.style.visibility = "hidden"
+
+  document.body.appendChild(link)
+  link.click()
+  document.body.removeChild(link)
+}
+
 const formSchema = z.object({
   navn: z.string().min(2, "Name must be at least 2 characters"),
   min: z.string().min(1, "Minutes is required"),
@@ -563,6 +591,9 @@ const IncomingCalls = () => {
                     )}
                   </Button>
                 )}
+                <Button size="sm" variant="outline" onClick={downloadTemplate} className="dark:text-white">
+                  Download Template
+                </Button>
                 <Dialog
                   open={isAddDialogOpen}
                   onOpenChange={(open) => {
@@ -858,4 +889,3 @@ const IncomingCalls = () => {
 }
 
 export default IncomingCalls
-
