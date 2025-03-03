@@ -19,10 +19,6 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
   const benchmark = inputs.team_score_tcm_benchmark || 0
   const interval = inputs.team_score_tcm_interval || 0
 
-  console.log("Company TCM Score Calculation:")
-  console.log("Benchmark:", benchmark)
-  console.log("Interval:", interval)
-
   return {
     benchmark,
     interval,
@@ -43,10 +39,6 @@ const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
 
   const benchmark = Number.parseFloat(inputs.team_score_ce_benchmark || "0") // 35%
   const interval = Number.parseFloat(inputs.team_score_ce_interval || "0") // 3%
-
-  console.log("Company CE Score Calculation:")
-  console.log("Benchmark:", benchmark + "%")
-  console.log("Interval:", interval + "%")
 
   return {
     benchmark,
@@ -83,10 +75,6 @@ const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
   const benchmark = inputs.team_score_ts_benchmark || 0
   const interval = inputs.team_score_ts_interval || 0
 
-  console.log("Company TS Score Calculation:")
-  console.log("Benchmark:", benchmark)
-  console.log("Interval:", interval)
-
   return {
     benchmark,
     interval,
@@ -107,10 +95,6 @@ const calculateRBSLScore = async (): Promise<ScoreMatrix | null> => {
 
   const benchmark = Number.parseFloat(inputs.team_score_rbsl_benchmark || "0")
   const interval = Number.parseFloat(inputs.team_score_rbsl_interval || "0")
-
-  console.log("Company RBSL Score Calculation:")
-  console.log("Benchmark:", benchmark + "%")
-  console.log("Interval:", interval + "%")
 
   return {
     benchmark,

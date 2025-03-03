@@ -62,10 +62,6 @@ const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
   const benchmark = Number.parseFloat(inputs.team_score_ce_benchmark || "0") // 35%
   const interval = Number.parseFloat(inputs.team_score_ce_interval || "0") // 3%
 
-  console.log("Department CE Score Calculation:")
-  console.log("Benchmark:", benchmark + "%")
-  console.log("Interval:", interval + "%")
-
   return {
     benchmark,
     interval,

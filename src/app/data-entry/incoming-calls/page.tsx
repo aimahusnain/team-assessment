@@ -715,7 +715,7 @@ const IncomingCalls = () => {
                               <Button
                                 onClick={() => onSubmit(form.getValues())}
                                 disabled={isUploading || fileData.length === 0}
-                                className="mt-2"
+                                className="mt-2 dark:text-black"
                               >
                                 {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : "Upload CSV Data"}
                               </Button>
