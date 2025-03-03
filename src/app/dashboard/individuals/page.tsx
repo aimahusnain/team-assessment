@@ -401,7 +401,7 @@ const IndividualsDashboard = () => {
                           <SortableHeader column={column} title="LIV" />
                         </div>
                       </TooltipTrigger>
-                      <TooltipContent>LIV Ratio</TooltipContent>
+                      <TooltipContent>Ratio Between Skade & Liv</TooltipContent>
                     </Tooltip>
                   </div>
                 </div>

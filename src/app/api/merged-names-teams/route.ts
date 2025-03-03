@@ -136,25 +136,38 @@ const calculateRBSLScore = async (): Promise<ScoreMatrix | null> => {
   const inputs = await prisma.inputs.findFirst()
   if (!inputs) return null
 
-  const benchmark = Number.parseFloat(inputs.team_score_rbsl_benchmark || "0")
-  const interval = Number.parseFloat(inputs.team_score_rbsl_interval || "0")
+  const benchmark = Number.parseFloat(inputs.team_score_rbsl_benchmark || "0") // 8%
+  const interval = Number.parseFloat(inputs.team_score_rbsl_interval || "0") // 1%
+
+  console.log("RBSL Score Calculation:")
+  console.log("Benchmark:", benchmark + "%")
+  console.log("Interval:", interval + "%")
 
   return {
     benchmark,
     interval,
     levels: Array.from({ length: 10 }, (_, i) => {
       const level = 10 - i
-      if (level === 10) {
-        return { level, score: benchmark + 5 * interval }
+      let score: number | string
+
+      if (level === 1) {
+        score = "-"
+      } else if (level === 10) {
+        // Level 10 is benchmark + 5 * interval (e.g., 8% + 5 * 1% = 13%)
+        score = benchmark + 5 * interval
       } else if (level > 5) {
-        return { level, score: benchmark + (level - 5) * interval }
+        // Levels 6-9: Add (level-5) intervals to benchmark
+        score = benchmark + (level - 5) * interval
       } else if (level === 5) {
-        return { level, score: benchmark }
-      } else if (level === 1) {
-        return { level, score: 0 }
+        // Level 5 is benchmark
+        score = benchmark
       } else {
-        return { level, score: benchmark - (5 - level) * interval }
+        // Levels 2-4: Subtract (5-level) intervals from benchmark
+        score = benchmark - (5 - level) * interval
       }
+
+      console.log(`Level ${level}: ${score === "-" ? "-" : score + "%"}`)
+      return { level, score: score === "-" ? "-" : score.toString() }
     }),
   }
 }
@@ -166,7 +179,7 @@ const getScoreForValue = (
   value: number,
   scoreMatrix: ScoreMatrix | null,
   isDescending = true,
-  // isRBSL = false,
+  isRBSL = false,
 ): ScoreLevel => {
   if (!scoreMatrix) return { level: 1, score: "-" }
 
@@ -195,6 +208,37 @@ const getScoreForValue = (
     return matchedLevel || { level: 1, score: "47" }
   }
 
+  // For RBSL scores
+  if (isRBSL) {
+    console.log("\nRBSL Score Determination:")
+    console.log("Input value:", (value * 100).toFixed(2) + "%")
+
+    const valueAsPercent = value * 100
+    const sortedLevels = scoreMatrix.levels
+      .filter(({ score }) => score !== "-")
+      .sort((a, b) => {
+        const aScore = Number(a.score)
+        const bScore = Number(b.score)
+        return bScore - aScore // Sort descending to match the table
+      })
+
+    console.log("Checking against sorted levels:")
+    sortedLevels.forEach(({ level, score }) => {
+      console.log(`Level ${level}: ${score}%`)
+    })
+
+    // Find the first level where the value is greater than or equal to the score
+    const matchedLevel = sortedLevels.find(({ score }) => valueAsPercent >= Number(score))
+    console.log("Matched level:", matchedLevel?.level || 1)
+
+    // If no match is found or value is 0, return level 1
+    if (!matchedLevel || value === 0) {
+      return { level: 1, score: "-" }
+    }
+
+    return matchedLevel
+  }
+
   // Original logic for other scores...
   const sortedLevels = scoreMatrix.levels
     .filter(({ score }) => score !== "-")
@@ -210,8 +254,6 @@ const getScoreForValue = (
 
   return matchedLevel || { level: 1, score: "-" }
 }
-
-
 
 /**
  * Data Processing Functions
@@ -264,8 +306,8 @@ const processActivityLogs = (
 }
 
 interface IncomingCall {
-  navn: string;
-  min: number;
+  navn: string
+  min: number
 }
 
 const processIncomingCalls = (incomingCalls: IncomingCall[], individualDataMap: Map<string, IndividualData>) => {
@@ -286,9 +328,9 @@ const processIncomingCalls = (incomingCalls: IncomingCall[], individualDataMap: 
 }
 
 interface OutgoingCall {
-  navn: string;
-  outgoing: string;
-  regular_call_time_min: string;
+  navn: string
+  outgoing: string
+  regular_call_time_min: string
 }
 
 const processOutgoingCalls = (outgoingCalls: OutgoingCall[], individualDataMap: Map<string, IndividualData>) => {
@@ -389,11 +431,14 @@ const calculateTeamDetails = (
         ? avgRatioBetweenSkadeAndLiv.reduce((a, b) => a + b, 0) / avgRatioBetweenSkadeAndLiv.length
         : 0
 
+    console.log(`\nTeam ${team} RBSL calculation:`)
+    console.log("Average RBSL value:", (avgRBSL * 100).toFixed(2) + "%")
+
     // Calculate scores
     const tcmScore = getScoreForValue(avgTCM, tcmScoreMatrix, true)
     const ceScore = getScoreForValue(avgCE, ceScoreMatrix, false)
     const tsScore = getScoreForValue(avgTS, tsScoreMatrix, true)
-    const rbslScore = getScoreForValue(avgRBSL, rbslScoreMatrix, true)
+    const rbslScore = getScoreForValue(avgRBSL, rbslScoreMatrix, true, true)
 
     console.log("\ntsScore:", tsScore)
 
