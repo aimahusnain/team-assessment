@@ -5,7 +5,8 @@ import { formatDecimal, formatNumber, formatRatio } from "@/lib/utils"
 
 const prisma = new PrismaClient()
 
-const CALL_MINUTES_THRESHOLD = 750
+const inputs = await prisma.inputs.findFirst()
+const CALL_MINUTES_THRESHOLD = inputs?.call_mins_thr || 750
 
 const normalizeAndTrim = (str: string | null | undefined): string => {
   if (!str) return ""

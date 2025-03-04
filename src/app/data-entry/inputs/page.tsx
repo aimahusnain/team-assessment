@@ -277,7 +277,13 @@ export default function Inputs() {
 
       const data = await res.json();
       if (data.success) {
-        toast.success("Configuration saved successfully!");
+        toast("Configuration saved successfully!", {
+          description: "Please refresh the page to see the updated results!",
+          action: {
+            label: "Close",
+            onClick: () => console.log("Close"),
+          },
+        });
       } else {
         throw new Error(data.message);
       }
