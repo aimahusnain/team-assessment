@@ -475,6 +475,7 @@ const OutgoingCalls = () => {
     }
   }
 
+  // Replace the uploadIndividualRecords function with a batched version
   const uploadIndividualRecords = async (records: OutgoingCall[]) => {
     setIsUploading(true)
     setFailedRecords([])
@@ -482,28 +483,63 @@ const OutgoingCalls = () => {
     let successCount = 0
     let failCount = 0
 
-    for (let i = 0; i < records.length; i++) {
+    // Process records in batches of 7
+    const BATCH_SIZE = 7
+    const totalBatches = Math.ceil(records.length / BATCH_SIZE)
+
+    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
+      // Get the current batch of records
+      const startIndex = batchIndex * BATCH_SIZE
+      const endIndex = Math.min(startIndex + BATCH_SIZE, records.length)
+      const currentBatch = records.slice(startIndex, endIndex)
+
       try {
+        // Send the batch as an array to the API
         const response = await fetch("/api/add-outgoingCall", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(records[i]),
+          body: JSON.stringify(currentBatch),
         })
+
         const result = await response.json()
+
         if (result.success) {
-          successCount++
+          // Count successful records
+          successCount += currentBatch.length
         } else {
-          failCount++
-          setFailedRecords((prev) => [...prev, { id: records[i].id, error: result.message || "Unknown error" }])
+          // If the entire batch failed
+          failCount += currentBatch.length
+          // Add each record in the batch to failed records
+          currentBatch.forEach((record) => {
+            setFailedRecords((prev) => [
+              ...prev,
+              {
+                id: record.id,
+                error: result.message || "Batch upload failed",
+              },
+            ])
+          })
         }
       } catch (error) {
-        console.error("Error uploading record:", error)
-        failCount++
-        setFailedRecords((prev) => [...prev, { id: records[i].id, error: "Network error" }])
+        console.error("Error uploading batch:", error)
+        failCount += currentBatch.length
+        // Add each record in the batch to failed records
+        currentBatch.forEach((record) => {
+          setFailedRecords((prev) => [
+            ...prev,
+            {
+              id: record.id,
+              error: "Network error during batch upload",
+            },
+          ])
+        })
       }
-      setUploadProgress(Math.round(((i + 1) / records.length) * 100)) // Update progress percentage
+
+      // Update progress based on batches completed
+      const progress = Math.round(((batchIndex + 1) / totalBatches) * 100)
+      setUploadProgress(progress)
     }
 
     setIsUploading(false)

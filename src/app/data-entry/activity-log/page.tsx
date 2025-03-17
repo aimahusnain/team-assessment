@@ -15,6 +15,7 @@ import {
   Dialog,
   DialogContent,
   DialogDescription,
+  DialogFooter,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
@@ -58,6 +59,8 @@ import {
   ArrowUpDown,
   ChevronDown,
   ChevronUp,
+  Edit,
+  FileDown,
   Loader2,
   Plus,
   RefreshCcw,
@@ -75,6 +78,7 @@ const downloadTemplate = () => {
     {
       id: "id here",
       name: "name here",
+      alternativeNames: "alternative name here",
       team: "team here",
       activity: "activity column here",
       verdi: "verdi here",
@@ -104,6 +108,7 @@ const downloadTemplate = () => {
 type ActivityLogEntry = {
   id: number
   name: string
+  alternativeNames?: string
   team: string
   activity: string
   verdi: number
@@ -117,6 +122,7 @@ type ActivityLogEntry = {
 // Form schema
 const formSchema = z.object({
   name: z.string().min(2, "Name must be at least 2 characters"),
+  alternativeNames: z.string().optional(),
   team: z.string().min(1, "Team is required"),
   activity: z.string().min(1, "Activity is required"),
   verdi: z.string().min(1, "Verdi is required"),
@@ -142,7 +148,7 @@ const ActivityLog = () => {
   const [sorting, setSorting] = useState<SortingState>([])
   const [columnFilters, setColumnFilters] = useState<ColumnFiltersState>([])
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
-  const [rowSelection, setRowSelection] = useState({})
+  const [rowSelection, setRowSelection] = useState<Record<string, boolean>>({})
   const [fileData, setFileData] = useState<ActivityLogEntry[]>([])
   const [isUploading, setIsUploading] = useState(false)
   const [uploadProgress, setUploadProgress] = useState(0)
@@ -150,6 +156,11 @@ const ActivityLog = () => {
   const [activityInputType, setActivityInputType] = useState("existing")
   const [isBackgroundUploading, setIsBackgroundUploading] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  const [isExporting, setIsExporting] = useState(false)
+  const [isEditAltNameDialogOpen, setIsEditAltNameDialogOpen] = useState(false)
+  const [newAlternativeName, setNewAlternativeName] = useState("")
+  const [isUpdatingAltNames, setIsUpdatingAltNames] = useState(false)
+  const [currentPage, setCurrentPage] = useState(0)
 
   console.log(isBackgroundUploading) // No need now.
 
@@ -158,6 +169,7 @@ const ActivityLog = () => {
     resolver: zodResolver(formSchema),
     defaultValues: {
       name: "",
+      alternativeNames: "",
       team: "",
       activity: "",
       verdi: "",
@@ -195,6 +207,7 @@ const ActivityLog = () => {
             title: "Success",
             description: `${result.count} activity logs added successfully`,
           })
+          window.dispatchEvent(new Event("data-uploaded"))
         } else {
           throw new Error(result.message)
         }
@@ -220,7 +233,7 @@ const ActivityLog = () => {
       form.reset()
       setActivityInputType("existing")
       setFileData([])
-      fetchData()
+      fetchData(true)
     } catch (error) {
       console.log(error)
       toast({
@@ -250,6 +263,12 @@ const ActivityLog = () => {
           for (let i = 0; i < totalEntries; i += batchSize) {
             const batch = results.data.slice(i, i + batchSize)
             try {
+              // Show current batch progress
+              toast({
+                title: "Processing Batch",
+                description: `Uploading entries ${i + 1}-${Math.min(i + batchSize, totalEntries)} of ${totalEntries}`,
+              })
+
               // First attempt: Try bulk upload for this batch
               const bulkResponse = await fetch("/api/upload-activity-logs", {
                 method: "POST",
@@ -263,8 +282,13 @@ const ActivityLog = () => {
 
               if (bulkResult.success) {
                 successfulUploads += bulkResult.count
+                toast({
+                  title: "Batch Complete",
+                  description: `Successfully uploaded ${bulkResult.count} entries (${successfulUploads}/${totalEntries} total)`,
+                })
               } else {
                 // If bulk upload fails, try individual uploads for this batch
+                let batchSuccessCount = 0
                 for (const entry of batch) {
                   try {
                     const response = await fetch("/api/add-activityLog", {
@@ -277,17 +301,28 @@ const ActivityLog = () => {
 
                     if (response.ok) {
                       successfulUploads++
+                      batchSuccessCount++
                     }
                   } catch (error) {
                     console.error("Error uploading entry:", error)
                   }
                 }
+
+                toast({
+                  title: "Batch Complete (Individual Mode)",
+                  description: `Successfully uploaded ${batchSuccessCount} entries (${successfulUploads}/${totalEntries} total)`,
+                })
               }
 
               // Update progress after each batch
               setUploadProgress(Math.min(((i + batchSize) / totalEntries) * 100, 100))
             } catch (error) {
               console.error("Error processing batch:", error)
+              toast({
+                title: "Batch Failed",
+                description: `Failed to upload batch ${Math.floor(i / batchSize) + 1}`,
+                variant: "destructive",
+              })
             }
           }
 
@@ -296,7 +331,7 @@ const ActivityLog = () => {
             title: "Upload Complete",
             description: `Successfully uploaded ${successfulUploads} out of ${totalEntries} entries.`,
           })
-          fetchData()
+          fetchData(true)
         },
       })
     }
@@ -306,13 +341,37 @@ const ActivityLog = () => {
   const columns: ColumnDef<ActivityLogEntry>[] = [
     {
       id: "select",
-      header: ({ table }) => (
-        <Checkbox
-          checked={table.getIsAllPageRowsSelected() || (table.getIsSomePageRowsSelected() && "indeterminate")}
-          onCheckedChange={(value) => table.toggleAllPageRowsSelected(!!value)}
-          aria-label="Select all"
-        />
-      ),
+      header: ({ table }) => {
+        const isAllSelected = table.getIsAllPageRowsSelected()
+        const isAllPagesSelected =
+          table.getState().rowSelection &&
+          Object.keys(table.getState().rowSelection).length === table.getFilteredRowModel().rows.length
+
+        return (
+          <div className="relative group">
+            <Checkbox
+              checked={isAllPagesSelected ? true : isAllSelected || false}
+              onCheckedChange={(value) => {
+                if (isAllPagesSelected || isAllSelected) {
+                  // If all are selected, deselect all
+                  table.resetRowSelection()
+                } else {
+                  // Select all filtered rows across all pages
+                  const allRows: Record<string, boolean> = {}
+                  table.getFilteredRowModel().rows.forEach((row) => {
+                    allRows[row.id] = true
+                  })
+                  table.setRowSelection(allRows)
+                }
+              }}
+              aria-label="Select all"
+            />
+            <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+              {isAllPagesSelected ? "Deselect all" : isAllSelected ? "Deselect all" : "Select all pages"}
+            </div>
+          </div>
+        )
+      },
       cell: ({ row }) => (
         <Checkbox
           checked={row.getIsSelected()}
@@ -350,6 +409,38 @@ const ActivityLog = () => {
           )}
         </Button>
       ),
+    },
+    {
+      accessorKey: "alternativeNames",
+      header: ({ column }) => (
+        <Button
+          variant="ghost"
+          onClick={() => {
+            const currentSort = column.getIsSorted()
+            if (currentSort === false) {
+              column.toggleSorting(false) // Set to asc
+            } else if (currentSort === "asc") {
+              column.toggleSorting(true) // Set to desc
+            } else {
+              column.clearSorting() // Reset sorting
+            }
+          }}
+          className="p-0 hover:bg-transparent"
+        >
+          Alternative Name
+          {column.getIsSorted() === "asc" ? (
+            <ChevronUp className="ml-2 h-4 w-4" />
+          ) : column.getIsSorted() === "desc" ? (
+            <ChevronDown className="ml-2 h-4 w-4" />
+          ) : (
+            <ArrowUpDown className="ml-2 h-4 w-4" />
+          )}
+        </Button>
+      ),
+      cell: ({ row }) => {
+        const altName = row.getValue("alternativeNames")
+        return <div>{altName && String(altName).trim() !== "" ? String(altName) : String(row.getValue("name"))}</div>
+      },
     },
     {
       accessorKey: "team",
@@ -527,38 +618,6 @@ const ActivityLog = () => {
     },
   ]
 
-  const fetchData = useCallback(async () => {
-    try {
-      setIsRefreshing(true)
-      const response = await fetch("/api/get-activityLogs")
-      const result = await response.json()
-      if (result.success) {
-        setData(result.data)
-        setUniqueActivities([...new Set(result.data.map((item: ActivityLogEntry) => item.activity))] as string[])
-        setUniqueTeams([...new Set(result.data.map((item: ActivityLogEntry) => item.team))] as string[])
-        setError(null)
-      } else {
-        // Set empty data when success is false
-        setData([])
-        setUniqueActivities([])
-        setUniqueTeams([])
-        setError(null)
-      }
-    } catch (err) {
-      console.error(err)
-      setError("An error occurred while fetching data")
-    } finally {
-      setIsRefreshing(false)
-      setLoading(false)
-    }
-  }, [])
-
-  useEffect(() => {
-    fetchData()
-    const interval = setInterval(fetchData, 10000)
-    return () => clearInterval(interval)
-  }, [fetchData])
-
   // Table initialization
   const table = useReactTable({
     data,
@@ -571,9 +630,21 @@ const ActivityLog = () => {
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
     onRowSelectionChange: setRowSelection,
+    onPaginationChange: (updater) => {
+      if (typeof updater === "function") {
+        const newState = updater(table.getState().pagination)
+        console.log("Page changed to:", newState.pageIndex)
+        setCurrentPage(newState.pageIndex)
+      } else {
+        console.log("Page set directly to:", updater.pageIndex)
+        setCurrentPage(updater.pageIndex)
+      }
+    },
+    manualPagination: false,
     initialState: {
       pagination: {
         pageSize: 30,
+        pageIndex: currentPage,
       },
     },
     state: {
@@ -581,8 +652,80 @@ const ActivityLog = () => {
       columnFilters,
       columnVisibility,
       rowSelection,
+      pagination: {
+        pageSize: 30,
+        pageIndex: currentPage,
+      },
     },
   })
+
+  const fetchData = useCallback(
+    async (preservePage = false) => {
+      try {
+        setIsRefreshing(true)
+        const response = await fetch("/api/get-activityLogs")
+        const result = await response.json()
+        if (result.success) {
+          setData(result.data)
+          setUniqueActivities([...new Set(result.data.map((item: ActivityLogEntry) => item.activity))] as string[])
+          setUniqueTeams([...new Set(result.data.map((item: ActivityLogEntry) => item.team))] as string[])
+          setError(null)
+
+          // Always preserve the current page index
+          if (!preservePage) {
+            setCurrentPage(0)
+          }
+
+          // Make sure the table pagination state is updated
+          if (preservePage && table) {
+            table.setPagination((prev) => ({
+              ...prev,
+              pageIndex: currentPage,
+            }))
+          }
+        } else {
+          // Set empty data when success is false
+          setData([])
+          setUniqueActivities([])
+          setUniqueTeams([])
+          setError(null)
+        }
+      } catch (err) {
+        console.error(err)
+        setError("An error occurred while fetching data")
+      } finally {
+        setIsRefreshing(false)
+        setLoading(false)
+      }
+    },
+    [currentPage, table],
+  )
+
+  useEffect(() => {
+    // Log the current page for debugging
+    console.log("Current page:", currentPage)
+
+    // Initial data load - only on first mount
+    if (currentPage === 0) {
+      fetchData(true)
+    }
+
+    // Set up event listeners for data changes
+    const handleDataChange = () => {
+      console.log("Data changed, refreshing...")
+      fetchData(true)
+    }
+
+    // Add event listener for when data is uploaded or alt names are changed
+    window.addEventListener("data-uploaded", handleDataChange)
+    window.addEventListener("alt-name-changed", handleDataChange)
+
+    return () => {
+      // Clean up event listeners
+      window.removeEventListener("data-uploaded", handleDataChange)
+      window.removeEventListener("alt-name-changed", handleDataChange)
+    }
+  }, [fetchData]) // Remove currentPage from dependencies to prevent refresh on pagination changes
 
   // Handlers
   const handleDelete = async () => {
@@ -613,7 +756,7 @@ const ActivityLog = () => {
       }
     }
 
-    await fetchData()
+    await fetchData(true) // Preserve page after deletion
     setRowSelection({})
     setIsDeleting(false)
     setDeletingCount(0)
@@ -654,6 +797,145 @@ const ActivityLog = () => {
 
   const activeFiltersCount = columnFilters.length + (selectedYear !== "all" ? 1 : 0) + (selectedMonth !== "all" ? 1 : 0)
 
+  const exportFilteredDataToCSV = () => {
+    // Set up state for export process
+    const handleExport = async () => {
+      try {
+        setIsExporting(true)
+
+        // Show initial toast
+        toast({
+          title: "Preparing Export",
+          description: "Getting your data ready for export...",
+        })
+
+        // Get the filtered data from the table
+        const filteredData = table.getFilteredRowModel().rows.map((row) => row.original)
+
+        // Simulate processing time for larger datasets
+        if (filteredData.length > 1000) {
+          await new Promise((resolve) => setTimeout(resolve, 1500))
+        }
+
+        // Convert to CSV using Papa Parse
+        const csv = Papa.unparse(filteredData)
+
+        // Create blob and download link
+        const blob = new Blob([csv], { type: "text/csv;charset=utf-8;" })
+        const link = document.createElement("a")
+        const url = URL.createObjectURL(blob)
+
+        // Set filename with current date
+        const date = new Date()
+        const filename = `activity-log-export-${date.toISOString().split("T")[0]}.csv`
+
+        link.setAttribute("href", url)
+        link.setAttribute("download", filename)
+        link.style.visibility = "hidden"
+
+        document.body.appendChild(link)
+        link.click()
+        document.body.removeChild(link)
+
+        toast({
+          title: "Export Complete",
+          description: `Successfully exported ${filteredData.length} records to CSV.`,
+        })
+      } catch (error) {
+        console.error("Export error:", error)
+        toast({
+          title: "Export Failed",
+          description: "There was a problem exporting your data. Please try again.",
+          variant: "destructive",
+        })
+      } finally {
+        setIsExporting(false)
+      }
+    }
+
+    return handleExport
+  }
+
+  const handleUpdateAlternativeNames = async () => {
+    try {
+      setIsUpdatingAltNames(true)
+      const selectedRows = table.getFilteredSelectedRowModel().rows
+      const selectedIds = selectedRows.map((row) => row.original.id)
+
+      // Calculate total batches
+      const batchSize = 10
+      const totalBatches = Math.ceil(selectedIds.length / batchSize)
+      let completedBatches = 0
+      let totalUpdated = 0
+
+      console.log(`Processing ${selectedIds.length} entries in ${totalBatches} batches of ${batchSize}`)
+
+      // Process in batches of 10
+      for (let i = 0; i < selectedIds.length; i += batchSize) {
+        const batchIds = selectedIds.slice(i, i + batchSize)
+
+        console.log(`Sending batch ${completedBatches + 1} with ${batchIds.length} entries:`, batchIds)
+
+        try {
+          // Send a separate API request for each batch
+          const response = await fetch("/api/update-alternative-names", {
+            method: "POST",
+            headers: {
+              "Content-Type": "application/json",
+            },
+            body: JSON.stringify({
+              ids: batchIds,
+              alternativeName: newAlternativeName,
+            }),
+          })
+
+          const result = await response.json()
+
+          if (result.success) {
+            completedBatches++
+            totalUpdated += batchIds.length
+
+            // Update progress toast for each batch
+            toast({
+              title: `Batch ${completedBatches} of ${totalBatches} Complete`,
+              description: `Updated ${batchIds.length} entries (${totalUpdated}/${selectedIds.length} total)`,
+            })
+          } else {
+            throw new Error(result.message)
+          }
+        } catch (error) {
+          console.error(`Error updating batch ${completedBatches + 1}:`, error)
+          toast({
+            title: `Batch ${completedBatches + 1} Failed`,
+            description: `Failed to update entries ${i + 1}-${Math.min(i + batchSize, selectedIds.length)}`,
+            variant: "destructive",
+          })
+        }
+      }
+
+      toast({
+        title: "Update Complete",
+        description: `Updated alternative name for ${totalUpdated} of ${selectedIds.length} entries`,
+      })
+
+      setIsEditAltNameDialogOpen(false)
+      setNewAlternativeName("")
+      // Clear row selection after update
+      setRowSelection({})
+      await fetchData(true) // Preserve page after update
+      window.dispatchEvent(new Event("alt-name-changed"))
+    } catch (error) {
+      console.error("Error updating alternative names:", error)
+      toast({
+        title: "Error",
+        description: "Failed to update alternative names",
+        variant: "destructive",
+      })
+    } finally {
+      setIsUpdatingAltNames(false)
+    }
+  }
+
   // Loading and error states
   if (loading) {
     return (
@@ -670,7 +952,7 @@ const ActivityLog = () => {
           <ExclamationTriangleIcon className="mx-auto h-10 w-10 text-destructive" />
           <h3 className="mt-4 text-lg font-semibold">Error Loading Data</h3>
           <p className="mt-2 text-sm text-muted-foreground">{error}</p>
-          <Button onClick={() => fetchData()} className="mt-4 dark:text-black">
+          <Button onClick={() => fetchData(true)} className="mt-4 dark:text-black">
             Try Again
           </Button>
         </div>
@@ -728,8 +1010,19 @@ const ActivityLog = () => {
                         <Input
                           id="name-filter"
                           placeholder="Filter by name..."
-                          value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-                          onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
+                          value={(table?.getColumn("name")?.getFilterValue() as string) ?? ""}
+                          onChange={(event) => table?.getColumn("name")?.setFilterValue(event.target.value)}
+                        />
+                      </div>
+
+                      {/* Alternative Name Filter */}
+                      <div className="space-y-2">
+                        <Label htmlFor="alt-name-filter">Alternative Name</Label>
+                        <Input
+                          id="alt-name-filter"
+                          placeholder="Filter by alternative name..."
+                          value={(table?.getColumn("alternativeNames")?.getFilterValue() as string) ?? ""}
+                          onChange={(event) => table?.getColumn("alternativeNames")?.setFilterValue(event.target.value)}
                         />
                       </div>
 
@@ -737,7 +1030,7 @@ const ActivityLog = () => {
                       <div className="space-y-2">
                         <Label htmlFor="activity-filter">Activity</Label>
                         <Select
-                          value={(table.getColumn("activity")?.getFilterValue() as string) ?? "all"}
+                          value={(table?.getColumn("activity")?.getFilterValue() as string) ?? "all"}
                           onValueChange={handleActivityChange}
                         >
                           <SelectTrigger id="activity-filter">
@@ -758,7 +1051,7 @@ const ActivityLog = () => {
                       <div className="space-y-2">
                         <Label htmlFor="team-filter">Team</Label>
                         <Select
-                          value={(table.getColumn("team")?.getFilterValue() as string) ?? "all"}
+                          value={(table?.getColumn("team")?.getFilterValue() as string) ?? "all"}
                           onValueChange={handleTeamChange}
                         >
                           <SelectTrigger id="team-filter">
@@ -827,28 +1120,62 @@ const ActivityLog = () => {
                   </SheetContent>
                 </Sheet>
                 <span className="text-sm text-muted-foreground">
-                  {table.getFilteredRowModel().rows.length} total rows
+                  {table?.getFilteredRowModel().rows.length} total rows
                 </span>
               </div>
               <div className="flex items-center space-x-2">
-                {table.getFilteredSelectedRowModel().rows.length > 0 && (
-                  <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
-                    {isDeleting ? (
-                      <>
-                        <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                        Deleting ({deletingCount})
-                      </>
-                    ) : (
-                      <>
-                        <Trash2 className="mr-2 h-4 w-4" />
-                        Delete ({table.getFilteredSelectedRowModel().rows.length})
-                      </>
-                    )}
-                  </Button>
+                {table?.getFilteredSelectedRowModel().rows.length > 0 && (
+                  <>
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => setIsEditAltNameDialogOpen(true)}
+                      className="flex items-center"
+                    >
+                      <Edit className="mr-2 h-4 w-4" />
+                      Edit Alt. Name ({table?.getFilteredSelectedRowModel().rows.length})
+                    </Button>
+                    <Button variant="destructive" size="sm" onClick={handleDelete} disabled={isDeleting}>
+                      {isDeleting ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Deleting ({deletingCount})
+                        </>
+                      ) : (
+                        <>
+                          <Trash2 className="mr-2 h-4 w-4" />
+                          Delete ({table?.getFilteredSelectedRowModel().rows.length})
+                        </>
+                      )}
+                    </Button>
+                  </>
                 )}
                 <Button size="sm" variant="outline" onClick={downloadTemplate} className="dark:text-white">
                   Download Template
                 </Button>
+                <div className="relative group">
+                  <Button
+                    size="sm"
+                    variant="outline"
+                    onClick={exportFilteredDataToCSV()}
+                    className="dark:text-white w-10 h-10 p-0 group-hover:w-auto group-hover:px-4 transition-all duration-300 ease-in-out"
+                    disabled={isExporting}
+                  >
+                    {isExporting ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <>
+                        <FileDown className="h-4 w-4 group-hover:mr-2 transition-all duration-300" />
+                        <span className="hidden group-hover:inline opacity-0 group-hover:opacity-100 transition-opacity duration-300">
+                          Export to CSV
+                        </span>
+                      </>
+                    )}
+                  </Button>
+                  <div className="absolute -top-8 left-1/2 transform -translate-x-1/2 bg-popover text-popover-foreground text-xs rounded px-2 py-1 opacity-0 group-hover:opacity-100 transition-opacity duration-200 whitespace-nowrap pointer-events-none">
+                    Export data to CSV
+                  </div>
+                </div>
                 {/* Add Activity Log Dialog */}
                 <Dialog
                   open={isAddDialogOpen}
@@ -876,7 +1203,7 @@ const ActivityLog = () => {
                       <DialogTitle>Add Activity Log</DialogTitle>
                       <DialogDescription>Create a new activity log entry or upload a CSV file</DialogDescription>
                     </DialogHeader>
-                    <Tabs defaultValue="choose-existing" className="w-full">
+                    <Tabs defaultValue="add-new-entry" className="w-full">
                       <TabsList className="grid w-full grid-cols-2">
                         <TabsTrigger value="add-new-entry">Add New Entry</TabsTrigger>
                         <TabsTrigger value="upload-csv">Upload CSV</TabsTrigger>
@@ -884,19 +1211,34 @@ const ActivityLog = () => {
                       <TabsContent value="add-new-entry">
                         <Form {...form}>
                           <form onSubmit={form.handleSubmit(onSubmit)} className="space-y-4">
-                            <FormField
-                              control={form.control}
-                              name="name"
-                              render={({ field }) => (
-                                <FormItem>
-                                  <FormLabel>Name</FormLabel>
-                                  <FormControl>
-                                    <Input placeholder="Enter name" {...field} />
-                                  </FormControl>
-                                  <FormMessage />
-                                </FormItem>
-                              )}
-                            />
+                            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                              <FormField
+                                control={form.control}
+                                name="name"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Enter name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                              <FormField
+                                control={form.control}
+                                name="alternativeNames"
+                                render={({ field }) => (
+                                  <FormItem>
+                                    <FormLabel>Alternative Name</FormLabel>
+                                    <FormControl>
+                                      <Input placeholder="Enter alternative name" {...field} />
+                                    </FormControl>
+                                    <FormMessage />
+                                  </FormItem>
+                                )}
+                              />
+                            </div>
                             <FormField
                               control={form.control}
                               name="team"
@@ -909,7 +1251,6 @@ const ActivityLog = () => {
                                     className="flex gap-6"
                                   >
                                     <div className="flex items-center space-x-2">
-                                      <RadioGroupItem value="existing" id="existing-team" />
                                       <RadioGroupItem value="existing" id="existing-team" />
                                       <Label htmlFor="existing-team">Choose Existing</Label>
                                     </div>
@@ -1120,6 +1461,57 @@ const ActivityLog = () => {
                     </Tabs>
                   </DialogContent>
                 </Dialog>
+
+                {/* Edit Alternative Name Dialog */}
+                <Dialog open={isEditAltNameDialogOpen} onOpenChange={setIsEditAltNameDialogOpen}>
+                  <DialogContent className="sm:max-w-[425px]">
+                    <DialogHeader>
+                      <DialogTitle>Edit Alternative Name</DialogTitle>
+                      <DialogDescription>
+                        This will update the alternative name for all selected entries (
+                        {table?.getFilteredSelectedRowModel().rows.length}).
+                      </DialogDescription>
+                    </DialogHeader>
+                    <div className="grid gap-4 py-4">
+                      <div className="grid gap-2">
+                        <Label htmlFor="alternativeName">Alternative Name</Label>
+                        <Input
+                          id="alternativeName"
+                          value={newAlternativeName}
+                          onChange={(e) => setNewAlternativeName(e.target.value)}
+                          placeholder="Enter alternative name"
+                        />
+                      </div>
+                    </div>
+                    <DialogFooter>
+                      <Button
+                        variant="outline"
+                        onClick={() => {
+                          setIsEditAltNameDialogOpen(false)
+                          setNewAlternativeName("")
+                        }}
+                        disabled={isUpdatingAltNames}
+                      >
+                        Cancel
+                      </Button>
+                      <Button
+                        onClick={handleUpdateAlternativeNames}
+                        disabled={isUpdatingAltNames}
+                        className="dark:text-black"
+                      >
+                        {isUpdatingAltNames ? (
+                          <>
+                            <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                            Updating... ({Math.ceil(table?.getFilteredSelectedRowModel().rows.length / 10)} batches)
+                          </>
+                        ) : (
+                          "Update"
+                        )}
+                      </Button>
+                    </DialogFooter>
+                  </DialogContent>
+                </Dialog>
+
                 <DropdownMenu>
                   <DropdownMenuTrigger asChild>
                     <Button variant="outline" size="sm">
@@ -1128,7 +1520,7 @@ const ActivityLog = () => {
                   </DropdownMenuTrigger>
                   <DropdownMenuContent align="end">
                     {table
-                      .getAllColumns()
+                      ?.getAllColumns()
                       .filter((column) => column.getCanHide())
                       .map((column) => {
                         return (
@@ -1167,7 +1559,7 @@ const ActivityLog = () => {
               <div className="rounded-md border">
                 <Table>
                   <TableHeader>
-                    {table.getHeaderGroups().map((headerGroup) => (
+                    {table?.getHeaderGroups().map((headerGroup) => (
                       <TableRow key={headerGroup.id}>
                         {headerGroup.headers.map((header) => (
                           <TableHead key={header.id}>
@@ -1180,8 +1572,8 @@ const ActivityLog = () => {
                     ))}
                   </TableHeader>
                   <TableBody>
-                    {table.getRowModel().rows?.length ? (
-                      table.getRowModel().rows.map((row) => (
+                    {table?.getRowModel().rows?.length ? (
+                      table?.getRowModel().rows.map((row) => (
                         <TableRow key={row.id} data-state={row.getIsSelected() && "selected"}>
                           {row.getVisibleCells().map((cell) => (
                             <TableCell key={cell.id}>
@@ -1211,24 +1603,31 @@ const ActivityLog = () => {
 
             {/* Pagination */}
             <div className="sticky bottom-0 left-0 right-0 flex items-center justify-between py-4 bg-background border-t">
-              <Button variant="outline" size="sm" className="mr-4" onClick={() => fetchData()} disabled={isRefreshing}>
-                <RefreshCcw className={`h-2 w-2 ${isRefreshing ? "animate-spin" : ""}`} />
-                Refresh
-              </Button>
-              <div className="flex-1 text-sm text-muted-foreground">
-                {table.getFilteredSelectedRowModel().rows.length} of {table.getFilteredRowModel().rows.length} row(s)
-                selected
+              <div className="flex items-center space-x-2">
+                <Button variant="outline" size="sm" onClick={() => fetchData(true)} disabled={isRefreshing}>
+                  <RefreshCcw className={`h-4 w-4 mr-2 ${isRefreshing ? "animate-spin" : ""}`} />
+                  Refresh
+                </Button>
+                <div className="text-sm text-muted-foreground">
+                  {table?.getFilteredSelectedRowModel().rows.length} of {table?.getFilteredRowModel().rows.length}{" "}
+                  row(s) selected
+                </div>
               </div>
               <div className="space-x-2">
                 <Button
                   variant="outline"
                   size="sm"
-                  onClick={() => table.previousPage()}
-                  disabled={!table.getCanPreviousPage()}
+                  onClick={() => table?.previousPage()}
+                  disabled={!table?.getCanPreviousPage()}
                 >
                   Previous
                 </Button>
-                <Button variant="outline" size="sm" onClick={() => table.nextPage()} disabled={!table.getCanNextPage()}>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => table?.nextPage()}
+                  disabled={!table?.getCanNextPage()}
+                >
                   Next
                 </Button>
               </div>

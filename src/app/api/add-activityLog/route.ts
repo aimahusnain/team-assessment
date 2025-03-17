@@ -1,15 +1,14 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
-
-const prisma = new PrismaClient()
+import { db } from "@/lib/db"
 
 export async function POST(req: Request) {
   try {
     const data = await req.json()
 
-    const activityLog = await prisma.activityLog.create({
+    const activityLog = await db.activityLog.create({
       data: {
         name: data.name,
+        alternativeNames: data.alternativeNames,
         team: data.team,
         activity: data.activity,
         verdi: Number.parseInt(data.verdi),
@@ -25,4 +24,3 @@ export async function POST(req: Request) {
     return NextResponse.json({ success: false, message: "Failed to add activity log" }, { status: 500 })
   }
 }
-

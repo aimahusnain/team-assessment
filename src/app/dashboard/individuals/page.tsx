@@ -17,7 +17,7 @@ import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover
 import { Separator } from "@/components/ui/separator"
 import { SidebarTrigger } from "@/components/ui/sidebar"
 import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
-import { Tooltip, TooltipContent, TooltipTrigger } from "@/components/ui/tooltip"
+import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { abbreviateMonth, cn, formatPercentage, formatValue } from "@/lib/utils"
 import {
   type Column,
@@ -32,11 +32,12 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, CalendarIcon, Check, ChevronDown, ChevronUp, Loader2, SendHorizontal } from 'lucide-react'
+import { ArrowUpDown, CalendarIcon, Check, ChevronDown, ChevronUp, Loader2, SendHorizontal } from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 
 type IndividualData = {
   name: string
+  alternativeNames: string | null
   team: string | null
   department: string | null
   monthData: {
@@ -110,6 +111,7 @@ const IndividualsDashboard = () => {
   const [columnVisibility, setColumnVisibility] = useState<VisibilityState>({})
   const [isRefreshing, setIsRefreshing] = useState(false)
   const [hasFilterChanges, setHasFilterChanges] = useState(false)
+  const [globalFilter, setGlobalFilter] = useState("")
 
   const [weightages, setWeightages] = useState({
     tcm: 0,
@@ -196,6 +198,12 @@ const IndividualsDashboard = () => {
         cell: ({ row }) => <div className="font-medium min-w-[200px]">{row.getValue("name")}</div>,
       },
       {
+        id: "alternativeNames",
+        accessorKey: "alternativeNames",
+        header: ({ column }) => <SortableHeader column={column} title="Alternative Names" />,
+        cell: ({ row }) => <div className="min-w-[200px]">{row.getValue("alternativeNames") || "-"}</div>,
+      },
+      {
         id: "team",
         accessorKey: "team",
         header: ({ column }) => <SortableHeader column={column} title="Team" />,
@@ -227,14 +235,16 @@ const IndividualsDashboard = () => {
                     {month.substring(0, 3)}
                   </div>
                   <div className="text-center dark:text-white">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <SortableHeader column={column} title="TCM" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>Total Call Minutes</TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="TCM" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Total Call Minutes</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               ),
@@ -255,14 +265,16 @@ const IndividualsDashboard = () => {
                     {month.substring(0, 3)}
                   </div>
                   <div className="text-center dark:text-white">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <SortableHeader column={column} title="Score" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>TCM Score</TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>TCM Score</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               ), // @ts-expect-error Type definition issue in table column configuration
@@ -283,14 +295,16 @@ const IndividualsDashboard = () => {
                     {month.substring(0, 3)}
                   </div>
                   <div className="text-center dark:text-white">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <SortableHeader column={column} title="CE" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>Call Efficiency</TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="CE" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Call Efficiency</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               ), // @ts-expect-error Type definition issue in table column configuration
@@ -310,14 +324,16 @@ const IndividualsDashboard = () => {
                     {month.substring(0, 3)}
                   </div>
                   <div className="text-center dark:text-white">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <SortableHeader column={column} title="Score" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>CE Score</TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>CE Score</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               ), // @ts-expect-error Type definition issue in table column configuration
@@ -338,14 +354,16 @@ const IndividualsDashboard = () => {
                     {month.substring(0, 3)}
                   </div>
                   <div className="text-center dark:text-white">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <SortableHeader column={column} title="TS" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>Total Sales</TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="TS" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Total Sales</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               ), // @ts-expect-error Type definition issue in table column configuration
@@ -366,14 +384,16 @@ const IndividualsDashboard = () => {
                     {month.substring(0, 3)}
                   </div>
                   <div className="text-center dark:text-white">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <SortableHeader column={column} title="Score" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>TS Score</TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>TS Score</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               ), // @ts-expect-error Type definition issue in table column configuration
@@ -395,14 +415,16 @@ const IndividualsDashboard = () => {
                     {month.substring(0, 3)}
                   </div>
                   <div className="text-center dark:text-white">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <SortableHeader column={column} title="LIV" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>Ratio Between Skade & Liv</TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="LIV" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>Ratio Between Skade & Liv</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               ),
@@ -425,14 +447,16 @@ const IndividualsDashboard = () => {
                     {month.substring(0, 3)}
                   </div>
                   <div className="text-center dark:text-white">
-                    <Tooltip>
-                      <TooltipTrigger asChild>
-                        <div>
-                          <SortableHeader column={column} title="Score" />
-                        </div>
-                      </TooltipTrigger>
-                      <TooltipContent>RBSL Score</TooltipContent>
-                    </Tooltip>
+                    <TooltipProvider>
+                      <Tooltip>
+                        <TooltipTrigger asChild>
+                          <div>
+                            <SortableHeader column={column} title="Score" />
+                          </div>
+                        </TooltipTrigger>
+                        <TooltipContent>RBSL Score</TooltipContent>
+                      </Tooltip>
+                    </TooltipProvider>
                   </div>
                 </div>
               ),
@@ -471,14 +495,16 @@ const IndividualsDashboard = () => {
               {month.substring(0, 3)}
             </div>
             <div className="text-center dark:text-white">
-              <Tooltip>
-                <TooltipTrigger asChild>
-                  <div>
-                    <SortableHeader column={column} title="Avg. score" />
-                  </div>
-                </TooltipTrigger>
-                <TooltipContent>Avg. Total Sales</TooltipContent>
-              </Tooltip>
+              <TooltipProvider>
+                <Tooltip>
+                  <TooltipTrigger asChild>
+                    <div>
+                      <SortableHeader column={column} title="Avg. score" />
+                    </div>
+                  </TooltipTrigger>
+                  <TooltipContent>Avg. Total Sales</TooltipContent>
+                </Tooltip>
+              </TooltipProvider>
             </div>
           </div>
         ),
@@ -522,6 +548,12 @@ const IndividualsDashboard = () => {
     }
   }, [selectedMonths, selectedYear])
 
+  const fuzzyFilter = (row: any, columnId: string, filterValue: string) => {
+    const value = row.getValue(columnId)
+    if (!value) return false
+    return String(value).toLowerCase().includes(String(filterValue).toLowerCase())
+  }
+
   const table = useReactTable({
     data,
     columns: getColumns(),
@@ -532,15 +564,36 @@ const IndividualsDashboard = () => {
     getSortedRowModel: getSortedRowModel(),
     getFilteredRowModel: getFilteredRowModel(),
     onColumnVisibilityChange: setColumnVisibility,
+    globalFilterFn: (row, columnId, filterValue) => {
+      // Check if the value is in the name or alternativeNames
+      const name = row.getValue("name") as string
+      const alternativeNames = row.getValue("alternativeNames") as string | null
+
+      const searchValue = String(filterValue).toLowerCase()
+
+      // Check if the search term is in the name
+      if (name && name.toLowerCase().includes(searchValue)) {
+        return true
+      }
+
+      // Check if the search term is in the alternativeNames
+      if (alternativeNames && alternativeNames.toLowerCase().includes(searchValue)) {
+        return true
+      }
+
+      return false
+    },
     initialState: {
       pagination: {
         pageSize: 30,
       },
     },
+    onGlobalFilterChange: setGlobalFilter,
     state: {
       sorting,
       columnFilters,
       columnVisibility,
+      globalFilter,
     },
   })
 
@@ -589,6 +642,7 @@ const IndividualsDashboard = () => {
 
   interface ApiResponseItem {
     name: string
+    alternativeNames: string | null
     team: string | null
     department: string | null
     month: string
@@ -625,6 +679,7 @@ const IndividualsDashboard = () => {
       } else {
         dataMap.set(item.name, {
           name: item.name,
+          alternativeNames: item.alternativeNames,
           team: item.team,
           department: item.department,
           monthData: [monthData],
@@ -636,245 +691,247 @@ const IndividualsDashboard = () => {
   }
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <header className="flex h-16 shrink-0 items-center gap-2 border-b">
-        <div className="flex items-center gap-2 px-4">
-          <SidebarTrigger className="-ml-1" />
-          <Separator orientation="vertical" className="mr-2 h-4" />
-          <Breadcrumb>
-            <BreadcrumbList>
-              <BreadcrumbItem className="hidden md:block">
-                <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
-              </BreadcrumbItem>
-              <BreadcrumbSeparator className="hidden md:block" />
-              <BreadcrumbItem>
-                <BreadcrumbPage>Individuals</BreadcrumbPage>
-              </BreadcrumbItem>
-            </BreadcrumbList>
-          </Breadcrumb>
-        </div>
-      </header>
-      <main className="flex flex-1 flex-col gap-4 p-4">
-        <Card className="border-none">
-          <CardContent>
-            <div className="space-y-4">
-              <div className="flex flex-wrap items-center justify-start gap-2">
-                <Input
-                  placeholder="Search by name..."
-                  className="max-w-64"
-                  value={(table.getColumn("name")?.getFilterValue() as string) ?? ""}
-                  onChange={(event) => table.getColumn("name")?.setFilterValue(event.target.value)}
-                />
-
-                <Popover>
-                  <PopoverTrigger asChild>
-                    <Button
-                      variant="outline"
-                      className={cn(
-                        "w-[280px] justify-start text-left font-normal",
-                        !filterValues.months.length && "text-muted-foreground",
-                      )}
-                    >
-                      <CalendarIcon className="mr-2 h-4 w-4" />
-                      {filterValues.months.length > 0 ? (
-                        `${filterValues.months.length} month${
-                          filterValues.months.length > 1 ? "s" : ""
-                        } selected (${filterValues.year})`
-                      ) : (
-                        <span>Pick months</span>
-                      )}
-                    </Button>
-                  </PopoverTrigger>
-                  <PopoverContent className="w-auto p-0" align="end">
-                    <MonthPicker
-                      selectedMonths={filterValues.months}
-                      selectedYear={filterValues.year}
-                      onSelect={handleFilterChange}
-                    />
-                  </PopoverContent>
-                </Popover>
-
-                <Button
-                  size="icon"
-                  variant="secondary"
-                  onClick={applyFilters}
-                  disabled={isRefreshing}
-                  className={cn(
-                    "transition-all duration-300",
-                    hasFilterChanges && "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]",
-                  )}
-                >
-                  <SendHorizontal className={cn("transition-colors", hasFilterChanges && "text-yellow-400")} />
-                </Button>
-              </div>
-
-              <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
-                <div>Weightages:</div>
-                <div className="flex gap-2">
-                  <span className="px-2 py-1 rounded-md bg-primary/10">TCM: {weightages.tcm.toFixed(0)}%</span>
-                  <span className="px-2 py-1 rounded-md bg-primary/10">CE: {weightages.ce.toFixed(0)}%</span>
-                  <span className="px-2 py-1 rounded-md bg-primary/10">TS: {weightages.ts.toFixed(0)}%</span>
-                  <span className="px-2 py-1 rounded-md bg-primary/10">RBSL: {weightages.rbsl.toFixed(0)}%</span>
-                </div>
-              </div>
-
-              {/* Table Section */}
-              <div className="rounded-md border shadow-sm overflow-hidden">
-                <div className="overflow-x-auto">
-                  {selectedMonths.length === 0 ? (
-                    <div className="h-96 flex items-center justify-center text-center text-muted-foreground">
-                      Please select a month to see the data.
-                    </div>
-                  ) : (
-                    <Table>
-                      <TableHeader>
-                        {table.getHeaderGroups().map((headerGroup) => (
-                          <TableRow key={headerGroup.id}>
-                            {headerGroup.headers.map((header) => {
-                              const monthHeader = header.column.parent
-                              if (
-                                monthHeader &&
-                                monthHeader.id !== "name" &&
-                                monthHeader.id !== "team" &&
-                                monthHeader.id !== "department"
-                              ) {
-                                return (
-                                  <th
-                                    key={header.id}
-                                    colSpan={header.colSpan}
-                                    className={cn(
-                                      getMonthColor(monthHeader.id),
-                                      "px-4 py-2 text-center font-semibold transition-colors duration-200",
-                                      "border-b-2",
-                                    )}
-                                  >
-                                    {monthHeader.id === header.column.id ? (
-                                      // Show abbreviated month name
-                                      <div className="text-xl font-bold mb-3 text-white tracking-wide">
-                                        {abbreviateMonth(monthHeader.id)}
-                                      </div>
-                                    ) : (
-                                      <div className="text-white">
-                                        {flexRender(header.column.columnDef.header, header.getContext())}
-                                      </div>
-                                    )}
-                                  </th>
-                                )
-                              }
-                              return (
-                                <TableHead key={header.id} colSpan={header.colSpan} className="bg-muted/50">
-                                  {header.isPlaceholder
-                                    ? null
-                                    : flexRender(header.column.columnDef.header, header.getContext())}
-                                </TableHead>
-                              )
-                            })}
-                          </TableRow>
-                        ))}
-                      </TableHeader>
-                      <TableBody>
-                        {isRefreshing ? (
-                          <TableRow>
-                            <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
-                              <div className="flex flex-col items-center justify-center gap-2">
-                                <Loader2 className="h-16 w-16 animate-spin text-primary" />
-                                <p className="text-lg text-muted-foreground">Loading data...</p>
-                              </div>
-                            </TableCell>
-                          </TableRow>
-                        ) : table.getRowModel().rows?.length ? (
-                          table.getRowModel().rows.map((row) => (
-                            <TableRow key={row.id} className="hover:bg-muted/50 transition-colors">
-                              {row.getVisibleCells().map((cell) => (
-                                <TableCell key={cell.id}>
-                                  {flexRender(cell.column.columnDef.cell, cell.getContext())}
-                                </TableCell>
-                              ))}
-                            </TableRow>
-                          ))
-                        ) : (
-                          <TableRow>
-                            <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
-                              No results found
-                            </TableCell>
-                          </TableRow>
-                        )}
-                      </TableBody>
-                    </Table>
-                  )}
-                </div>
-              </div>
-
-              {/* Footer Section */}
-              <div className="fixed bottom-8 left-0 right-0 flex justify-center z-0 transition-all duration-150">
-                <div className="flex items-center justify-between py-2 rounded-full shadow-lg bg-background border-t gap-20 px-5 w-fit">
-                  <div className="flex-1 text-sm text-muted-foreground">
-                    {table.getFilteredRowModel().rows.length} records found
-                  </div>
+    <TooltipProvider>
+      <div className="flex flex-col min-h-screen bg-background">
+        <header className="flex h-16 shrink-0 items-center gap-2 border-b">
+          <div className="flex items-center gap-2 px-4">
+            <SidebarTrigger className="-ml-1" />
+            <Separator orientation="vertical" className="mr-2 h-4" />
+            <Breadcrumb>
+              <BreadcrumbList>
+                <BreadcrumbItem className="hidden md:block">
+                  <BreadcrumbLink href="/">Dashboard</BreadcrumbLink>
+                </BreadcrumbItem>
+                <BreadcrumbSeparator className="hidden md:block" />
+                <BreadcrumbItem>
+                  <BreadcrumbPage>Individuals</BreadcrumbPage>
+                </BreadcrumbItem>
+              </BreadcrumbList>
+            </Breadcrumb>
+          </div>
+        </header>
+        <main className="flex flex-1 flex-col gap-4 p-4">
+          <Card className="border-none">
+            <CardContent>
+              <div className="space-y-4">
+                <div className="flex flex-wrap items-center justify-start gap-2">
+                  <Input
+                    placeholder="Search by name or alternative names..."
+                    className="max-w-64"
+                    value={globalFilter}
+                    onChange={(event) => setGlobalFilter(event.target.value)}
+                  />
 
                   <Popover>
                     <PopoverTrigger asChild>
-                      <Button variant="secondary" size="sm">
-                        Columns <ChevronDown className="ml-2 h-4 w-4" />
+                      <Button
+                        variant="outline"
+                        className={cn(
+                          "w-[280px] justify-start text-left font-normal",
+                          !filterValues.months.length && "text-muted-foreground",
+                        )}
+                      >
+                        <CalendarIcon className="mr-2 h-4 w-4" />
+                        {filterValues.months.length > 0 ? (
+                          `${filterValues.months.length} month${
+                            filterValues.months.length > 1 ? "s" : ""
+                          } selected (${filterValues.year})`
+                        ) : (
+                          <span>Pick months</span>
+                        )}
                       </Button>
                     </PopoverTrigger>
-                    <PopoverContent className="w-[200px] p-0" align="end">
-                      <Command>
-                        <CommandInput placeholder="Search columns..." />
-                        <CommandList>
-                          <CommandEmpty>No column found.</CommandEmpty>
-                          <CommandGroup>
-                            {[
-                              "Total Call Minutes",
-                              "TCM Score",
-                              "Call Efficiency",
-                              "CE Score",
-                              "Total Sales",
-                              "TS Score",
-                              "LIV Ratio",
-                              "RBSL Score",
-                            ].map((column) => (
-                              <CommandItem key={column} onSelect={() => handleColumnSelection(column)}>
-                                <Check
-                                  className={cn(
-                                    "mr-2 h-4 w-4",
-                                    selectedColumns.includes(column) ? "opacity-100" : "opacity-0",
-                                  )}
-                                />
-                                {column}
-                              </CommandItem>
-                            ))}
-                          </CommandGroup>
-                        </CommandList>
-                      </Command>
+                    <PopoverContent className="w-auto p-0" align="end">
+                      <MonthPicker
+                        selectedMonths={filterValues.months}
+                        selectedYear={filterValues.year}
+                        onSelect={handleFilterChange}
+                      />
                     </PopoverContent>
                   </Popover>
 
-                  <div className="flex items-center space-x-2">
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => table.previousPage()}
-                      disabled={!table.getCanPreviousPage()}
-                    >
-                      Previous
-                    </Button>
-                    <Button
-                      variant="outline"
-                      size="sm"
-                      onClick={() => table.nextPage()}
-                      disabled={!table.getCanNextPage()}
-                    >
-                      Next
-                    </Button>
+                  <Button
+                    size="icon"
+                    variant="secondary"
+                    onClick={applyFilters}
+                    disabled={isRefreshing}
+                    className={cn(
+                      "transition-all duration-300",
+                      hasFilterChanges && "border-2 border-yellow-400 shadow-[0_0_10px_rgba(250,204,21,0.5)]",
+                    )}
+                  >
+                    <SendHorizontal className={cn("transition-colors", hasFilterChanges && "text-yellow-400")} />
+                  </Button>
+                </div>
+
+                <div className="flex items-center gap-4 mb-4 text-sm text-muted-foreground">
+                  <div>Weightages:</div>
+                  <div className="flex gap-2">
+                    <span className="px-2 py-1 rounded-md bg-primary/10">TCM: {weightages.tcm.toFixed(0)}%</span>
+                    <span className="px-2 py-1 rounded-md bg-primary/10">CE: {weightages.ce.toFixed(0)}%</span>
+                    <span className="px-2 py-1 rounded-md bg-primary/10">TS: {weightages.ts.toFixed(0)}%</span>
+                    <span className="px-2 py-1 rounded-md bg-primary/10">RBSL: {weightages.rbsl.toFixed(0)}%</span>
+                  </div>
+                </div>
+
+                {/* Table Section */}
+                <div className="rounded-md border shadow-sm overflow-hidden">
+                  <div className="overflow-x-auto">
+                    {selectedMonths.length === 0 ? (
+                      <div className="h-96 flex items-center justify-center text-center text-muted-foreground">
+                        Please select a month to see the data.
+                      </div>
+                    ) : (
+                      <Table>
+                        <TableHeader>
+                          {table.getHeaderGroups().map((headerGroup) => (
+                            <TableRow key={headerGroup.id}>
+                              {headerGroup.headers.map((header) => {
+                                const monthHeader = header.column.parent
+                                if (
+                                  monthHeader &&
+                                  monthHeader.id !== "name" &&
+                                  monthHeader.id !== "team" &&
+                                  monthHeader.id !== "department"
+                                ) {
+                                  return (
+                                    <th
+                                      key={header.id}
+                                      colSpan={header.colSpan}
+                                      className={cn(
+                                        getMonthColor(monthHeader.id),
+                                        "px-4 py-2 text-center font-semibold transition-colors duration-200",
+                                        "border-b-2",
+                                      )}
+                                    >
+                                      {monthHeader.id === header.column.id ? (
+                                        // Show abbreviated month name
+                                        <div className="text-xl font-bold mb-3 text-white tracking-wide">
+                                          {abbreviateMonth(monthHeader.id)}
+                                        </div>
+                                      ) : (
+                                        <div className="text-white">
+                                          {flexRender(header.column.columnDef.header, header.getContext())}
+                                        </div>
+                                      )}
+                                    </th>
+                                  )
+                                }
+                                return (
+                                  <TableHead key={header.id} colSpan={header.colSpan} className="bg-muted/50">
+                                    {header.isPlaceholder
+                                      ? null
+                                      : flexRender(header.column.columnDef.header, header.getContext())}
+                                  </TableHead>
+                                )
+                              })}
+                            </TableRow>
+                          ))}
+                        </TableHeader>
+                        <TableBody>
+                          {isRefreshing ? (
+                            <TableRow>
+                              <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
+                                <div className="flex flex-col items-center justify-center gap-2">
+                                  <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                                  <p className="text-lg text-muted-foreground">Loading data...</p>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ) : table.getRowModel().rows?.length ? (
+                            table.getRowModel().rows.map((row) => (
+                              <TableRow key={row.id} className="hover:bg-muted/50 transition-colors">
+                                {row.getVisibleCells().map((cell) => (
+                                  <TableCell key={cell.id}>
+                                    {flexRender(cell.column.columnDef.cell, cell.getContext())}
+                                  </TableCell>
+                                ))}
+                              </TableRow>
+                            ))
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
+                                No results found
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </div>
+                </div>
+
+                {/* Footer Section */}
+                <div className="fixed bottom-8 left-0 right-0 flex justify-center z-0 transition-all duration-150">
+                  <div className="flex items-center justify-between py-2 rounded-full shadow-lg bg-background border-t gap-20 px-5 w-fit">
+                    <div className="flex-1 text-sm text-muted-foreground">
+                      {table.getFilteredRowModel().rows.length} records found
+                    </div>
+
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="secondary" size="sm">
+                          Columns <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0" align="end">
+                        <Command>
+                          <CommandInput placeholder="Search columns..." />
+                          <CommandList>
+                            <CommandEmpty>No column found.</CommandEmpty>
+                            <CommandGroup>
+                              {[
+                                "Total Call Minutes",
+                                "TCM Score",
+                                "Call Efficiency",
+                                "CE Score",
+                                "Total Sales",
+                                "TS Score",
+                                "LIV Ratio",
+                                "RBSL Score",
+                              ].map((column) => (
+                                <CommandItem key={column} onSelect={() => handleColumnSelection(column)}>
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedColumns.includes(column) ? "opacity-100" : "opacity-0",
+                                    )}
+                                  />
+                                  {column}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                      >
+                        Next
+                      </Button>
+                    </div>
                   </div>
                 </div>
               </div>
-            </div>
-          </CardContent>
-        </Card>
-      </main>
-    </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    </TooltipProvider>
   )
 }
 

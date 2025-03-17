@@ -10,6 +10,7 @@ datasource db {
 model ActivityLog {
   id         String  @id @default(cuid()) @map("_id")
   name       String
+  alternativeNames String? // Optional field for alternative names
   team       String
   activity   String
   verdi      Int
@@ -21,6 +22,7 @@ model ActivityLog {
 
   @@map("activity_logs")
 }
+
 
 model IncomingCalls {
   id         String  @id @default(cuid()) @map("_id")
