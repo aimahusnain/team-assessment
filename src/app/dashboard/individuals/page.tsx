@@ -548,12 +548,6 @@ const IndividualsDashboard = () => {
     }
   }, [selectedMonths, selectedYear])
 
-  const fuzzyFilter = (row: any, columnId: string, filterValue: string) => {
-    const value = row.getValue(columnId)
-    if (!value) return false
-    return String(value).toLowerCase().includes(String(filterValue).toLowerCase())
-  }
-
   const table = useReactTable({
     data,
     columns: getColumns(),
