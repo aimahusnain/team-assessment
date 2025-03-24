@@ -392,6 +392,7 @@ const IncomingCalls = () => {
                 ])
               }
             } catch (error) {
+              console.log(error)
               failCount++
               setFailedRecords((prev) => [
                 ...prev,

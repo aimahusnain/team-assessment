@@ -203,7 +203,7 @@ const getScoreForValue = (
 
     // console.log("Checking against sorted levels:")
     sortedLevels.forEach(({ level, score }) => {
-      // console.log(`Level ${level}: ${score}%`)
+      console.log(`Level ${level}: ${score}%`)
     })
 
     const matchedLevel = sortedLevels.find(({ score }) => valueAsPercent >= Number(score))
