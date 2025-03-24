@@ -22,35 +22,56 @@ export async function POST(req: Request) {
     // Fetch all alternative name mappings
     const alternativeNameMappings = await db.alternativeNames.findMany()
 
-    // Create a lookup map for quick access
-    const nameMap = new Map()
+    // Create lookup maps for quick access
+    const nameToAltMap = new Map()
+    const altToNameMap = new Map()
+
     alternativeNameMappings.forEach((mapping) => {
-      // Map in both directions for easy lookup
-      nameMap.set(mapping.name, mapping.altName)
-      nameMap.set(mapping.altName, mapping.name)
+      // Store mappings in both directions but in separate maps to maintain correct ordering
+      nameToAltMap.set(mapping.name, mapping.altName)
+      altToNameMap.set(mapping.altName, mapping.name)
     })
 
-    // Process each log and apply alternative name mappings
+    // Process each log and apply alternative name mappings with correct ordering
     const processedLogs = validLogs.map((log) => {
       const originalName = log.name
+      const originalAltName = log.alternativeNames || ""
+      let finalName = originalName
+      let finalAltName = originalAltName
 
-      // Check if this name has an alternative mapping
-      if (nameMap.has(originalName)) {
-        // Set the alternative name
-        return {
-          ...log,
-          alternativeNames: nameMap.get(originalName),
-        }
+      // Case 1: Primary name is in the 'name' column of AlternativeNames
+      if (nameToAltMap.has(originalName)) {
+        finalAltName = nameToAltMap.get(originalName)
+      }
+      // Case 2: Primary name is in the 'altName' column of AlternativeNames
+      else if (altToNameMap.has(originalName)) {
+        // Swap the names to maintain consistency
+        finalName = altToNameMap.get(originalName)
+        finalAltName = originalName
+      }
+      // Case 3: Alternative name is in the 'name' column of AlternativeNames
+      else if (originalAltName && nameToAltMap.has(originalAltName)) {
+        // Swap the names to maintain consistency
+        finalName = originalAltName
+        finalAltName = originalName
+      }
+      // Case 4: Alternative name is in the 'altName' column of AlternativeNames
+      else if (originalAltName && altToNameMap.has(originalAltName)) {
+        finalName = altToNameMap.get(originalAltName)
+        finalAltName = originalAltName
       }
 
-      return log
+      return {
+        ...log,
+        name: finalName,
+        alternativeNames: finalAltName,
+      }
     })
 
-    // Process in batches as in the original code
+    // Process in batches
     const batchSize = 20
     let totalCreated = 0
 
-    // Process in batches
     for (let i = 0; i < processedLogs.length; i += batchSize) {
       const batch = processedLogs.slice(i, i + batchSize)
 
