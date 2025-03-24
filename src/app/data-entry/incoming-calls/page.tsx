@@ -335,31 +335,92 @@ const IncomingCalls = () => {
     setIsUploading(true)
     setUploadProgress(0)
     setFailedRecords([])
+
+    // Process records in batches of 7
+    const BATCH_SIZE = 7
+    const batches = []
+
+    // Split records into batches
+    for (let i = 0; i < records.length; i += BATCH_SIZE) {
+      batches.push(records.slice(i, i + BATCH_SIZE))
+    }
+
     let successCount = 0
     let failCount = 0
+    let processedCount = 0
 
-    for (let i = 0; i < records.length; i++) {
+    // Process each batch
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i]
       try {
         const response = await fetch("/api/add-incomingCall", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(records[i]),
+          body: JSON.stringify(batch),
         })
+
         const result = await response.json()
+
         if (result.success) {
-          successCount++
+          successCount += result.data.count || batch.length
         } else {
-          failCount++
-          setFailedRecords((prev) => [...prev, { id: records[i].id, error: result.message || "Unknown error" }])
+          // If batch fails, try individual uploads as fallback
+          for (const record of batch) {
+            try {
+              const individualResponse = await fetch("/api/add-incomingCall", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(record),
+              })
+
+              const individualResult = await individualResponse.json()
+
+              if (individualResult.success) {
+                successCount++
+              } else {
+                failCount++
+                setFailedRecords((prev) => [
+                  ...prev,
+                  {
+                    id: record.id,
+                    error: individualResult.message || "Failed in individual upload",
+                  },
+                ])
+              }
+            } catch (error) {
+              failCount++
+              setFailedRecords((prev) => [
+                ...prev,
+                {
+                  id: record.id,
+                  error: "Network error during individual upload",
+                },
+              ])
+            }
+          }
         }
       } catch (error) {
-        console.error("Error uploading record:", error)
-        failCount++
-        setFailedRecords((prev) => [...prev, { id: records[i].id, error: "Network error" }])
+        console.error("Error uploading batch:", error)
+        failCount += batch.length
+        batch.forEach((record) => {
+          setFailedRecords((prev) => [
+            ...prev,
+            {
+              id: record.id,
+              error: "Network error during batch upload",
+            },
+          ])
+        })
       }
-      setUploadProgress(Math.round(((i + 1) / records.length) * 100))
+
+      // Update progress after each batch
+      processedCount += batch.length
+      const progressPercentage = (processedCount / records.length) * 100
+      setUploadProgress(progressPercentage)
     }
 
     setIsUploading(false)
@@ -712,9 +773,7 @@ const IncomingCalls = () => {
                             {isUploading && (
                               <div className="space-y-2">
                                 <Progress value={uploadProgress} className="w-full" />
-                                <p className="text-sm text-muted-foreground">
-                                  Uploading: {Math.round(uploadProgress)}%
-                                </p>
+                                <p className="text-sm text-muted-foreground">Uploading: {uploadProgress.toFixed(2)}%</p>
                               </div>
                             )}
 
@@ -748,7 +807,7 @@ const IncomingCalls = () => {
                                 disabled={isUploading || fileData.length === 0}
                                 className="mt-2 dark:text-black"
                               >
-                                {isUploading ? `Uploading... (${Math.round(uploadProgress)}%)` : "Upload CSV Data"}
+                                {isUploading ? `Uploading... (${uploadProgress.toFixed(2)}%)` : "Upload CSV Data"}
                               </Button>
                               {isUploading && <Progress value={uploadProgress} className="w-full mt-2" />}
                               {failedRecords.length > 0 && (

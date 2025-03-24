@@ -76,9 +76,7 @@ const downloadTemplate = () => {
   // Create template data with headers and one example row
   const templateData = [
     {
-      id: "id here",
       name: "name here",
-      alternativeNames: "alternative name here",
       team: "team here",
       activity: "activity column here",
       verdi: "verdi here",

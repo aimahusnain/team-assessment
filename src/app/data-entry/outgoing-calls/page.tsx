@@ -480,53 +480,78 @@ const OutgoingCalls = () => {
     setIsUploading(true)
     setFailedRecords([])
     setUploadProgress(0)
-    let successCount = 0
-    let failCount = 0
 
     // Process records in batches of 7
     const BATCH_SIZE = 7
-    const totalBatches = Math.ceil(records.length / BATCH_SIZE)
+    const batches = []
 
-    for (let batchIndex = 0; batchIndex < totalBatches; batchIndex++) {
-      // Get the current batch of records
-      const startIndex = batchIndex * BATCH_SIZE
-      const endIndex = Math.min(startIndex + BATCH_SIZE, records.length)
-      const currentBatch = records.slice(startIndex, endIndex)
+    // Split records into batches
+    for (let i = 0; i < records.length; i += BATCH_SIZE) {
+      batches.push(records.slice(i, i + BATCH_SIZE))
+    }
 
+    let successCount = 0
+    let failCount = 0
+    let processedCount = 0
+
+    // Process each batch
+    for (let i = 0; i < batches.length; i++) {
+      const batch = batches[i]
       try {
-        // Send the batch as an array to the API
         const response = await fetch("/api/add-outgoingCall", {
           method: "POST",
           headers: {
             "Content-Type": "application/json",
           },
-          body: JSON.stringify(currentBatch),
+          body: JSON.stringify(batch),
         })
 
         const result = await response.json()
 
         if (result.success) {
-          // Count successful records
-          successCount += currentBatch.length
+          successCount += result.data.count || batch.length
         } else {
-          // If the entire batch failed
-          failCount += currentBatch.length
-          // Add each record in the batch to failed records
-          currentBatch.forEach((record) => {
-            setFailedRecords((prev) => [
-              ...prev,
-              {
-                id: record.id,
-                error: result.message || "Batch upload failed",
-              },
-            ])
-          })
+          // If batch fails, try individual uploads as fallback
+          for (const record of batch) {
+            try {
+              const individualResponse = await fetch("/api/add-outgoingCall", {
+                method: "POST",
+                headers: {
+                  "Content-Type": "application/json",
+                },
+                body: JSON.stringify(record),
+              })
+
+              const individualResult = await individualResponse.json()
+
+              if (individualResult.success) {
+                successCount++
+              } else {
+                failCount++
+                setFailedRecords((prev) => [
+                  ...prev,
+                  {
+                    id: record.id,
+                    error: individualResult.message || "Failed in individual upload",
+                  },
+                ])
+              }
+            } catch (error) {
+              failCount++
+              setFailedRecords((prev) => [
+                ...prev,
+                {
+                  id: record.id,
+                  error: "Network error during individual upload",
+                },
+              ])
+            }
+          }
         }
       } catch (error) {
         console.error("Error uploading batch:", error)
-        failCount += currentBatch.length
-        // Add each record in the batch to failed records
-        currentBatch.forEach((record) => {
+        failCount += batch.length
+        batch.forEach((record) => {
           setFailedRecords((prev) => [
             ...prev,
             {
@@ -537,13 +562,13 @@ const OutgoingCalls = () => {
         })
       }
 
-      // Update progress based on batches completed
-      const progress = Math.round(((batchIndex + 1) / totalBatches) * 100)
-      setUploadProgress(progress)
+      // Update progress after each batch
+      processedCount += batch.length
+      const progressPercentage = (processedCount / records.length) * 100
+      setUploadProgress(progressPercentage)
     }
 
     setIsUploading(false)
-    setUploadProgress(0)
     toast({
       title: "Upload Complete",
       description: `Successfully added ${successCount} records. Failed to add ${failCount} records.`,
@@ -992,9 +1017,7 @@ const OutgoingCalls = () => {
                             {isUploading && (
                               <div className="space-y-2">
                                 <Progress value={uploadProgress} className="w-full" />
-                                <p className="text-sm text-muted-foreground">
-                                  Uploading: {Math.round(uploadProgress)}%
-                                </p>
+                                <p className="text-sm text-muted-foreground">Uploading: {uploadProgress.toFixed(2)}%</p>
                               </div>
                             )}
 
@@ -1028,15 +1051,13 @@ const OutgoingCalls = () => {
                                 disabled={isUploading || fileData.length === 0}
                                 className="mt-2 dark:text-black"
                               >
-                                {isUploading
-                                  ? `Uploading... (${Math.round((uploadProgress / fileData.length) * 100)}%)`
-                                  : "Upload CSV Data"}
+                                {isUploading ? `Uploading... (${uploadProgress.toFixed(2)}%)` : "Upload CSV Data"}
                               </Button>
-                              {isBackgroundUploading && (
+                              {isUploading && (
                                 <div className="space-y-2">
                                   <Progress value={uploadProgress} className="w-full" />
                                   <p className="text-sm text-muted-foreground">
-                                    Uploading in background: {Math.round(uploadProgress)}%
+                                    Uploading: {uploadProgress.toFixed(2)}%
                                   </p>
                                 </div>
                               )}

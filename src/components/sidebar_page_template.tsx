@@ -20,7 +20,7 @@ import {
   PhoneIncoming,
   PhoneOutgoing,
   PieChart,
-  Users
+  Users,
 } from "lucide-react";
 import Link from "next/link";
 import { usePathname } from "next/navigation";
@@ -82,7 +82,10 @@ export default function SidebarPageTemplate({
       },
       // { name: "Configuration", href: "/data-entry/inputs", icon: Bolt },
     ],
-    visualization: [{ name: "Top 10", href: "/top-10", icon: PieChart }],
+    visualization: [
+      { name: "Top 10", href: "/top-10", icon: PieChart },
+      { name: "Months", href: "/months", icon: Bolt },
+    ],
   };
   const [isOpen, setIsOpen] = useState(false);
 
