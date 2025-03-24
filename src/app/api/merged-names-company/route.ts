@@ -28,7 +28,7 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
       if (level === 1) return { level, score: "-" }
       const steps = level - 5
       const score = benchmark + steps * interval
-      console.log(`Level ${level}: ${score} (Benchmark ${benchmark} + ${steps} intervals)`)
+      // console.log(`Level ${level}: ${score} (Benchmark ${benchmark} + ${steps} intervals)`)
       return { level, score }
     }),
   }
@@ -50,18 +50,18 @@ const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
 
       if (level === 10) {
         score = 0 // Level 10 is always 0%
-        console.log(`Level ${level}: ${score}% (Fixed at 0%)`)
+        // console.log(`Level ${level}: ${score}% (Fixed at 0%)`)
       } else if (level > 5) {
         // For levels 6-9: Subtract interval for each level above 5
         score = benchmark - (level - 5) * interval
-        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% - ${level - 5} intervals)`)
+        // console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% - ${level - 5} intervals)`)
       } else if (level === 5) {
         score = benchmark // Level 5 is benchmark
-        console.log(`Level ${level}: ${score}% (Benchmark)`)
+        // console.log(`Level ${level}: ${score}% (Benchmark)`)
       } else {
         // For levels 1-4: Add interval for each level below 5
         score = benchmark + (5 - level) * interval
-        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% + ${5 - level} intervals)`)
+        // console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% + ${5 - level} intervals)`)
       }
 
       return { level, score }
@@ -84,7 +84,7 @@ const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
       if (level === 1) return { level, score: "-" }
       const steps = level - 5
       const score = benchmark + steps * interval
-      console.log(`Level ${level}: ${score} (Benchmark ${benchmark} + ${steps} intervals)`)
+      // console.log(`Level ${level}: ${score} (Benchmark ${benchmark} + ${steps} intervals)`)
       return { level, score }
     }),
   }
@@ -106,19 +106,19 @@ const calculateRBSLScore = async (): Promise<ScoreMatrix | null> => {
 
       if (level === 10) {
         score = benchmark + 5 * interval
-        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% + 5 intervals)`)
+        // console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% + 5 intervals)`)
       } else if (level > 5) {
         score = benchmark + (level - 5) * interval
-        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% + ${level - 5} intervals)`)
+        // console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% + ${level - 5} intervals)`)
       } else if (level === 5) {
         score = benchmark
-        console.log(`Level ${level}: ${score}% (Benchmark)`)
+        // console.log(`Level ${level}: ${score}% (Benchmark)`)
       } else if (level === 1) {
         score = 0
-        console.log(`Level ${level}: ${score}% (Fixed at 0%)`)
+        // console.log(`Level ${level}: ${score}% (Fixed at 0%)`)
       } else {
         score = benchmark - (5 - level) * interval
-        console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% - ${5 - level} intervals)`)
+        // console.log(`Level ${level}: ${score}% (Benchmark ${benchmark}% - ${5 - level} intervals)`)
       }
 
       return { level, score }
@@ -136,12 +136,12 @@ const getScoreForValue = (
 
   // For CE scores (when isDescending is false)
   if (!isDescending) {
-    console.log("\nCompany CE Score Determination:")
-    console.log("Input value:", isNaN(value) ? "NaN" : (value * 100).toFixed(2) + "%")
+    // console.log("\nCompany CE Score Determination:")
+    // console.log("Input value:", isNaN(value) ? "NaN" : (value * 100).toFixed(2) + "%")
 
     // Special case: if value is NaN, 0, or very close to 0, return level 10
     if (isNaN(value) || value === 0 || value < 0.001) {
-      console.log("Value is NaN/0/very small - returning Level 10")
+      // console.log("Value is NaN/0/very small - returning Level 10")
       return { level: 10, score: "0" }
     }
 
@@ -150,7 +150,7 @@ const getScoreForValue = (
     // For CE scores, we need to check against the thresholds in ascending order
     // If the value is higher than 47%, it's level 1
     if (valueAsPercent > 47) {
-      console.log("Value > 47% - returning Level 1")
+      // console.log("Value > 47% - returning Level 1")
       return { level: 1, score: "47" }
     }
 
@@ -167,28 +167,28 @@ const getScoreForValue = (
       { level: 1, threshold: 47 },
     ]
 
-    console.log("Checking CE thresholds:")
+    // console.log("Checking CE thresholds:")
     for (const { level, threshold } of thresholds) {
-      console.log(`Level ${level}: ${threshold}%`)
+      // console.log(`Level ${level}: ${threshold}%`)
       if (valueAsPercent <= threshold) {
-        console.log(`Value ${valueAsPercent}% <= ${threshold}% - returning Level ${level}`)
+        // console.log(`Value ${valueAsPercent}% <= ${threshold}% - returning Level ${level}`)
         return { level, score: threshold.toString() }
       }
     }
 
     // If we get here, the value is > 47%, so return level 1
-    console.log("Value > 47% - returning Level 1")
+    // console.log("Value > 47% - returning Level 1")
     return { level: 1, score: "47" }
   }
 
   // For RBSL scores
   if (isRBSL) {
-    console.log("\nCompany RBSL Score Determination:")
-    console.log("Input value:", isNaN(value) ? "NaN" : (value * 100).toFixed(2) + "%")
+    // console.log("\nCompany RBSL Score Determination:")
+    // console.log("Input value:", isNaN(value) ? "NaN" : (value * 100).toFixed(2) + "%")
 
     // Handle NaN for RBSL
     if (isNaN(value)) {
-      console.log("Value is NaN - returning Level 1")
+      // console.log("Value is NaN - returning Level 1")
       return { level: 1, score: "0" }
     }
 
@@ -201,13 +201,13 @@ const getScoreForValue = (
         return bScore - aScore
       })
 
-    console.log("Checking against sorted levels:")
+    // console.log("Checking against sorted levels:")
     sortedLevels.forEach(({ level, score }) => {
-      console.log(`Level ${level}: ${score}%`)
+      // console.log(`Level ${level}: ${score}%`)
     })
 
     const matchedLevel = sortedLevels.find(({ score }) => valueAsPercent >= Number(score))
-    console.log("Matched level:", matchedLevel?.level || 1)
+    // console.log("Matched level:", matchedLevel?.level || 1)
 
     return matchedLevel || { level: 1, score: "0" }
   }

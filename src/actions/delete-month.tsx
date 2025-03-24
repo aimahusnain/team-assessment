@@ -33,6 +33,8 @@ export async function deleteMonthData(monthName: string, year: number) {
       }),
     ])
 
+    console.log(result)
+
     return { success: true, message: "Month data deleted successfully" }
   } catch (error) {
     console.error("Error deleting month data:", error)

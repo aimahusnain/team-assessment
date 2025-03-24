@@ -1,9 +1,7 @@
 import { NextResponse } from "next/server"
-import { PrismaClient } from "@prisma/client"
+import { db } from "@/lib/db"
 import type { ScoreLevel, ScoreMatrix } from "@/types"
 import { formatDecimal, formatNumber, formatRatio } from "@/lib/utils"
-
-const prisma = new PrismaClient()
 
 interface NameDetails {
   name: string
@@ -18,7 +16,7 @@ interface NameDetails {
   livRatio: string
   rbslScore: ScoreLevel
   month: string
-  alternativeNames: string | null
+  alternativeNames: string
 }
 
 const normalizeAndTrim = (str: string | null | undefined): string => {
@@ -27,7 +25,7 @@ const normalizeAndTrim = (str: string | null | undefined): string => {
 }
 
 const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
-  const inputs = await prisma.inputs.findFirst()
+  const inputs = await db.inputs.findFirst()
   if (!inputs) return null
 
   const benchmark = inputs.individual_score_tcm_benchmark || 0
@@ -52,7 +50,7 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
 }
 
 const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
-  const inputs = await prisma.inputs.findFirst()
+  const inputs = await db.inputs.findFirst()
   if (!inputs) return null
 
   const benchmark = Number.parseFloat(inputs.individual_score_ce_benchmark || "0") // 35%
@@ -91,7 +89,7 @@ const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
 }
 
 const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
-  const inputs = await prisma.inputs.findFirst()
+  const inputs = await db.inputs.findFirst()
   if (!inputs) return null
 
   const benchmark = inputs.individual_score_ts_benchmark || 0
@@ -116,7 +114,7 @@ const calculateTSScore = async (): Promise<ScoreMatrix | null> => {
 }
 
 const calculateRBSLScore = async (): Promise<ScoreMatrix | null> => {
-  const inputs = await prisma.inputs.findFirst()
+  const inputs = await db.inputs.findFirst()
   if (!inputs) return null
 
   const benchmark = Number.parseFloat(inputs.individual_score_rbsl_benchmark || "0")
@@ -243,8 +241,30 @@ export async function GET(request: Request) {
     const months = url.searchParams.getAll("months")
     const year = Number.parseInt(url.searchParams.get("year") || new Date().getFullYear().toString())
 
+    // Fetch all alternative name mappings from the dedicated model
+    const alternativeNameMappings = await db.alternativeNames.findMany()
+
+    // Create maps for name lookups
+    const nameToLookupKeyMap = new Map<string, string>()
+
+    // First, process the AlternativeNames model entries
+    alternativeNameMappings.forEach((mapping) => {
+      const normalizedName = normalizeAndTrim(mapping.name)
+      const normalizedAltName = normalizeAndTrim(mapping.altName)
+
+      if (normalizedName && normalizedAltName) {
+        // Always use the shorter name as the primary name (lookup key)
+        // This ensures "Gaute Liff" is preferred over "Gaute Eivind Floan Liff"
+        const primaryName = normalizedName.length <= normalizedAltName.length ? normalizedName : normalizedAltName
+
+        // Map both names to the primary name as lookup key
+        nameToLookupKeyMap.set(normalizedName, primaryName)
+        nameToLookupKeyMap.set(normalizedAltName, primaryName)
+      }
+    })
+
     // Fetch team and department data without month and year filters
-    const allActivityLogs = await prisma.activityLog.findMany({
+    const allActivityLogs = await db.activityLog.findMany({
       select: {
         name: true,
         alternativeNames: true,
@@ -253,32 +273,65 @@ export async function GET(request: Request) {
       },
     })
 
-    // Create a mapping between names and their details
-    const nameDetailsMap = new Map<string, { team: string; department: string; alternativeNames: string | null }>()
+    // Create mappings for team, department, and alternative names
+    const nameToTeamDeptMap = new Map<string, { team: string | null; department: string | null }>()
+    const lookupKeyToAltNameMap = new Map<string, string | null>()
 
-    // Create a mapping between names and their preferred lookup key (alternative name or original name)
-    const nameToLookupKeyMap = new Map<string, string>()
-
+    // Process activity logs for names not in AlternativeNames model
     allActivityLogs.forEach((log) => {
       const normalizedName = normalizeAndTrim(log.name)
+      const normalizedAltName = normalizeAndTrim(log.alternativeNames || "")
+
       if (normalizedName) {
-        // Store the details for this name
-        nameDetailsMap.set(normalizedName, {
-          team: log.team || "",
-          department: log.department || "",
-          alternativeNames: log.alternativeNames,
+        // Store team and department info
+        nameToTeamDeptMap.set(normalizedName, {
+          team: log.team,
+          department: log.department,
         })
 
-        // Determine the lookup key for this name
-        const lookupKey = log.alternativeNames ? normalizeAndTrim(log.alternativeNames) : normalizedName
-        nameToLookupKeyMap.set(normalizedName, lookupKey)
+        // If this name is not already in our lookup map (from AlternativeNames model)
+        if (!nameToLookupKeyMap.has(normalizedName)) {
+          // If it has an alternative name in the activity log
+          if (normalizedAltName) {
+            // Always use the shorter name as the primary name (lookup key)
+            const primaryName = normalizedName.length <= normalizedAltName.length ? normalizedName : normalizedAltName
+            const altName = normalizedName.length <= normalizedAltName.length ? normalizedAltName : normalizedName
+
+            // Map both names to the primary name as lookup key
+            nameToLookupKeyMap.set(normalizedName, primaryName)
+            nameToLookupKeyMap.set(normalizedAltName, primaryName)
+
+            // Store the alternative name for this lookup key
+            lookupKeyToAltNameMap.set(primaryName, altName)
+          } else {
+            // No alternative name, use itself as lookup key
+            nameToLookupKeyMap.set(normalizedName, normalizedName)
+          }
+        }
+      }
+    })
+
+    // Now process the AlternativeNames model again to store alternative names for lookup keys
+    alternativeNameMappings.forEach((mapping) => {
+      const normalizedName = normalizeAndTrim(mapping.name)
+      const normalizedAltName = normalizeAndTrim(mapping.altName)
+
+      if (normalizedName && normalizedAltName) {
+        // Get the lookup key for this name (which we determined earlier)
+        const lookupKey = nameToLookupKeyMap.get(normalizedName)
+
+        if (lookupKey) {
+          // The alternative name is the one that's not the lookup key
+          const altName = lookupKey === normalizedName ? normalizedAltName : normalizedName
+          lookupKeyToAltNameMap.set(lookupKey, altName)
+        }
       }
     })
 
     const monthlyData = await Promise.all(
       months.map(async (month) => {
         const [activityLogs, incomingCalls, outgoingCalls] = await Promise.all([
-          prisma.activityLog.findMany({
+          db.activityLog.findMany({
             where: { monthName: month, year },
             select: {
               name: true,
@@ -287,14 +340,14 @@ export async function GET(request: Request) {
               alternativeNames: true,
             },
           }),
-          prisma.incomingCalls.findMany({
+          db.incomingCalls.findMany({
             where: { monthName: month, year },
             select: {
               navn: true,
               min: true,
             },
           }),
-          prisma.outgoingCalls.findMany({
+          db.outgoingCalls.findMany({
             where: { monthName: month, year },
             select: {
               navn: true,
@@ -311,7 +364,7 @@ export async function GET(request: Request) {
           calculateRBSLScore(),
         ])
 
-        // Maps to store aggregated data by lookup key (alternative name or original name)
+        // Maps to store aggregated data by lookup key
         const incomingMinutesMap = new Map<string, number>()
         const outgoingMinutesMap = new Map<string, number>()
         const outgoingCallsMap = new Map<string, number>()
@@ -322,10 +375,8 @@ export async function GET(request: Request) {
         activityLogs.forEach((log) => {
           const normalizedName = normalizeAndTrim(log.name)
           if (normalizedName) {
-            // Get the lookup key for this name (alternative name or original name)
-            const lookupKey = log.alternativeNames
-              ? normalizeAndTrim(log.alternativeNames)
-              : nameToLookupKeyMap.get(normalizedName) || normalizedName
+            // Get the lookup key for this name
+            const lookupKey = nameToLookupKeyMap.get(normalizedName) || normalizedName
 
             const currentSales = totalSalesMap.get(lookupKey) || 0
             totalSalesMap.set(lookupKey, currentSales + log.verdi)
@@ -372,19 +423,12 @@ export async function GET(request: Request) {
           ...Array.from(totalSalesMap.keys()),
         ])
 
-        // Create a reverse mapping from lookup keys to original names
-        const lookupKeyToOriginalNameMap = new Map<string, string>()
-        for (const [originalName, lookupKey] of nameToLookupKeyMap.entries()) {
-          lookupKeyToOriginalNameMap.set(lookupKey, originalName)
-        }
-
         // Process the data for each unique lookup key
         const monthDetails: NameDetails[] = Array.from(uniqueLookupKeys)
           .filter(Boolean)
           .map((lookupKey) => {
-            // Find the original name for this lookup key
-            const originalName = lookupKeyToOriginalNameMap.get(lookupKey) || lookupKey
-            const details = nameDetailsMap.get(originalName)
+            const teamDept = nameToTeamDeptMap.get(lookupKey) || { team: null, department: null }
+            const alternativeName = lookupKeyToAltNameMap.get(lookupKey) || null
 
             const incomingMinutes = incomingMinutesMap.get(lookupKey) || 0
             const outgoingMinutes = outgoingMinutesMap.get(lookupKey) || 0
@@ -395,16 +439,10 @@ export async function GET(request: Request) {
             const livSales = livSalesMap.get(lookupKey) || 0
             const livRatio = totalSales > 0 ? Number(livSales / totalSales) : 0
 
-            // console.log(`\nProcessing ${lookupKey} (original: ${originalName}) for ${month}:`)
-            // console.log("Total Call Minutes:", totalCallMinutes)
-            // console.log("Call Efficiency:", (callEfficiency * 100).toFixed(2) + "%")
-            // console.log("Total Sales:", totalSales)
-            // console.log("Liv Ratio:", (livRatio * 100).toFixed(2) + "%")
-
             return {
-              name: originalName,
-              team: details?.team || null,
-              department: details?.department || null,
+              name: lookupKey,
+              team: teamDept.team,
+              department: teamDept.department,
               totalCallMinutes: formatNumber(totalCallMinutes),
               tcmScore: getScoreForValue(totalCallMinutes, tcmScoreMatrix, true),
               callEfficiency: formatDecimal(callEfficiency),
@@ -414,7 +452,7 @@ export async function GET(request: Request) {
               livRatio: formatRatio(livRatio),
               rbslScore: getScoreForValue(livRatio, rbslScoreMatrix, true, true),
               month,
-              alternativeNames: details?.alternativeNames || originalName,
+              alternativeNames: alternativeName || lookupKey, // Use the name itself when alternative name is null
             }
           })
 
@@ -451,7 +489,6 @@ export async function GET(request: Request) {
       },
       { status: 500 },
     )
-  } finally {
-    await prisma.$disconnect()
   }
 }
+

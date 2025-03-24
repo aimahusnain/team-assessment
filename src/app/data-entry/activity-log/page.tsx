@@ -349,7 +349,7 @@ const ActivityLog = () => {
           <div className="relative group">
             <Checkbox
               checked={isAllPagesSelected ? true : isAllSelected || false}
-              onCheckedChange={(value) => {
+              onCheckedChange={() => {
                 if (isAllPagesSelected || isAllSelected) {
                   // If all are selected, deselect all
                   table.resetRowSelection()
@@ -854,11 +854,15 @@ const ActivityLog = () => {
     return handleExport
   }
 
+  // Update the handleUpdateAlternativeNames function to also update the AlternativeNames model
   const handleUpdateAlternativeNames = async () => {
     try {
       setIsUpdatingAltNames(true)
       const selectedRows = table.getFilteredSelectedRowModel().rows
       const selectedIds = selectedRows.map((row) => row.original.id)
+
+      // Get the primary name from the first selected row
+      const primaryName = selectedRows[0]?.original.name || ""
 
       // Calculate total batches
       const batchSize = 10
@@ -884,6 +888,7 @@ const ActivityLog = () => {
             body: JSON.stringify({
               ids: batchIds,
               alternativeName: newAlternativeName,
+              primaryName: primaryName, // Pass the primary name to the API
             }),
           })
 
@@ -1638,3 +1643,4 @@ const ActivityLog = () => {
 }
 
 export default ActivityLog
+

@@ -37,9 +37,9 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
   const benchmark = inputs.team_score_tcm_benchmark || 0
   const interval = inputs.team_score_tcm_interval || 0
 
-  console.log("Department TCM Score Calculation:")
-  console.log("Benchmark:", benchmark)
-  console.log("Interval:", interval)
+  // console.log("Department TCM Score Calculation:")
+  // console.log("Benchmark:", benchmark)
+  // console.log("Interval:", interval)
 
   return {
     benchmark,
