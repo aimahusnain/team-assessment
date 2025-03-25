@@ -31,9 +31,9 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
   const benchmark = inputs.individual_score_tcm_benchmark || 0
   const interval = inputs.individual_score_tcm_interval || 0
 
-  console.log("Individual TCM Score Calculation:")
-  console.log("Benchmark:", benchmark)
-  console.log("Interval:", interval)
+  // console.log("Individual TCM Score Calculation:")
+  // console.log("Benchmark:", benchmark)
+  // console.log("Interval:", interval)
 
   return {
     benchmark,
@@ -43,7 +43,7 @@ const calculateTCMScore = async (): Promise<ScoreMatrix | null> => {
       if (level === 1) return { level, score: "-" }
       const steps = level - 5
       const score = benchmark + steps * interval
-      console.log(`Level ${level}: ${score} (Benchmark ${benchmark} + ${steps} intervals)`)
+      // console.log(`Level ${level}: ${score} (Benchmark ${benchmark} + ${steps} intervals)`)
       return { level, score }
     }),
   }
@@ -56,9 +56,9 @@ const calculateCEScore = async (): Promise<ScoreMatrix | null> => {
   const benchmark = Number.parseFloat(inputs.individual_score_ce_benchmark || "0") // 35%
   const interval = Number.parseFloat(inputs.individual_score_ce_interval || "0") // 3%
 
-  console.log("Individual CE Score Calculation:")
-  console.log("Benchmark:", benchmark + "%")
-  console.log("Interval:", interval + "%")
+  // console.log("Individual CE Score Calculation:")
+  // console.log("Benchmark:", benchmark + "%")
+  // console.log("Interval:", interval + "%")
 
   return {
     benchmark,
@@ -189,7 +189,7 @@ const getScoreForValue = (
     // For CE, we want to find the first level where the value is GREATER than the score
     // This gives higher levels (better scores) for lower CE percentages
     const matchedLevel = sortedLevels.find(({ score }) => valueAsPercent > Number(score))
-    console.log("Matched level:", matchedLevel?.level || 1)
+    // console.log("Matched level:", matchedLevel?.level || 1)
 
     return matchedLevel || { level: 1, score: "47" }
   }
