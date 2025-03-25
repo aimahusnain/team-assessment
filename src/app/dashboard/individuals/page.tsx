@@ -32,7 +32,16 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, CalendarIcon, Check, ChevronDown, ChevronUp, Loader2, SendHorizontal } from "lucide-react"
+import {
+  ArrowUpDown,
+  CalendarIcon,
+  Check,
+  ChevronDown,
+  ChevronUp,
+  Download,
+  Loader2,
+  SendHorizontal,
+} from "lucide-react"
 import { useCallback, useEffect, useState } from "react"
 
 type IndividualData = {
@@ -684,6 +693,48 @@ const IndividualsDashboard = () => {
     return Array.from(dataMap.values())
   }
 
+  const exportToCSV = () => {
+    // Only export if we have data
+    if (table.getFilteredRowModel().rows.length === 0) return
+
+    // Get all visible columns
+    const visibleColumns = table.getVisibleFlatColumns()
+
+    // Create header row
+    const headers = visibleColumns.map((column) => {
+      // For month columns, add the month prefix
+      if (column.id.includes("-")) {
+        const [month, metric] = column.id.split("-")
+        return `${month} ${metric}`
+      }
+      return column.id
+    })
+
+    // Create data rows
+    const rows = table.getFilteredRowModel().rows.map((row) => {
+      return visibleColumns.map((column) => {
+        const cellValue = row.getValue(column.id)
+        // Handle different data types appropriately
+        if (cellValue === null || cellValue === undefined) return ""
+        return String(cellValue).replace(/,/g, "")
+      })
+    })
+
+    // Combine headers and rows
+    const csvContent = [headers.join(","), ...rows.map((row) => row.join(","))].join("\n")
+
+    // Create a blob and download link
+    const blob = new Blob([csvContent], { type: "text/csv;charset=utf-8;" })
+    const url = URL.createObjectURL(blob)
+    const link = document.createElement("a")
+    link.setAttribute("href", url)
+    link.setAttribute("download", `individuals-data-${selectedYear}-${selectedMonths.join("-")}.csv`)
+    link.style.visibility = "hidden"
+    document.body.appendChild(link)
+    link.click()
+    document.body.removeChild(link)
+  }
+
   return (
     <TooltipProvider>
       <div className="flex flex-col min-h-screen bg-background">
@@ -755,6 +806,15 @@ const IndividualsDashboard = () => {
                     )}
                   >
                     <SendHorizontal className={cn("transition-colors", hasFilterChanges && "text-yellow-400")} />
+                  </Button>
+                  <Button
+                    variant="outline"
+                    onClick={exportToCSV}
+                    disabled={table.getFilteredRowModel().rows.length === 0 || isRefreshing}
+                    className="flex items-center gap-2"
+                  >
+                    <Download className="h-4 w-4" />
+                    Export CSV
                   </Button>
                 </div>
 
@@ -857,7 +917,7 @@ const IndividualsDashboard = () => {
 
                 {/* Footer Section */}
                 <div className="fixed bottom-8 left-0 right-0 flex justify-center z-0 transition-all duration-150">
-                  <div className="flex items-center justify-between py-2 rounded-full shadow-lg bg-background border-t gap-20 px-5 w-fit">
+                  <div className="flex items-center justify-between py-2 rounded-full shadow-lg bg-background border-t gap-4 px-5 w-fit">
                     <div className="flex-1 text-sm text-muted-foreground">
                       {table.getFilteredRowModel().rows.length} records found
                     </div>
@@ -930,3 +990,4 @@ const IndividualsDashboard = () => {
 }
 
 export default IndividualsDashboard
+
