@@ -110,6 +110,11 @@ const OutgoingCalls = () => {
   const [failedRecords, setFailedRecords] = useState<FailedRecord[]>([])
   const [isBackgroundUploading, setIsBackgroundUploading] = useState(false)
   const [isRefreshing, setIsRefreshing] = useState(false)
+  // Add states for name change functionality
+  const [isChangingNames, setIsChangingNames] = useState(false)
+  const [nameChangeProgress, setNameChangeProgress] = useState(0)
+  const [isNameChangeDialogOpen, setIsNameChangeDialogOpen] = useState(false)
+  const [newName, setNewName] = useState("")
 
   console.log(isBackgroundUploading) // No need now.
 
@@ -578,6 +583,92 @@ const OutgoingCalls = () => {
     fetchData()
   }
 
+  // Add a function to handle batch name changes
+  const handleBatchNameChange = async () => {
+    if (!newName.trim()) {
+      toast({
+        title: "Error",
+        description: "Please enter a valid name",
+        variant: "destructive",
+      })
+      return
+    }
+
+    setIsChangingNames(true)
+    setNameChangeProgress(0)
+
+    const selectedRows = table.getFilteredSelectedRowModel().rows
+    const selectedIds = selectedRows.map((row) => row.original.id)
+    const totalEntries = selectedIds.length
+
+    // Check if all selected entries have the same name and if it matches the current search
+    const currentSearchTerm = (table.getColumn("navn")?.getFilterValue() as string) ?? ""
+    const allSelectedNames = selectedRows.map((row) => row.original.navn)
+    const allSameName = allSelectedNames.every((name) => name === allSelectedNames[0])
+    const searchMatchesSelection = currentSearchTerm && allSameName && allSelectedNames[0] === currentSearchTerm
+
+    // Process in batches of 10
+    const BATCH_SIZE = 10
+    const batches = []
+
+    // Split into batches
+    for (let i = 0; i < selectedIds.length; i += BATCH_SIZE) {
+      batches.push(selectedIds.slice(i, i + BATCH_SIZE))
+    }
+
+    let processedCount = 0
+    let successCount = 0
+
+    // Process each batch
+    for (let i = 0; i < batches.length; i++) {
+      const batchIds = batches[i]
+      try {
+        const response = await fetch("/api/edit-outgoingCall-names", {
+          method: "PUT",
+          headers: {
+            "Content-Type": "application/json",
+          },
+          body: JSON.stringify({
+            ids: batchIds,
+            newName: newName,
+          }),
+        })
+
+        const result = await response.json()
+
+        if (result.success) {
+          successCount += result.data.count
+        }
+      } catch (error) {
+        console.error("Error updating batch:", error)
+      }
+
+      // Update progress
+      processedCount += batchIds.length
+      const progressPercentage = (processedCount / totalEntries) * 100
+      setNameChangeProgress(progressPercentage)
+    }
+
+    setIsChangingNames(false)
+    setIsNameChangeDialogOpen(false)
+    setNewName("")
+
+    // If the current search term matches all selected entries, update the search to the new name
+    if (searchMatchesSelection) {
+      table.getColumn("navn")?.setFilterValue(newName)
+    }
+
+    toast({
+      title: "Name Change Complete",
+      description: `Successfully updated ${successCount} out of ${totalEntries} records.`,
+      variant: successCount > 0 ? "default" : "destructive",
+    })
+
+    // Refresh data
+    await fetchData()
+    setRowSelection({})
+  }
+
   // File upload handler
   const handleFileUpload = (files: File[]) => {
     const file = files[0]
@@ -845,6 +936,64 @@ const OutgoingCalls = () => {
                       </>
                     )}
                   </Button>
+                )}
+                {/* Add Change Names Dialog */}
+                {table.getFilteredSelectedRowModel().rows.length > 0 && (
+                  <Dialog open={isNameChangeDialogOpen} onOpenChange={setIsNameChangeDialogOpen}>
+                    <DialogTrigger asChild>
+                      <Button variant="outline" size="sm">
+                        Change Names ({table.getFilteredSelectedRowModel().rows.length})
+                      </Button>
+                    </DialogTrigger>
+                    <DialogContent className="sm:max-w-[425px] dark:text-white">
+                      <DialogHeader>
+                        <DialogTitle>Change Names</DialogTitle>
+                        <DialogDescription>
+                          Enter the new name for {table.getFilteredSelectedRowModel().rows.length} selected entries
+                        </DialogDescription>
+                      </DialogHeader>
+                      <div className="space-y-4 py-4">
+                        <div className="space-y-2">
+                          <Label htmlFor="new-name">New Name</Label>
+                          <Input
+                            id="new-name"
+                            placeholder="Enter new name"
+                            value={newName}
+                            onChange={(e) => setNewName(e.target.value)}
+                          />
+                        </div>
+
+                        {isChangingNames && (
+                          <div className="space-y-2">
+                            <Progress value={nameChangeProgress} className="w-full" />
+                            <p className="text-sm text-muted-foreground">
+                              Processing: {nameChangeProgress.toFixed(2)}%
+                            </p>
+                          </div>
+                        )}
+                      </div>
+                      <div className="flex justify-end gap-3">
+                        <Button
+                          type="button"
+                          variant="outline"
+                          onClick={() => setIsNameChangeDialogOpen(false)}
+                          disabled={isChangingNames}
+                        >
+                          Cancel
+                        </Button>
+                        <Button className="dark:!text-black" onClick={handleBatchNameChange} disabled={isChangingNames || !newName.trim()}>
+                          {isChangingNames ? (
+                            <>
+                              <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                              Processing...
+                            </>
+                          ) : (
+                            "Change Names"
+                          )}
+                        </Button>
+                      </div>
+                    </DialogContent>
+                  </Dialog>
                 )}
                 {/* Add Outgoing Call Dialog */}
                 <Dialog
@@ -1205,3 +1354,4 @@ const OutgoingCalls = () => {
 }
 
 export default OutgoingCalls
+
