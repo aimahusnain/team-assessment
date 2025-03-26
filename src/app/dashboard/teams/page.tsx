@@ -10,11 +10,12 @@ import {
 } from "@/components/ui/breadcrumb"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
+import { Command, CommandEmpty, CommandGroup, CommandInput, CommandItem, CommandList } from "@/components/ui/command"
 import { Input } from "@/components/ui/input"
 import { MonthPicker } from "@/components/ui/monthpicker"
 import { Popover, PopoverContent, PopoverTrigger } from "@/components/ui/popover"
 import { Separator } from "@/components/ui/separator"
-import { Table, TableHeader, TableRow } from "@/components/ui/table"
+import { Table, TableBody, TableCell, TableHead, TableHeader, TableRow } from "@/components/ui/table"
 import { Tooltip, TooltipContent, TooltipProvider, TooltipTrigger } from "@/components/ui/tooltip"
 import { abbreviateMonth, cn, formatPercentage, formatValue } from "@/lib/utils"
 import {
@@ -30,8 +31,18 @@ import {
   getSortedRowModel,
   useReactTable,
 } from "@tanstack/react-table"
-import { ArrowUpDown, CalendarIcon, ChevronDown, ChevronUp, Loader2, SendHorizontal } from "lucide-react"
-import { useCallback, useEffect, useState } from "react"
+import { AnimatePresence, motion } from "framer-motion"
+import {
+  ArrowUpDown,
+  CalendarIcon,
+  Check,
+  ChevronDown,
+  ChevronRight,
+  ChevronUp,
+  Loader2,
+  SendHorizontal,
+} from "lucide-react"
+import React, { useCallback, useEffect, useState } from "react"
 
 type TeamData = {
   team: string
@@ -591,12 +602,6 @@ const TeamsDashboard = () => {
     return Array.from(dataMap.values())
   }, [])
 
-  // Add a function to calculate totals for all teams
-  // Add this function after the transformApiResponse function
-  // Add this function after the transformApiResponse function
-
-  // 2. Modify the fetchData function to add the total row
-  // Replace the fetchData function with this updated version
   const fetchData = useCallback(async () => {
     if (selectedMonths.length === 0) {
       setData([])
@@ -680,6 +685,7 @@ const TeamsDashboard = () => {
       totalCallMinutes: number
       formattedTotalCallMinutes: string
       tcmScore: { level: number; score: number | string }
+      month: string
     }[]
   }
 
@@ -711,17 +717,6 @@ const TeamsDashboard = () => {
         <Loader2 className="h-8 w-8 animate-spin" />
       </div>
     )
-  }
-
-  // Update the TeamMemberDetails interface to include month
-  interface TeamMemberDetails {
-    name: string
-    totalSales: number
-    formattedTotalSales: string
-    month: string
-    totalCallMinutes?: number;
-    formattedTotalCallMinutes?: string;
-    tcmScore?: { level: number; score: number | string };
   }
 
   return (
@@ -843,4 +838,307 @@ const TeamsDashboard = () => {
                                     </th>
                                   )
                                 }
+                                return (
+                                  <TableHead key={header.id} colSpan={header.colSpan} className="bg-muted/50">
+                                    {header.isPlaceholder
+                                      ? null
+                                      : flexRender(header.column.columnDef.header, header.getContext())}
+                                  </TableHead>
+                                )
+                              })}
+                            </TableRow>
+                          ))}
+                        </TableHeader>
+                        <TableBody>
+                          {isRefreshing ? (
+                            <TableRow>
+                              <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
+                                <div className="flex flex-col items-center justify-center gap-2">
+                                  <Loader2 className="h-16 w-16 animate-spin text-primary" />
+                                  <p className="text-lg text-muted-foreground">Loading data...</p>
+                                </div>
+                              </TableCell>
+                            </TableRow>
+                          ) : table.getRowModel().rows?.length ? (
+                            <>
+                              {table.getRowModel().rows.map((row) => (
+                                <React.Fragment key={row.id}>
+                                  <TableRow
+                                    key={row.id}
+                                    className={cn(
+                                      "hover:bg-muted/50 transition-colors h-12",
+                                      row.getValue("team") === "Total (All Teams)" && "bg-primary/10 font-bold",
+                                      expandedTeams.includes(row.getValue("team")) && "bg-muted/30",
+                                    )}
+                                    onMouseEnter={() => setHoveredTeam(row.getValue("team"))}
+                                    onMouseLeave={() => setHoveredTeam(null)}
+                                  >
+                                    {row.getVisibleCells().map((cell, cellIndex) => (
+                                      <TableCell
+                                        key={cell.id}
+                                        className={row.getValue("team") === "Total (All Teams)" ? "font-bold" : ""}
+                                      >
+                                        {cellIndex === 0 ? (
+                                          <div className="flex items-center gap-2">
+                                            <div className="font-medium min-w-[200px] flex items-center">
+                                              {hoveredTeam === row.getValue("team") &&
+                                                row.getValue("team") !== "Total (All Teams)" && (
+                                                  <Button
+                                                    variant="ghost"
+                                                    size="icon"
+                                                    className="h-6 w-6 mr-1 rounded-full bg-primary/10 hover:bg-primary/20"
+                                                    onClick={() => toggleTeamExpansion(row.getValue("team"))}
+                                                  >
+                                                    {expandedTeams.includes(row.getValue("team")) ? (
+                                                      <ChevronDown className="h-4 w-4" />
+                                                    ) : (
+                                                      <ChevronRight className="h-4 w-4" />
+                                                    )}
+                                                  </Button>
+                                                )}
+                                              <span>{row.getValue("team")}</span>
+                                            </div>
+                                          </div>
+                                        ) : (
+                                          flexRender(cell.column.columnDef.cell, cell.getContext())
+                                        )}
+                                      </TableCell>
+                                    ))}
+                                  </TableRow>
+
+                                  <AnimatePresence>
+                                    {expandedTeams.includes(row.getValue("team")) && (
+                                      <motion.tr
+                                        initial={{ opacity: 0, height: 0 }}
+                                        animate={{ opacity: 1, height: "auto" }}
+                                        exit={{ opacity: 0, height: 0 }}
+                                        transition={{ duration: 0.3 }}
+                                        className="bg-muted/10"
+                                      >
+                                        <td colSpan={row.getVisibleCells().length} className="p-0">
+                                          <motion.div
+                                            initial={{ opacity: 0 }}
+                                            animate={{ opacity: 1 }}
+                                            exit={{ opacity: 0 }}
+                                            className="py-4 px-6"
+                                          >
+                                            {row.original.members?.length ? (
+                                              <div className="space-y-4">
+                                                <div className="divide-y">
+                                                  {/* Month headers row */}
+                                                  <div className="flex items-center pb-3">
+                                                    <div className="w-[14.2rem] font-bold">
+                                                      {row.getValue("team")}'s Members
+                                                    </div>
+                                                    <div className="flex flex-1 justify-start gap-4">
+                                                      <div className="min-w-32 font-bold">TCM</div>
+                                                      <div className="min-w-32 font-bold">Total Sales</div>
+                                                    </div>
+                                                  </div>
+
+                                                  {Array.from(new Set(row.original.members?.map((m) => m.name))).map(
+                                                    (memberName) => {
+                                                      const membersByMonth =
+                                                        row.original.members?.filter((m) => m.name === memberName) || []
+
+                                                      return (
+                                                        <div
+                                                          key={memberName}
+                                                          className="hover:bg-background/80 transition-colors rounded-lg"
+                                                        >
+                                                          <div className="flex items-center py-3">
+                                                            <div className="w-[14.2rem] font-medium flex items-center gap-2">
+                                                              <span>{memberName}</span>
+                                                            </div>
+
+                                                            <div className="flex flex-1 justify-start gap-4">
+                                                              {/* TCM Data */}
+                                                              <div className="min-w-32">
+                                                                {selectedMonths
+                                                                  .sort((a, b) => months.indexOf(a) - months.indexOf(b))
+                                                                  .map((month) => {
+                                                                    const memberData = membersByMonth.find(
+                                                                      (m) => m.month === month,
+                                                                    )
+
+                                                                    return (
+                                                                      <div key={month} className="min-w-20 text-center">
+                                                                        <Tooltip>
+                                                                          <TooltipTrigger asChild>
+                                                                            <div className="text-sm font-medium px-3 py-1.5 rounded-md transition-all">
+                                                                              {memberData?.formattedTotalCallMinutes ||
+                                                                                "-"}
+                                                                              {memberData?.tcmScore && (
+                                                                                <span className="ml-2 text-xs px-1.5 py-0.5 rounded bg-primary/20">
+                                                                                  {memberData?.tcmScore.level || "-"}
+                                                                                </span>
+                                                                              )}
+                                                                            </div>
+                                                                          </TooltipTrigger>
+                                                                          <TooltipContent side="top">
+                                                                            <p>
+                                                                              TCM Score:{" "}
+                                                                              {memberData?.tcmScore?.level || "-"}
+                                                                            </p>
+                                                                          </TooltipContent>
+                                                                        </Tooltip>
+                                                                      </div>
+                                                                    )
+                                                                  })}
+                                                              </div>
+
+                                                              {/* Sales Data */}
+                                                              <div className="min-w-32">
+                                                                <div className="flex flex-1 justify-start">
+                                                                  {selectedMonths
+                                                                    .sort(
+                                                                      (a, b) => months.indexOf(a) - months.indexOf(b),
+                                                                    )
+                                                                    .map((month) => {
+                                                                      const memberData = membersByMonth.find(
+                                                                        (m) => m.month === month,
+                                                                      )
+                                                                      const monthColor =
+                                                                        getMonthColor(month).split(" ")[0]
+                                                                      return (
+                                                                        <div
+                                                                          key={month}
+                                                                          className="min-w-20 text-center"
+                                                                        >
+                                                                          <Tooltip>
+                                                                            <TooltipTrigger asChild>
+                                                                              <div
+                                                                                className={cn(
+                                                                                  "text-sm font-medium px-3 py-1.5 rounded-md transition-all",
+                                                                                  memberData &&
+                                                                                    memberData.formattedTotalSales !==
+                                                                                      "-"
+                                                                                    ? `${monthColor}/10 hover:${monthColor}/20`
+                                                                                    : "",
+                                                                                )}
+                                                                              >
+                                                                                {memberData
+                                                                                  ? memberData.formattedTotalSales
+                                                                                  : "-"}
+                                                                              </div>
+                                                                            </TooltipTrigger>
+                                                                            <TooltipContent side="top">
+                                                                              <p>{month} Total Sales</p>
+                                                                            </TooltipContent>
+                                                                          </Tooltip>
+                                                                        </div>
+                                                                      )
+                                                                    })}
+                                                                </div>
+                                                              </div>
+                                                            </div>
+                                                          </div>
+                                                        </div>
+                                                      )
+                                                    },
+                                                  )}
+                                                </div>
+                                              </div>
+                                            ) : (
+                                              <div className="flex items-center justify-center py-8 text-muted-foreground">
+                                                <div className="text-center">
+                                                  <p>No member data available for this team</p>
+                                                </div>
+                                              </div>
+                                            )}
+                                          </motion.div>
+                                        </td>
+                                      </motion.tr>
+                                    )}
+                                  </AnimatePresence>
+                                </React.Fragment>
+                              ))}
+                            </>
+                          ) : (
+                            <TableRow>
+                              <TableCell colSpan={table.getAllColumns().length} className="h-96 text-center">
+                                No results found
+                              </TableCell>
+                            </TableRow>
+                          )}
+                        </TableBody>
+                      </Table>
+                    )}
+                  </div>
+                </div>
+
+                <div className="fixed bottom-8 left-0 right-0 flex justify-center z-10 transition-all duration-150">
+                  <div className="flex items-center justify-between py-2 rounded-full shadow-lg bg-background border-t gap-20 px-5 w-fit">
+                    <div className="flex-1 text-sm text-muted-foreground">
+                      {table.getFilteredRowModel().rows.length} records found
+                    </div>
+
+                    <Popover>
+                      <PopoverTrigger asChild>
+                        <Button variant="secondary" size="sm">
+                          Columns <ChevronDown className="ml-2 h-4 w-4" />
+                        </Button>
+                      </PopoverTrigger>
+                      <PopoverContent className="w-[200px] p-0" align="end">
+                        <Command>
+                          <CommandInput placeholder="Search columns..." />
+                          <CommandList>
+                            <CommandEmpty>No column found.</CommandEmpty>
+                            <CommandGroup>
+                              {[
+                                "Avg Total Call Minutes",
+                                "TCM Score",
+                                "Avg Call Efficiency",
+                                "CE Score",
+                                "Avg Total Sales",
+                                "TS Score",
+                                "Avg Ratio Between Skade & Liv",
+                                "RBSL Score",
+                              ].map((column) => (
+                                <CommandItem key={column} onSelect={() => handleColumnSelection(column)}>
+                                  <Check
+                                    className={cn(
+                                      "mr-2 h-4 w-4",
+                                      selectedColumns.includes(column) ? "opacity-100" : "opacity-0",
+                                    )}
+                                  />
+                                  {column}
+                                </CommandItem>
+                              ))}
+                            </CommandGroup>
+                          </CommandList>
+                        </Command>
+                      </PopoverContent>
+                    </Popover>
+
+                    <div className="flex items-center space-x-2">
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.previousPage()}
+                        disabled={!table.getCanPreviousPage()}
+                      >
+                        Previous
+                      </Button>
+                      <Button
+                        variant="outline"
+                        size="sm"
+                        onClick={() => table.nextPage()}
+                        disabled={!table.getCanNextPage()}
+                      >
+                        Next
+                      </Button>
+                    </div>
+                  </div>
+                </div>
+              </div>
+            </CardContent>
+          </Card>
+        </main>
+      </div>
+    </TooltipProvider>
+  )
+}
+
+export default TeamsDashboard
 
