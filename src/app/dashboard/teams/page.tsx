@@ -931,7 +931,7 @@ const TeamsDashboard = () => {
                                                       {row.getValue("team")}'s Members
                                                     </div>
                                                     <div className="flex flex-1 justify-start gap-4">
-                                                      <div className="min-w-32 font-bold">TCM</div>
+                                                      <div className="min-w-32 font-bold text-center">TCM</div>
                                                       <div className="min-w-32 font-bold">Total Sales</div>
                                                     </div>
                                                   </div>
