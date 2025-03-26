@@ -12,6 +12,10 @@ interface TeamMemberDetails {
   name: string
   totalSales: number
   formattedTotalSales: string
+  totalCallMinutes: number
+  formattedTotalCallMinutes: string
+  tcmScore: ScoreLevel
+  month?: string
 }
 
 interface TeamDetails {
@@ -390,6 +394,8 @@ const calculateTeamMetrics = (
   }
 }
 
+// Update the calculateTeamDetails function to ensure TCM data is month-specific
+// Modify the function signature to include month parameter
 const calculateTeamDetails = (
   teamDetailsMap: Map<string, TeamMetrics>,
   teamMembersMap: Map<string, Map<string, number>>,
@@ -405,6 +411,7 @@ const calculateTeamDetails = (
     tsScoreMatrix: ScoreMatrix | null
     rbslScoreMatrix: ScoreMatrix | null
   },
+  individualDataMap: Map<string, IndividualData>,
   month: string,
 ): TeamDetails[] => {
   const { teamTotalCallMinutesMap, teamCallEfficiencyMap, teamTotalSalesMap, teamLivRatioMap } = teamMetrics
@@ -445,11 +452,21 @@ const calculateTeamDetails = (
     // Get individual member sales data
     const memberSalesMap = teamMembersMap.get(team) || new Map<string, number>()
     const members: TeamMemberDetails[] = Array.from(memberSalesMap.entries())
-      .map(([name, sales]) => ({
-        name,
-        totalSales: sales,
-        formattedTotalSales: formatNumber(sales),
-      }))
+      .map(([name, sales]) => {
+        // Get individual data for this member
+        const memberData = individualDataMap.get(name)
+        const totalCallMinutes = memberData?.totalCallMinutes || 0
+
+        return {
+          name,
+          totalSales: sales,
+          formattedTotalSales: formatNumber(sales),
+          totalCallMinutes: totalCallMinutes,
+          formattedTotalCallMinutes: formatNumber(totalCallMinutes),
+          tcmScore: getScoreForValue(totalCallMinutes, tcmScoreMatrix, true),
+          month: month, // Add month to each member's data
+        }
+      })
       .sort((a, b) => b.totalSales - a.totalSales) // Sort by sales descending
 
     // Calculate team total sales (sum of all members)
@@ -542,7 +559,14 @@ export async function GET(request: Request) {
         const teamMetrics = calculateTeamMetrics(teamDetailsMap, individualDataMap)
 
         // Calculate final team details
-        return calculateTeamDetails(teamDetailsMap, teamMembersMap, teamMetrics, scoreMatrices, month)
+        return calculateTeamDetails(
+          teamDetailsMap,
+          teamMembersMap,
+          teamMetrics,
+          scoreMatrices,
+          individualDataMap,
+          month,
+        )
       }),
     )
 
@@ -581,3 +605,4 @@ export async function GET(request: Request) {
     await prisma.$disconnect()
   }
 }
+

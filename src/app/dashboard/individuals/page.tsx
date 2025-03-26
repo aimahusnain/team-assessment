@@ -761,7 +761,7 @@ const IndividualsDashboard = () => {
               <div className="space-y-4">
                 <div className="flex flex-wrap items-center justify-start gap-2">
                   <Input
-                    placeholder="Search by name or alternative names..."
+                    placeholder="Search by name or alt names..."
                     className="max-w-64"
                     value={globalFilter}
                     onChange={(event) => setGlobalFilter(event.target.value)}
@@ -917,7 +917,7 @@ const IndividualsDashboard = () => {
 
                 {/* Footer Section */}
                 <div className="fixed bottom-8 left-0 right-0 flex justify-center z-0 transition-all duration-150">
-                  <div className="flex items-center justify-between py-2 rounded-full shadow-lg bg-background border-t gap-4 px-5 w-fit">
+                  <div className="flex items-center justify-between py-2 rounded-full shadow-lg bg-background border-t gap-10 px-5 w-fit">
                     <div className="flex-1 text-sm text-muted-foreground">
                       {table.getFilteredRowModel().rows.length} records found
                     </div>
