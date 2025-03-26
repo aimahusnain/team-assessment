@@ -928,7 +928,7 @@ const TeamsDashboard = () => {
                                                   {/* Month headers row */}
                                                   <div className="flex items-center pb-3">
                                                     <div className="w-[14.2rem] font-bold">
-                                                      {row.getValue("team")}'s Members
+                                                      {row.getValue("team")}&apos;s Members
                                                     </div>
                                                     <div className="flex flex-1 justify-start gap-4">
                                                       <div className="min-w-32 font-bold text-center">TCM</div>
